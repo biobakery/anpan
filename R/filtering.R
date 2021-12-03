@@ -1,89 +1,36 @@
 # Do outlier detection on number of confidently detected genes
-library(data.table)
-library(tidyverse); theme_set(theme_light())
-library(patchwork)
-library(furrr);
+# library(data.table)
+# library(tidyverse); theme_set(theme_light())
+# library(patchwork)
+# library(furrr);
 
-windoze = grepl("Windows",
-                Sys.info()['sysname'])
+# windoze = grepl("Windows",
+#                 Sys.info()['sysname'])
+#
+# if (windoze) {
+#   gf_files = list.files("../../../../strain_stats/data/genefamilies/",
+#                         full.names = TRUE)
+#   out_dir = "outputs/"
+#   meta = read_tsv('data/CRC_analysis_metadata_final_version.tsv')
+#   plan(multisession, workers = 6)
+# } else {
+#   gf_files = list.files("/n/holystore01/LABS/huttenhower_lab/Users/yyan/humann2_bug_gene/franzosa/bb3_version/output/genefamilies",
+#                         full.names = TRUE)
+#   out_dir = "/n/hutlab12_nobackup/users/aghazi/strain_stats/outputs/"
+#   meta = read_tsv('/n/home11/aghazi/strain_stats/data/CRC_analysis_metadata_final_version.tsv')
+#   plan(multisession, workers = 32)
+#
+#   if (!dir.exists('outputs/n_z_by_quantiles')) {
+#     dir.create('outputs/n_z_by_quantiles')
+#     dir.create('outputs/n_z_by_quantiles/hexs')
+#     dir.create('outputs/n_z_by_quantiles/hists')
+#   }
+# }
 
-if (windoze) {
-  gf_files = list.files("../../../../strain_stats/data/genefamilies/",
-                        full.names = TRUE)
-  out_dir = "outputs/"
-  meta = read_tsv('data/CRC_analysis_metadata_final_version.tsv')
-  plan(multisession, workers = 6)
-} else {
-  gf_files = list.files("/n/holystore01/LABS/huttenhower_lab/Users/yyan/humann2_bug_gene/franzosa/bb3_version/output/genefamilies",
-                        full.names = TRUE)
-  out_dir = "/n/hutlab12_nobackup/users/aghazi/strain_stats/outputs/"
-  meta = read_tsv('/n/home11/aghazi/strain_stats/data/CRC_analysis_metadata_final_version.tsv')
-  plan(multisession, workers = 32)
+get_q_large = function(gf_file) {
+  # If the gene family file is large (e.g. E coli), we have to get the quantiles in chunks
+  # TODO Test this function specifically
 
-  if (!dir.exists('outputs/n_z_by_quantiles')) {
-    dir.create('outputs/n_z_by_quantiles')
-    dir.create('outputs/n_z_by_quantiles/hexs')
-    dir.create('outputs/n_z_by_quantiles/hists')
-  }
-}
-
-read_bug = function(bug_file) {
-
-  nc = readLines(bug_file,
-                 n = 1) %>%
-    strsplit('\t') %>%
-    .[[1]] %>%
-    length
-
-  gf = fread(bug_file,
-             colClasses = list(character = 1, numeric = 2:nc)) %>%
-    dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
-
-  names(gf)[1] = "gene_spec"
-  gf = gf %>%
-    tidyr::separate(gene_spec,
-                    into = c("u", "s"),
-                    sep = "\\|")
-
-  s_ids = names(gf)[-c(1, 2)]
-
-  gf = gf %>%
-    melt(id.vars = c("u", "s"),
-         variable.name = 'sampleID',
-         value.name = "abd")
-
-  gf$sampleID = factor(gf$sampleID,
-                       levels = s_ids)
-  gf
-}
-
-# i = 6
-gf = read_bug(gf_files[i])
-
-q_df = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
-                                    n_nz = sum(abd > 0),
-                                    qs = quantile(labd[abd > 0], probs = c(.1, .5, .9)),
-                                    quantile = c('.1', '.5', '.9')), by = sampleID]
-
-# int_width = q_df[,.(q80 = qs[quantile == ".9"] - qs[quantile == ".1"], n_nz = n_nz[1]), by = sampleID]
-
-# q_hists = q_df %>%
-#   ggplot(aes(qs)) +
-#   geom_histogram() +
-#   facet_wrap('quantile', labeller = label_both)
-
-# q_df %>%
-#   ggplot(aes(n_nz, qs)) +
-#   geom_point(size = 1) +
-#   facet_wrap('quantile', labeller = label_both)
-
-# q_by_nz_hex = q_df %>%
-#   ggplot(aes(n_nz, qs)) +
-#   geom_hex() +
-#   scale_fill_viridis_c() +
-#   facet_wrap('quantile', labeller = label_both)
-
-get_q_large = function(gf_file){
   nc = readLines(gf_file,
                  n = 1) %>%
     strsplit('\t') %>%
@@ -118,16 +65,19 @@ get_q_large = function(gf_file){
       chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                                n_nz = sum(abd > 0),
                                                qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                               quantile = c('.1', '.5', '.9', 'n_hi', 'n_lo')), by = sampleID] %>%
-        .[, n_diff := (qs[quantile == "n_lo"] - qs[quantile == "n_hi"]), by = sampleID] %>%
+                                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
+        data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+        .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
         .[]
     } else {
       chunk_set = rbind(chunk_set,
                         chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                                                  n_nz = sum(abd > 0),
                                                                  qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                                                 quantile = c('.1', '.5', '.9', 'n_hi', 'n_lo')), by = sampleID] %>%
-                          .[, n_diff := (qs[quantile == "n_lo"] - qs[quantile == "n_hi"]), by = sampleID] %>% .[])
+                                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
+                          data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+                          .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
+                          .[])
     }
   }
 
@@ -143,93 +93,103 @@ get_qs_and_n_hi_lo = function(.x){
   c(qs, n_hi, n_lo)
 }
 
-get_samp_quantiles = function(gf){
+get_samp_stats = function(gf){
   gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                n_nz = sum(abd > 0),
                                qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                               quantile = c('.1', '.5', '.9', 'n_hi', 'n_lo')), by = sampleID] %>%
-    .[, n_diff := (qs[quantile == "n_lo"] - qs[quantile == "n_hi"]), by = sampleID] %>%
+                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
+    data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+    .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
     .[]
 }
 
-make_q_plot = function(gf_file) {
-  bug_name = gsub(".genefamilies.tsv", "", basename(gf_file))
-  n_lines = R.utils::countLines(gf_file)
+fit_mixture = function(samp_stats) {
+  em_input = na.omit(samp_stats[,.(sampleID, n_z, q50)])
+  em_input$n_z = scale(em_input$n_z)
+  em_input$q50 = scale(em_input$q50)
 
-  if (n_lines > 161000){
-    q_df = get_q_large(gf_file)
-  } else {
-    gf = read_bug(gf_file)
-    q_df = get_samp_quantiles(gf)
-  }
-
-  int_width = q_df[,.(q80 = qs[quantile == ".9"] - qs[quantile == ".1"], n_nz = n_nz[1], n_z = n_z[1]), by = sampleID]
-
-  q80_hist = int_width %>% ggplot(aes(q80)) + geom_histogram() + theme_light()
-  q80_hex = int_width %>%
-    ggplot(aes(n_z, q80)) +
-    geom_hex(aes(color = ..count..)) +
-    scale_fill_viridis_c() +
-    scale_color_viridis_c() +
-    guides(color = guide_none())+ theme_light()
-
-  n80_hist = q_df[n_diff != 0][quantile == 'n_hi'] %>% ggplot(aes(n_diff)) + geom_histogram() + labs(x = 'n80') + theme_light()
-  # n80_hex = q_df[n_diff != 0][quantile == 'n_hi'] %>% # OBVIOUSLY it's just a linear relationship
-  #   dplyr::rename(n80 = n_diff) %>%
-  #   ggplot(aes(n_z, n80)) +
-  #   geom_hex(aes(color = ..count..)) +
-  #   scale_fill_viridis_c() +
-  #   scale_color_viridis_c() +
-  #   guides(color = guide_none())+ theme_light()
-
-  q_hists = q_df %>% filter(!grepl("n", quantile)) %>%
-    ggplot(aes(qs)) +
-    geom_histogram() +
-    facet_wrap('quantile', labeller = label_both) +
-    theme_light()
-
-  # q_df %>%
-  #   ggplot(aes(n_z, qs)) +
-  #   geom_point(size = 1) +
-  #   facet_wrap('quantile', labeller = label_both)
-
-  scale_fun = ifelse(n_lines > 161000,
-                     scale_x_log10,
-                     scale_x_continuous)
-
-  title_str = NULL
-  if (n_lines > 161000) title_str = 'log scale on x-axis!'
-
-  q_by_z_hex = q_df %>% filter(!grepl("n", quantile)) %>%
-    ggplot(aes(n_z, qs)) +
-    geom_hex(aes(color = ..count..)) +
-    scale_fun() +
-    scale_fill_viridis_c() +
-    scale_color_viridis_c() +
-    facet_wrap('quantile', labeller = label_both) +
-    guides(color = guide_none()) +
-    theme_light() +
-    labs(title = title_str, y = "quantile_value", x = "number of zero observations")
-
-
-
-  layout_str = "
-  1##
-  222
-  "
-  ggsave(plot =  q80_hex + q_by_z_hex +  plot_annotation(title = bug_name) + plot_layout(design = layout_str),
-         filename = paste0("outputs/n_z_by_quantiles/hexs/", bug_name, ".png"),
-         width = 12,
-         height = 7)
-  ggsave(plot = (q80_hist + n80_hist) / q_hists + plot_annotation(title = bug_name),
-         filename = paste0("outputs/n_z_by_quantiles/hists/", bug_name, ".png"),
-         width = 12,
-         height = 7)
-
-  NULL
+  mf = mixtools::mvnormalmixEM(as.matrix(em_input[,-1]),
+                               lambda = c(.75, .25))
+  return(list(res = mf, input = em_input))
 }
 
-safely_plot = purrr::safely(make_q_plot)
+get_component_densities = function(mix_fit, plot = FALSE) {
+  input_mat = as.matrix(mix_fit$input[,-1])
+
+  left_i = which.min(sapply(mix_fit$res$mu, function(.x) .x[1]))
+  right_i = setdiff(1:2, left_i)
+
+  samp_df = mix_fit$input
+  samp_df$left_dens = mixtools::dmvnorm(input_mat,
+                                        mu = mix_fit$res$mu[[left_i]],
+                                        sigma = mix_fit$res$sigma[[left_i]])
+  samp_df$right_dens = mixtools::dmvnorm(input_mat,
+                                        mu = mix_fit$res$mu[[right_i]],
+                                        sigma = mix_fit$res$sigma[[right_i]])
+
+  samp_df[,in_right := right_dens > left_dens]
+
+  if (plot) {
+    samp_df %>%
+      ggplot(aes(n_z, q50)) +
+      geom_point(aes(color = in_right)) +
+      labs(title = 'EM based decision for A. putredinis') +
+      theme_light()
+  }
+
+  samp_df[,.(sampleID, in_right)]
+}
+
+# TODO implement this
+# Check if the components overlap mostly overlap
+# Turns out this is pretty hard to do:
+# https://math.stackexchange.com/questions/1114879/detect-if-two-ellipses-intersect
+check_mix_fit = function(mix_fit) {
+  # Check they don't overlap too much
+  # Check that one is to the upper left of the other
+  TRUE
+}
+
+filter_gf = function(gf) {
+  samp_stats = get_samp_stats(gf)
+
+  mix_fit = fit_mixture(samp_stats)
+
+  mix_checks = check_mix_fit(mix_fit)
+
+  if (!mix_checks) {
+    stop("Mixture fitting seems to have failed")
+  }
+
+  mix_labels = get_component_densities(mix_fit)
+  label_df = mix_labels[samp_stats, on = "sampleID"]
+  label_df$in_right[is.na(label_df$in_right)] = TRUE # all zero samples don't have the species
+
+  filtered_gf = label_df[,.(sampleID, in_right)][gf, on = "sampleID"]
+  filtered_gf$abd[filtered_gf$in_right] = 0
+  filtered_gf$present = filtered_gf$abd > 0
+  filtered_gf
+}
+
+read_and_filter = function(bug_file, meta_cov,
+                           minmax_thresh = 5) {
+
+  gf = read_bug(bug_file, meta = meta_cov)[,.(gene_spec, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(present != 0) > minmax_thresh), by = gene_spec
+  ][(varies_enough)
+  ][,.(gene_spec, sampleID, abd)]
+
+  filtered_gf = filter_gf(gf) # Might need to reapply the minmax_thresh here
+
+  joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene_spec, present, sampleID, age, gender, crc)]
+
+  wide_dat = dcast(joined,
+                   age + gender + sampleID + crc ~ gene_spec,
+                   value.var = 'present')
+
+  wide_dat
+}
+
+# safely_plot = purrr::safely(make_q_plot)
 
 # pl = future_map(gf_files %>% head,
 #                 safely_plot,
