@@ -150,7 +150,12 @@ check_mix_fit = function(mix_fit) {
   TRUE
 }
 
-filter_gf = function(gf) {
+#' @export
+filter_gf = function(gf, filtering_method = "med_by_nz_components") {
+
+  if (filtering_method != "med_by_nz_components") stop("Only median by zero observation count filtering is currently implemented")
+
+  # TODO allow alternate filtering strategies
   samp_stats = get_samp_stats(gf)
 
   mix_fit = fit_mixture(samp_stats)
@@ -172,21 +177,32 @@ filter_gf = function(gf) {
 }
 
 read_and_filter = function(bug_file, meta_cov,
+                           pivot_wide = TRUE,
                            minmax_thresh = 5) {
 
-  gf = read_bug(bug_file, meta = meta_cov)[,.(gene_spec, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(present != 0) > minmax_thresh), by = gene_spec
+  n_lines = R.utils::countLines(bug_file)
+
+  if (n_lines > 161000) {
+    stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
+  }
+
+  gf = read_bug(bug_file, meta = meta_cov)[,.(gene_spec, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene_spec
   ][(varies_enough)
   ][,.(gene_spec, sampleID, abd)]
 
-  filtered_gf = filter_gf(gf) # Might need to reapply the minmax_thresh here
+  filtered_gf = filter_gf(gf, filtering_method = "med_by_nz_components") # Might need to reapply the minmax_thresh here
 
   joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene_spec, present, sampleID, age, gender, crc)]
 
-  wide_dat = dcast(joined,
-                   age + gender + sampleID + crc ~ gene_spec,
-                   value.var = 'present')
+  if (pivot_wide) {
+    wide_dat = dcast(joined,
+                     age + gender + sampleID + crc ~ gene_spec, # TODO generalize covariates
+                     value.var = 'present')
 
-  wide_dat
+    return(wide_dat)
+  } else {
+    return(joined)
+  }
 }
 
 # safely_plot = purrr::safely(make_q_plot)
@@ -198,35 +214,35 @@ read_and_filter = function(bug_file, meta_cov,
 
 # fit mixtures ------------------------------------------------------------
 
-library(mixtools)
-
-q_df %>%
-  ggplot(aes(n_z, qs)) +
-  geom_hex(aes(color = ..count..)) +
-  scale_fill_viridis_c() +
-  scale_color_viridis_c() +
-  guides(color = guide_none())
-
-circ_df = tibble(t = seq(0, 2*pi, by = .01),
-                 x = cos(t),
-                 y = sin(t))
-circ = as.matrix(circ_df[,c('x', 'y')])
-
-mvnormalmixEM(as.matrix(na.omit(q_df[,.(n_z, qs)])),
-              lambda = c(.2, .8),
-              mu = list(c(500, -.5),
-                        c(3000, .5))) # Too hard to figure out scales
-
-em_input = na.omit(q_df[,.(n_z, qs, quantile)] %>% filter(quantile == ".5") %>% select(-quantile))
-
-mixfit = mvnormalmixEM(as.matrix(mutate_all(em_input, scale)),
-                       lambda = c(.8, .2))
-
-input_scales = em_input %>%
-  summarise(mnz = mean(n_z),
-            m_q = mean(qs),
-            snz = sd(n_z),
-            sq = sd(qs))
+# library(mixtools)
+#
+# q_df %>%
+#   ggplot(aes(n_z, qs)) +
+#   geom_hex(aes(color = ..count..)) +
+#   scale_fill_viridis_c() +
+#   scale_color_viridis_c() +
+#   guides(color = guide_none())
+#
+# circ_df = tibble(t = seq(0, 2*pi, by = .01),
+#                  x = cos(t),
+#                  y = sin(t))
+# circ = as.matrix(circ_df[,c('x', 'y')])
+#
+# mvnormalmixEM(as.matrix(na.omit(q_df[,.(n_z, qs)])),
+#               lambda = c(.2, .8),
+#               mu = list(c(500, -.5),
+#                         c(3000, .5))) # Too hard to figure out scales
+#
+# em_input = na.omit(q_df[,.(n_z, qs, quantile)] %>% filter(quantile == ".5") %>% select(-quantile))
+#
+# mixfit = mvnormalmixEM(as.matrix(mutate_all(em_input, scale)),
+#                        lambda = c(.8, .2))
+#
+# input_scales = em_input %>%
+#   summarise(mnz = mean(n_z),
+#             m_q = mean(qs),
+#             snz = sd(n_z),
+#             sq = sd(qs))
 
 get_ell_df = function(mu, sigma){
   path = (circ %*% sigma) %*% matrix(c(input_scales$snz, 0, 0, input_scales$sq), nrow = 2)
@@ -237,15 +253,15 @@ get_ell_df = function(mu, sigma){
     as_tibble
 }
 
-q_df %>% filter(quantile == ".5") %>%
-  ggplot(aes(n_z, qs)) +
-  geom_hex(aes(color = ..count..)) +
-  scale_fill_viridis_c() +
-  scale_color_viridis_c() +
-  geom_path(color = 'red',
-            data = get_ell_df(mixfit$mu[[1]], mixfit$sigma[[1]]) ,
-            aes(V1, V2)) +
-  guides(color = guide_none())
+# q_df %>% filter(quantile == ".5") %>%
+#   ggplot(aes(n_z, qs)) +
+#   geom_hex(aes(color = ..count..)) +
+#   scale_fill_viridis_c() +
+#   scale_color_viridis_c() +
+#   geom_path(color = 'red',
+#             data = get_ell_df(mixfit$mu[[1]], mixfit$sigma[[1]]) ,
+#             aes(V1, V2)) +
+#   guides(color = guide_none())
 
 get_ell = function(mu, sigma) {
   m = (circ %*% sigma) %*% matrix(c(qnorm(.975), 0, 0, qnorm(.975)), nrow = 2)
@@ -254,20 +270,20 @@ get_ell = function(mu, sigma) {
   as_tibble(m)
 }
 
-mutate_all(em_input, scale) %>%
-  ggplot(aes(n_z, qs)) +
-  geom_hex(aes(color = ..count..),
-           lwd = .1) +
-  scale_fill_viridis_c() +
-  scale_color_viridis_c() +
-  geom_path(color = 'red',
-            data = get_ell(mixfit$mu[[2]], mixfit$sigma[[2]]),
-            aes(V1, V2)) +
-  geom_path(color = 'red',
-            data = get_ell(mixfit$mu[[1]], mixfit$sigma[[1]]),
-            aes(V1, V2)) +
-  guides(color = guide_none()) +
-  labs(title = "Akkermansia result for median with mixtools results",
-       caption = "Scaled axes to make the EM easier")
-
-ggsave('outputs/med_by_z_mixture.png', width = 8, height = 6)
+# mutate_all(em_input, scale) %>%
+#   ggplot(aes(n_z, qs)) +
+#   geom_hex(aes(color = ..count..),
+#            lwd = .1) +
+#   scale_fill_viridis_c() +
+#   scale_color_viridis_c() +
+#   geom_path(color = 'red',
+#             data = get_ell(mixfit$mu[[2]], mixfit$sigma[[2]]),
+#             aes(V1, V2)) +
+#   geom_path(color = 'red',
+#             data = get_ell(mixfit$mu[[1]], mixfit$sigma[[1]]),
+#             aes(V1, V2)) +
+#   guides(color = guide_none()) +
+#   labs(title = "Akkermansia result for median with mixtools results",
+#        caption = "Scaled axes to make the EM easier")
+#
+# ggsave('outputs/med_by_z_mixture.png', width = 8, height = 6)

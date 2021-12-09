@@ -51,16 +51,43 @@
 # wide_subset = wide_dat[,1:50]
 
 
-fit_glm = function(wide, bug_file){
+fit_glms = function(model_input, out_dir, non_element_cols = 1:4) {
+  # non_element_cols = indices of columns that aren't genes.
+  # Select covariates, outcome, and iteratively each additional gene-family column. GLM them each in turn
+
+  element_cols = (1:ncol(model_input))[-non_element_cols] # This is brittle
+
+
 
 }
 
-fit_scone = function(wide, bug_name, tpc = 4, ncore = 4, out_path,
+fit_glm = function(model_input, out_dir) {
+  # Select covariates, outcome, and iteratively each additional gene-family column. GLM them each in turn
+  if (n_distinct(gene_spec_dat$crc) != 2 |
+      n_distinct(gene_spec_dat$bug) == 1 |
+      min(table(gene_spec_dat$bug) / nrow(gene_spec_dat)) < .05) {
+    return(data.table(term = character(),
+                      estimate = numeric(),
+                      std.error = numeric(),
+                      statistic = numeric(),
+                      p.value = numeric(),
+                      gs = character()))
+  }
+
+  glm(crc ~ age + gender + bug,
+      data = gene_spec_dat,
+      family = 'binomial') %>%
+    broom::tidy() %>%
+    as.data.table() %>%
+    .[, gs := gs]
+}
+
+fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
                     save_summ = FALSE) {
   form = brms::bf(n_crc ~ stdCovariates + unirefs, nl = TRUE) +
     brms::lf(stdCovariates  ~ 1 + age + gender , center = TRUE) +
     brms::lf(as.formula(paste0("unirefs ~ 0 + ",
-                               paste(names(wide)[-(1:5)],
+                               paste(names(model_input)[-(1:5)],
                                      collapse = " + "))), cmc = FALSE)
 
   p = brms::set_prior("horseshoe(par_ratio = .005)",
@@ -70,7 +97,7 @@ fit_scone = function(wide, bug_name, tpc = 4, ncore = 4, out_path,
 
   model_fit = brms::brm(form,
             prior = p,
-            data = wide,
+            data = model_input,
             family = brms::bernoulli(),
             refresh = 50,
             control = list(adapt_delta = .9),
@@ -100,20 +127,22 @@ fit_scone = function(wide, bug_name, tpc = 4, ncore = 4, out_path,
 #' @export
 scone = function(bug_file,
                  meta_file,
+                 out_dir,
                  model_type = "scone",
-                 covariates = c("age", "gender")) {
+                 covariates = c("age", "sex")) {
 
   if (!(model_type %in% c("scone", "glm"))) stop('model_type must be either "scone" or "glm"')
 
-  bug_name = gsub(".genefamilies.tsv", "", basename(gf_file))
-  n_lines = R.utils::countLines(gf_file)
+  bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
+  n_lines = R.utils::countLines(bug_file)
 
   #
-  input_data = read_and_filter(bug_file, read_meta(meta_file))
+  model_input = read_and_filter(bug_file, read_meta(meta_file),
+                                pivot_wide = model_type == "scone")
 
   res = switch(model_type,
-               scone = fit_scone(input_data),
-               glm = fit_glm(input_data))
+               scone = fit_scone(model_input),
+               glm = fit_glms(model_input))
 }
 
 #' @export

@@ -17,3 +17,4 @@ Imports:
     tibble,
     tidyr,
     furrr
+RoxygenNote: 7.1.1
