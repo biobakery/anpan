@@ -18,14 +18,14 @@ read_bug = function(bug_file, meta,
              colClasses = list(character = 1, numeric = 2:nc)) %>%
     dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need dplyr
 
-  names(gf)[1] = "gene_spec"
+  names(gf)[1] = "gene"
 
-  gf$gene_spec = gsub("\\|(.*)", "", gf$gene_spec)
+  gf$gene = gsub("\\|(.*)", "", gf$gene)
   # ^ This removes the |species_id part of the identifier to make it easier to read
 
-  gf = gf %>% dplyr::select(gene_spec, any_of(unique(meta$sampleID)))
+  gf = gf %>% dplyr::select(gene, any_of(unique(meta$sampleID)))
 
-  melt(gf, id.vars = "gene_spec", variable.name = 'sampleID', value.name = "abd")
+  melt(gf, id.vars = "gene", variable.name = 'sampleID', value.name = "abd")
 }
 
 get_file_list = function(file_dir) {

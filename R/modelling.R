@@ -32,14 +32,14 @@
 #
 # # priors by predictor, one bug at a time ----------------------------------
 # gf = read_bug(bug_files[4]) %>%
-#   .[,.(gene_spec, sampleID, bug,
+#   .[,.(gene, sampleID, bug,
 #        varies_enough = sum(bug) < (.N - minmax_thresh) &
-#          sum(bug) > minmax_thresh), by = gene_spec] %>%
+#          sum(bug) > minmax_thresh), by = gene] %>%
 #   .[(varies_enough)] %>%
-#   .[,.(gene_spec, sampleID, bug)]
+#   .[,.(gene, sampleID, bug)]
 #
-# joined = gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene_spec, present = bug, sampleID, age, gender, crc)] %>%
-#   tidyr::separate(gene_spec,
+# joined = gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene, present = bug, sampleID, age, gender, crc)] %>%
+#   tidyr::separate(gene,
 #                   into = c('uniref', "species"),
 #                   sep = "\\|") %>%
 #   .[,.(n_crc = sum(crc),
@@ -51,36 +51,80 @@
 # wide_subset = wide_dat[,1:50]
 
 
-fit_glms = function(model_input, out_dir, non_element_cols = 1:4) {
-  # non_element_cols = indices of columns that aren't genes.
-  # Select covariates, outcome, and iteratively each additional gene-family column. GLM them each in turn
+fit_glms = function(model_input, out_dir) {
+  glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
-  element_cols = (1:ncol(model_input))[-non_element_cols] # This is brittle
+  # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
+  # p <- progressor(steps = dplyr::n_distinct(model_input$gene))
+  # ^ That goes right here, then activate the p() calls commented out in fit_glm()
+  glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
+                                       safely_fit_glm) # TODO progress bar with progressr
 
 
+  failed = glm_fits[sapply(glm_fits$glm_res,
+                           \(.x) !is.null(.x$error))]
+  if (nrow(failed) > 0){
+    # TODO Write out the failures to a warning file with a message
+  }
 
+  worked = glm_fits[sapply(glm_fits$glm_res,
+                           \(.x) is.null(.x$error))]
+
+  all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, \(.x) .x$result))],
+                            cols = c(glm_res))
+
+  readr::write_tsv(all_terms,
+                   file = paste0(out_dir, "all_terms.tsv"))
+
+  bug_terms = all_terms %>%
+    dplyr::filter(term == "presentTRUE") %>%
+    dplyr::arrange(p.value) %>%
+    dplyr::mutate(q = p.adjust(p.value, method = 'fdr')) %>%
+    dplyr::select(-term)
+
+  readr::write_tsv(bug_terms,
+                   file = paste0(out_dir, "bug_terms.tsv"))
+
+  return(bug_terms)
 }
 
-fit_glm = function(model_input, out_dir) {
-  # Select covariates, outcome, and iteratively each additional gene-family column. GLM them each in turn
-  if (n_distinct(gene_spec_dat$crc) != 2 |
-      n_distinct(gene_spec_dat$bug) == 1 |
-      min(table(gene_spec_dat$bug) / nrow(gene_spec_dat)) < .05) {
+check_prevalence_okay = function(gene_dat, prevalence_filter) {
+
+  min_prev_by_outcome = table(gene_dat[,.(present, crc)]) %>%
+    apply(2, \(.x) .x / sum(.x)) %>%
+    apply(2, min) # It has to be variable above the prevalence filter in BOTH groups
+
+  if (n_distinct(gene_dat$crc) != 2 |                         # If only one outcome shows up
+      n_distinct(gene_dat$present) == 1 |                     # or if the gene is omni-present or omni-absent
+      all(prev_by_outcome < prevalence_filter)) {             # or if it doesn't get through the prevalence filter
+    return(FALSE) # Then it's not okay
+  } else {
+    return(TRUE)
+  }
+}
+
+#' Fit a GLM to one gene
+fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
+
+  if (!check_prevalence_okay(gene_dat, prevalence_filter)) {
+    # p()
     return(data.table(term = character(),
                       estimate = numeric(),
                       std.error = numeric(),
                       statistic = numeric(),
-                      p.value = numeric(),
-                      gs = character()))
+                      p.value = numeric()))
   }
 
-  glm(crc ~ age + gender + bug,
-      data = gene_spec_dat,
-      family = 'binomial') %>%
+  res = glm(crc ~ age + gender + present, # TODO adjustable covariates
+            data = gene_dat,
+            family = 'binomial') %>%
     broom::tidy() %>%
-    as.data.table() %>%
-    .[, gs := gs]
+    as.data.table()
+  # p()
+  return(res)
 }
+
+safely_fit_glm = purrr::safely(fit_glm)
 
 fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
                     save_summ = FALSE) {
@@ -131,18 +175,39 @@ scone = function(bug_file,
                  model_type = "scone",
                  covariates = c("age", "sex")) {
 
+
+# Checks ------------------------------------------------------------------
+
+
   if (!(model_type %in% c("scone", "glm"))) stop('model_type must be either "scone" or "glm"')
 
   bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   n_lines = R.utils::countLines(bug_file)
 
-  #
+
+
+
+# Filtering ---------------------------------------------------------------
+
   model_input = read_and_filter(bug_file, read_meta(meta_file),
                                 pivot_wide = model_type == "scone")
 
+
+# Fitting -----------------------------------------------------------------
+
+
   res = switch(model_type,
-               scone = fit_scone(model_input),
-               glm = fit_glms(model_input))
+               scone = fit_scone(model_input, out_dir),
+               glm = fit_glms(model_input, out_dir))
+
+
+# Summarizing -------------------------------------------------------------
+
+
+# Write output ------------------------------------------------------------
+
+
+  return(res)
 }
 
 #' @export

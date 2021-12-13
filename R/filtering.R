@@ -45,9 +45,9 @@ get_q_large = function(gf_file) {
                select = c(1, (2:nc)[chunks == i])) %>%
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
-    names(gf)[1] = "gene_spec"
+    names(gf)[1] = "gene"
     gf = gf %>%
-      tidyr::separate(gene_spec,
+      tidyr::separate(gene,
                       into = c("u", "s"),
                       sep = "\\|")
 
@@ -151,7 +151,8 @@ check_mix_fit = function(mix_fit) {
 }
 
 #' @export
-filter_gf = function(gf, filtering_method = "med_by_nz_components") {
+filter_gf = function(gf, filtering_method = "med_by_nz_components", plot_mix = FALSE,
+                     return_labels = FALSE) {
 
   if (filtering_method != "med_by_nz_components") stop("Only median by zero observation count filtering is currently implemented")
 
@@ -166,6 +167,10 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components") {
     stop("Mixture fitting seems to have failed")
   }
 
+  if (plot_mix) {
+    stop("Plotting the estimated mixture components isn't implemented yet")
+  }
+
   mix_labels = get_component_densities(mix_fit)
   label_df = mix_labels[samp_stats, on = "sampleID"]
   label_df$in_right[is.na(label_df$in_right)] = TRUE # all zero samples don't have the species
@@ -173,8 +178,31 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components") {
   filtered_gf = label_df[,.(sampleID, in_right)][gf, on = "sampleID"]
   filtered_gf$abd[filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
+
+  return(filtered_gf)
+}
+
+read_and_label = function(bug_file, meta_cov,
+                          pivot_wide = TRUE,
+                          minmax_thresh = 5) {
+  # Would be better to make this function an argument of read_and_filter
+
+  n_lines = R.utils::countLines(bug_file)
+
+  if (n_lines > 161000) {
+    stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
+  }
+
+  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
+  ][(varies_enough)
+  ][,.(gene, sampleID, abd)]
+
+  filtered_gf = filter_gf(gf,
+                          filtering_method = "med_by_nz_components",
+                          return_labels = TRUE) # Might need to reapply the minmax_thresh here
   filtered_gf
 }
+
 
 read_and_filter = function(bug_file, meta_cov,
                            pivot_wide = TRUE,
@@ -186,17 +214,17 @@ read_and_filter = function(bug_file, meta_cov,
     stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
   }
 
-  gf = read_bug(bug_file, meta = meta_cov)[,.(gene_spec, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene_spec
+  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
   ][(varies_enough)
-  ][,.(gene_spec, sampleID, abd)]
+  ][,.(gene, sampleID, abd)]
 
   filtered_gf = filter_gf(gf, filtering_method = "med_by_nz_components") # Might need to reapply the minmax_thresh here
 
-  joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene_spec, present, sampleID, age, gender, crc)]
+  joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene, present, sampleID, age, gender, crc)]
 
   if (pivot_wide) {
     wide_dat = dcast(joined,
-                     age + gender + sampleID + crc ~ gene_spec, # TODO generalize covariates
+                     age + gender + sampleID + crc ~ gene, # TODO generalize covariates
                      value.var = 'present')
 
     return(wide_dat)
@@ -205,11 +233,6 @@ read_and_filter = function(bug_file, meta_cov,
   }
 }
 
-# safely_plot = purrr::safely(make_q_plot)
-
-# pl = future_map(gf_files %>% head,
-#                 safely_plot,
-#                 .progress = TRUE)
 
 
 # fit mixtures ------------------------------------------------------------

@@ -141,3 +141,38 @@ make_mix_plot = function(gf_file){
 }
 
 safely_mix = purrr::safely(make_mix_plot)
+
+make_line_plot = function(bug_file) {
+  # filtered gene families
+  fgf = read_and_label(bug_file,
+                       read_meta(meta_file),
+                       pivot_wide = model_type == "scone")
+
+  fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
+    dplyr::mutate(labelled_as = c('present', 'absent')[in_right + 1]) %>%
+    ggplot(aes(i, labd)) +
+    geom_line(aes(group = sampleID,
+                  color = labelled_as)) +
+    labs(x = NULL,
+         y = 'log abundance') +
+    scale_color_brewer(palette = "Set1") +
+    theme_light()
+
+}
+
+make_composite_plot = function(bug_file,
+                               model_results) {
+
+  lp = make_line_plot(bug_file)
+  hp = make_hex_plot(bug_file)
+
+  dp = make_data_plot(model_results)
+  ip = make_int_plot(model_results)
+
+  layout_str = "
+  AC
+  BD"
+
+  lp + hp + dp + ip + plot_layout(design = layout_str)
+
+}
