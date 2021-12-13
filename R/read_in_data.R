@@ -1,8 +1,9 @@
 read_meta = function(meta_path,
                      select_cols = c("sampleID", "age", "gender", "crc")) {
+
   meta = fread(meta_path) # 'data/CRC_analysis_metadata_final_version.tsv'
   meta$crc = c(CRC = TRUE, control = FALSE)[meta$study_condition]
-  meta_cov = meta[, ..select_cols]
+  meta_cov = meta %>% dplyr::select(all_of(select_cols))
   meta_cov
 }
 
