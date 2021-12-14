@@ -19,18 +19,31 @@ get_transformed_ellipse = function(id, mix_fit, A, input_scales){
   as_tibble(mat) %>% purrr::set_names(c('n_z', 'q50'))
 }
 
+#' Make a filter-labelled line plot
+#' @param bug_file a path to a gene family file
+#' @param meta_file a path to the corresponding metadata file
+#' @param fgf a filtered gene family data frame
+#' @param bug_name
+#' @details The required input is either \itemize{ \item{the gene family file
+#'   and the metadata file} \item{OR a pre-filtered gene family file}}
 #' @export
-make_line_plot = function(bug_file,
-                          meta_file,
-                          model_type = "glm") {
-  # filtered gene families
-  fgf = read_and_filter(bug_file,
-                        read_meta(meta_file),
-                        pivot_wide = model_type == "scone")
+make_line_plot = function(bug_file = NULL,
+                          meta_file = NULL,
+                          fgf = NULL,
+                          bug_name = NULL,
+                          plot_dir = NULL) {
 
-  bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
+  precomputed = !is.null(fgf)
+  to_compute = !is.null(bug_file) & !is.null(meta_file)
+  if (!(precomputed|to_compute)) {
+    # filtered gene families
+    fgf = read_and_filter(bug_file,
+                          read_meta(meta_file), pivot_wide = FALSE)
 
-  fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
+    # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
+  }
+
+  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
     dplyr::mutate(labelled_as = c('present', 'absent')[in_right + 1]) %>%
     ggplot(aes(i, labd)) +
     geom_line(aes(group = sampleID,
@@ -42,6 +55,13 @@ make_line_plot = function(bug_file,
     scale_color_brewer(palette = "Set1") +
     theme_light()
 
+  if (!is.null(plot_dir)) {
+    ggsave(p,
+           filename = file.path(plot_dir, paste0(bug_name, "_labelled_lines.png")),
+           width = 6, height = 4)
+  }
+
+  p
 }
 
 #' Make a hex plot of the abundance by zeroness of a gene family dataset
@@ -61,12 +81,13 @@ make_hex_plot = function(bug_file = NULL,
                          minmax_thresh = 5,
                          samp_stats = NULL,
                          mix_fit = NULL,
-                         bug_name = NULL) {
+                         bug_name = NULL,
+                         plot_dir = NULL) {
 
-  if (( is.null(samp_stats) &  is.null(mix_fit)) &
-      (!is.null(bug_file)   & !is.null(meta_file))) {
+  precomputed = (!is.null(samp_stats) & !is.null(mix_fit))
+  to_compute = (!is.null(bug_file) & !is.null(meta_file))
 
-    bug_name = get_bug_name(bug_file)
+  if (to_compute) {
     gf = read_bug(bug_file, meta = read_meta(meta_file))[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
     ][(varies_enough)
     ][,.(gene, sampleID, abd)]
@@ -74,6 +95,8 @@ make_hex_plot = function(bug_file = NULL,
     samp_stats = get_samp_stats(gf)
 
     mix_fit = fit_mixture(samp_stats)
+  } else if (precomputed) {
+    # Do nothing
   } else {
     stop("You somehow misspecified your inputs. Specify either a gene family file and metadata file OR a sample statistics data frame and a mixture fit object")
   }
@@ -93,7 +116,7 @@ make_hex_plot = function(bug_file = NULL,
   s_inv = solve(s)
   A = C %*% s_inv # This is the transformation between standardized and centered scales
 
-  em_input %>%
+  p = em_input %>%
     ggplot(aes(n_z, q50)) +
     geom_hex(aes(color = ..count..),
              lwd = .1) +
@@ -109,7 +132,13 @@ make_hex_plot = function(bug_file = NULL,
          y = 'Median log abundance') +
     theme_light()
 
+  if (!is.null(plot_dir)) {
+    ggsave(p,
+           filename = file.path(plot_dir, paste0(bug_name, "_hex.png")),
+           width = 6, height = 4)
+  }
 
+  p
 }
 
 make_data_plot = function() {
@@ -121,12 +150,13 @@ make_interval_plot = function() {
 }
 
 make_composite_plot = function(bug_file,
-                               model_results) {
+                               model_results,
+                               return_components = FALSE) {
 
   lp = make_line_plot(bug_file) #
   hp = make_hex_plot(bug_file)
 
-  dp = make_data_plot(model_results)
+  dp = make_data_plot(bug_file, model_results, annotation_file)
   ip = make_int_plot(model_results)
 
   layout_str = "
@@ -134,6 +164,12 @@ make_composite_plot = function(bug_file,
   BBCD
   "
 
-  lp + hp + dp + ip + plot_layout(design = layout_str)
+  p = lp + hp + dp + ip + plot_layout(design = layout_str)
+  print(p)
+  if (return_components) {
+    return(list(lp,hp,dp,ip))
+  } else {
+    return(p)
+  }
 
 }

@@ -56,7 +56,7 @@ get_bug_name = function(bug_file,
 }
 
 
-fit_glms = function(model_input, out_dir) {
+fit_glms = function(model_input, out_dir, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
@@ -75,11 +75,12 @@ fit_glms = function(model_input, out_dir) {
   worked = glm_fits[sapply(glm_fits$glm_res,
                            \(.x) is.null(.x$error))]
 
+  # V Find the data.table way to unnest. tidyr is slow.
   all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, \(.x) .x$result))],
                             cols = c(glm_res))
 
   readr::write_tsv(all_terms,
-                   file = paste0(out_dir, "all_terms.tsv"))
+                   file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv")))
 
   bug_terms = all_terms %>%
     dplyr::filter(term == "presentTRUE") %>%
@@ -88,7 +89,7 @@ fit_glms = function(model_input, out_dir) {
     dplyr::select(-term)
 
   readr::write_tsv(bug_terms,
-                   file = paste0(out_dir, "bug_terms.tsv"))
+                   file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv")))
 
   return(bug_terms)
 }
@@ -99,9 +100,9 @@ check_prevalence_okay = function(gene_dat, prevalence_filter) {
     apply(2, \(.x) .x / sum(.x)) %>%
     apply(2, min) # It has to be variable above the prevalence filter in BOTH groups
 
-  if (n_distinct(gene_dat$crc) != 2 |                         # If only one outcome shows up
-      n_distinct(gene_dat$present) == 1 |                     # or if the gene is omni-present or omni-absent
-      all(prev_by_outcome < prevalence_filter)) {             # or if it doesn't get through the prevalence filter
+  if (n_distinct(gene_dat$crc) != 2 |                             # If only one outcome shows up
+      n_distinct(gene_dat$present) == 1 |                         # or if the gene is omni-present or omni-absent
+      all(min_prev_by_outcome < prevalence_filter)) {             # or if it doesn't get through the prevalence filter
     return(FALSE) # Then it's not okay
   } else {
     return(TRUE)
@@ -157,9 +158,9 @@ fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 
   summ = summarise_fit(model_fit)
 
-  if (save_summ){
+  if (save_summ) {
     save(summ,
-         file = paste0(out_path, "/", bug_name, ".RData")) # TODO make the parts of this work
+         file = file.path(out_path, paste0(bug_name, ".RData"))) # TODO make the parts of this work
   }
 
   model_fit
@@ -168,19 +169,19 @@ fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 
 #' Run scone
 #'
-#' @description Run the scone model on a
+#' @description Run the scone model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv. Must contain the specify covariates
 #' @param model_type either "scone" or "glm"
-#' @param covariates covariates to account for
+#' @param covariates covariates to account for CURRENTLY IGNORED
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @export
 scone = function(bug_file,
                  meta_file,
                  out_dir,
                  model_type = "scone",
-                 covariates = c("age", "sex"),
-                 save_filter_stats = FALSE) {
+                 covariates = c("age", "gender"),
+                 save_filter_stats = TRUE) {
 
 
 # Checks ------------------------------------------------------------------
@@ -191,19 +192,17 @@ scone = function(bug_file,
   bug_name = get_bug_name(bug_file)
   n_lines = R.utils::countLines(bug_file)
 
-  if (!grepl('/$', out_dir)){
-    out_dir = paste0(out_dir, "/")
-  }
-
-  if (!dir.exists(out_dir)){
+  if (!dir.exists(out_dir)) {
     message("* Output directory doesn't exist. Creating it.")
     dir.create(out_dir)
   }
 
   if (save_filter_stats) {
     message("* Creating the filter stats directory in the output directory.")
-    filter_stats_dir = paste0(out_dir, "filter_stats/")
-    dir.create(filter_stats_dir)
+    filter_stats_dir = file.path(out_dir, "filter_stats")
+    plot_dir = file.path(filter_stats_dir, 'plots')
+    if (!dir.exists(filter_stats_dir)) dir.create(filter_stats_dir)
+    if (!dir.exists(plot_dir)) dir.create(plot_dir)
   }
 
 
@@ -212,22 +211,22 @@ scone = function(bug_file,
   message("Reading and filtering the data.")
   model_input = read_and_filter(bug_file, read_meta(meta_file),
                                 pivot_wide = model_type == "scone",
-                                save_filter_stats = save_filter_stats)
+                                save_filter_stats = save_filter_stats,
+                                filter_stats_dir = filter_stats_dir)
 
 
 # Fitting -----------------------------------------------------------------
 
-
   res = switch(model_type,
                scone = fit_scone(model_input, out_dir),
-               glm = fit_glms(model_input, out_dir))
+               glm = fit_glms(model_input, out_dir, bug_name = bug_name))
 
 
 # Summarizing -------------------------------------------------------------
-
+# Only needed for scone
 
 # Write output ------------------------------------------------------------
-
+# Done inside fit_glms()
 
   return(res)
 }

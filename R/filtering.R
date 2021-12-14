@@ -153,7 +153,6 @@ check_mix_fit = function(mix_fit) {
 
 #' @export
 filter_gf = function(gf, filtering_method = "med_by_nz_components",
-                     plot_mix = FALSE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
                      bug_name = NULL) {
@@ -175,15 +174,15 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
     if (!dir.exists(filter_stats_dir)) {
       stop("filter_stats_dir doesn't exist!")
     }
-    mix_fit_res = mix_fit$res
-    save(samp_stats, mix_fit_res,
-         file = paste0(filter_stats_dir, bug_name, ".RData"))
-  }
-
-  if (plot_mix) {
     make_hex_plot(samp_stats = samp_stats,
-                  mix_fit = mix_fit)
-    stop("Plotting the estimated mixture components isn't implemented yet")
+                  mix_fit = mix_fit,
+                  plot_dir = file.path(filter_stats_dir, "plots"),
+                  bug_name = bug_name)
+
+    mix_fit_res = mix_fit$res
+
+    save(samp_stats, mix_fit_res,
+         file = file.path(filter_stats_dir, paste0(bug_name, ".RData")))
   }
 
   mix_labels = get_component_densities(mix_fit)
@@ -194,10 +193,16 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
   filtered_gf$abd[filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
 
+  if (save_filter_stats) {
+    make_line_plot(fgf = filtered_gf,
+                   bug_name = bug_name,
+                   plot_dir = file.path(filter_stats_dir, "plots"))
+  }
+
   return(filtered_gf)
 }
 
-read_and_filter = function(bug_file, meta_cov,
+read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
                            minmax_thresh = 5,
                            save_filter_stats = FALSE,
