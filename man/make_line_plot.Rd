@@ -18,6 +18,8 @@ make_line_plot(
 \item{meta_file}{a path to the corresponding metadata file}
 
 \item{fgf}{a filtered gene family data frame}
+
+\item{bug_name}{name of the bug}
 }
 \description{
 Make a filter-labelled line plot

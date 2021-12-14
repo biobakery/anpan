@@ -181,6 +181,7 @@ scone = function(bug_file,
                  out_dir,
                  model_type = "scone",
                  covariates = c("age", "gender"),
+                 filtering_method = "med_by_nz_components",
                  save_filter_stats = TRUE) {
 
 
@@ -211,6 +212,7 @@ scone = function(bug_file,
   message("Reading and filtering the data.")
   model_input = read_and_filter(bug_file, read_meta(meta_file),
                                 pivot_wide = model_type == "scone",
+                                filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir)
 
@@ -237,7 +239,8 @@ scone_batch = function(bug_dir,
                        out_dir,
                        model_type = "scone",
                        covariates = c("age", "gender"),
-                       save_filter_stats = TRUE){
+                       filtering_method = "med_by_nz_components",
+                       save_filter_stats = TRUE) {
 
   bug_files = get_file_list(bug_dir)
   # scone is parallelized internally, so just map here.
@@ -246,6 +249,7 @@ scone_batch = function(bug_dir,
                              meta_file = meta_file,
                              out_dir = out_dir,
                              model_type = model_type,
+                             filtering_method = filtering_method,
                              covariates = covariates,
                              save_filter_stats = save_filter_stats) %>%
     bind_rows

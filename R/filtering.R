@@ -114,6 +114,8 @@ fit_mixture = function(samp_stats) {
   return(list(res = mf, input = em_input))
 }
 
+
+
 get_component_densities = function(mix_fit, plot = FALSE) {
   input_mat = as.matrix(mix_fit$input[,-1])
 
@@ -151,17 +153,10 @@ check_mix_fit = function(mix_fit) {
   TRUE
 }
 
-#' @export
-filter_gf = function(gf, filtering_method = "med_by_nz_components",
-                     save_filter_stats = FALSE,
-                     filter_stats_dir = NULL,
-                     bug_name = NULL) {
-
-  if (filtering_method != "med_by_nz_components") stop("Only median by zero observation count filtering is currently implemented")
-
-  # TODO allow alternate filtering strategies
-  samp_stats = get_samp_stats(gf)
-
+filter_with_mixture = function(samp_stats,
+                               save_filter_stats,
+                               filter_stats_dir,
+                               bug_name){
   mix_fit = fit_mixture(samp_stats)
 
   mix_checks = check_mix_fit(mix_fit)
@@ -171,9 +166,7 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
   }
 
   if (save_filter_stats) {
-    if (!dir.exists(filter_stats_dir)) {
-      stop("filter_stats_dir doesn't exist!")
-    }
+
     make_hex_plot(samp_stats = samp_stats,
                   mix_fit = mix_fit,
                   plot_dir = file.path(filter_stats_dir, "plots"),
@@ -193,6 +186,62 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
   filtered_gf$abd[filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
 
+  filtered_gf
+}
+
+filter_with_kmeans = function(samp_stats,
+                              save_filter_stats,
+                              filter_stats_dir,
+                              bug_name) {
+  em_input = na.omit(samp_stats[,.(sampleID, n_z, q50)])
+  em_input$n_z = scale(em_input$n_z)
+  em_input$q50 = scale(em_input$q50)
+
+  km_res = kmeans(as.matrix(em_input[,-1]),
+                  centers = matrix(c(-1,1,1,-1), nrow = 2))
+
+  samp_stats$in_right = NA
+  samp_stats$clust = NA
+  low_clust = which.min(km_res$centers[,2])
+
+  samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
+  samp_stats$clust[is.na(samp_stats$q50)] = low_clust
+
+  samp_stats$in_right = samp_stats$clust == low_clust
+  samp_stats$clust = NULL
+
+  if (save_filter_stats) {
+    make_kmeans_dotplot(ss = samp_stats,
+                        plot_dir = file.path(filter_stats_dir, "plots"),
+                        bug_name)
+  }
+
+  samp_stats
+}
+
+#' @export
+filter_gf = function(gf,
+                     filtering_method = "med_by_nz_components",
+                     save_filter_stats = FALSE,
+                     filter_stats_dir = NULL,
+                     bug_name = NULL) {
+
+  if (!(filtering_method %in% c("med_by_nz_components", "kmeans"))) stop("Specified filtering method not implemented")
+
+  samp_stats = get_samp_stats(gf)
+
+  if (filtering_method == "med_by_nz_components"){
+    filtered_gf = filter_with_mixture(samp_stats = samp_stats,
+                                      save_filter_stats = save_filter_stats,
+                                      filter_stats_dir = filter_stats_dir,
+                                      bug_name = bug_name)
+  } else if (filtering_method == 'kmeans') {
+    filtered_gf = filter_with_kmeans(samp_stats,
+                                     save_filter_stats = save_filter_stats,
+                                     filter_stats_dir = filter_stats_dir,
+                                     bug_name = bug_name)
+  }
+
   if (save_filter_stats) {
     make_line_plot(fgf = filtered_gf,
                    bug_name = bug_name,
@@ -205,6 +254,7 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
 read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
                            minmax_thresh = 5,
+                           filtering_method = "med_by_nz_components",
                            save_filter_stats = FALSE,
                            filter_stats_dir = NULL) {
 
@@ -224,7 +274,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   ][(varies_enough)
   ][,.(gene, sampleID, abd)]
 
-  filtered_gf = filter_gf(gf, filtering_method = "med_by_nz_components",
+  filtered_gf = filter_gf(gf, filtering_method = filtering_method,
                           save_filter_stats = save_filter_stats,
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here

@@ -23,7 +23,7 @@ get_transformed_ellipse = function(id, mix_fit, A, input_scales){
 #' @param bug_file a path to a gene family file
 #' @param meta_file a path to the corresponding metadata file
 #' @param fgf a filtered gene family data frame
-#' @param bug_name
+#' @param bug_name name of the bug
 #' @details The required input is either \itemize{ \item{the gene family file
 #'   and the metadata file} \item{OR a pre-filtered gene family file}}
 #' @export
@@ -44,7 +44,8 @@ make_line_plot = function(bug_file = NULL,
   }
 
   p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
-    dplyr::mutate(labelled_as = c('present', 'absent')[in_right + 1]) %>%
+    dplyr::mutate(labelled_as = factor(c('present', 'absent')[in_right + 1],
+                                       levels = c("present", "absent"))) %>%
     ggplot(aes(i, labd)) +
     geom_line(aes(group = sampleID,
                   color = labelled_as),
@@ -58,6 +59,32 @@ make_line_plot = function(bug_file = NULL,
   if (!is.null(plot_dir)) {
     ggsave(p,
            filename = file.path(plot_dir, paste0(bug_name, "_labelled_lines.png")),
+           width = 8, height = 7)
+  }
+
+  p
+}
+
+make_kmeans_dotplot = function(samp_stats,
+                               plot_dir = NULL,
+                               bug_name = NULL) {
+
+  p = samp_stats %>%
+    dplyr::mutate(labelled_as = factor(c('present', 'absent')[in_right + 1],
+                                       levels = c("present", "absent"))) %>%
+    ggplot(aes(n_z, q50)) +
+    geom_point(aes(color = labelled_as),
+               alpha = .5) +
+    scale_color_brewer(palette = "Set1")+
+    guides(color = guide_none()) +
+    labs(title = paste0(bug_name, " - labelled by kmeans"),
+         x = "Number of zero observations",
+         y = 'Median log abundance') +
+    theme_light()
+
+  if (!is.null(plot_dir)) {
+    ggsave(p,
+           filename = file.path(plot_dir, paste0(bug_name, "_hex.png")),
            width = 6, height = 4)
   }
 
