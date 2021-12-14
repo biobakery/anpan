@@ -10,7 +10,8 @@ make_hex_plot(
   minmax_thresh = 5,
   samp_stats = NULL,
   mix_fit = NULL,
-  bug_name = NULL
+  bug_name = NULL,
+  plot_dir = NULL
 )
 }
 \arguments{

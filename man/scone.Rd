@@ -9,8 +9,8 @@ scone(
   meta_file,
   out_dir,
   model_type = "scone",
-  covariates = c("age", "sex"),
-  save_filter_stats = FALSE
+  covariates = c("age", "gender"),
+  save_filter_stats = TRUE
 )
 }
 \arguments{
@@ -20,10 +20,10 @@ scone(
 
 \item{model_type}{either "scone" or "glm"}
 
-\item{covariates}{covariates to account for}
+\item{covariates}{covariates to account for CURRENTLY IGNORED}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 }
 \description{
-Run the scone model on a
+Run the scone model on a single bug
 }
