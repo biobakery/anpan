@@ -43,7 +43,7 @@ make_line_plot = function(bug_file = NULL,
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }
 
-  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
+  p = fgf[, labd := log10(abd)][is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
     dplyr::mutate(labelled_as = factor(c('present', 'absent')[in_right + 1],
                                        levels = c("present", "absent"))) %>%
     ggplot(aes(i, labd)) +

@@ -153,7 +153,8 @@ check_mix_fit = function(mix_fit) {
   TRUE
 }
 
-filter_with_mixture = function(samp_stats,
+filter_with_mixture = function(gf,
+                               samp_stats,
                                save_filter_stats,
                                filter_stats_dir,
                                bug_name){
@@ -189,7 +190,8 @@ filter_with_mixture = function(samp_stats,
   filtered_gf
 }
 
-filter_with_kmeans = function(samp_stats,
+filter_with_kmeans = function(gf,
+                              samp_stats,
                               save_filter_stats,
                               filter_stats_dir,
                               bug_name) {
@@ -211,12 +213,17 @@ filter_with_kmeans = function(samp_stats,
   samp_stats$clust = NULL
 
   if (save_filter_stats) {
-    make_kmeans_dotplot(ss = samp_stats,
+    make_kmeans_dotplot(samp_stats = samp_stats,
                         plot_dir = file.path(filter_stats_dir, "plots"),
                         bug_name)
   }
 
-  samp_stats
+  filtered_gf = samp_stats[,.(sampleID, in_right)][gf, on = "sampleID"]
+
+  filtered_gf$abd[filtered_gf$in_right] = 0
+  filtered_gf$present = filtered_gf$abd > 0
+
+  filtered_gf
 }
 
 #' @export
@@ -231,12 +238,14 @@ filter_gf = function(gf,
   samp_stats = get_samp_stats(gf)
 
   if (filtering_method == "med_by_nz_components"){
-    filtered_gf = filter_with_mixture(samp_stats = samp_stats,
+    filtered_gf = filter_with_mixture(gf,
+                                      samp_stats = samp_stats,
                                       save_filter_stats = save_filter_stats,
                                       filter_stats_dir = filter_stats_dir,
                                       bug_name = bug_name)
   } else if (filtering_method == 'kmeans') {
-    filtered_gf = filter_with_kmeans(samp_stats,
+    filtered_gf = filter_with_kmeans(gf = gf,
+                                     samp_stats = samp_stats,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
                                      bug_name = bug_name)
