@@ -4,22 +4,33 @@
 \alias{make_hex_plot}
 \title{Make a hex plot of the abundance by zeroness of a gene family dataset}
 \usage{
-make_hex_plot(bug_file = NULL, samp_stats = NULL, mix_fit = NULL, bug_name)
+make_hex_plot(
+  bug_file = NULL,
+  meta_file = NULL,
+  minmax_thresh = 5,
+  samp_stats = NULL,
+  mix_fit = NULL,
+  bug_name = NULL
+)
 }
 \arguments{
 \item{bug_file}{path to a gene family file}
 
+\item{meta_file}{path to a metadata file}
+
 \item{samp_stats}{data frame of sample statistics}
 
 \item{mix_fit}{mixture fit object}
+
+\item{bug_name}{the name of the bug}
 }
 \description{
 Make a hex plot of the abundance by zeroness of a gene family dataset
 }
 \details{
-The required input is either \itemize{ \item{}{the path to
-  the gene family file} \item{}{a paired set of sample statistics and
-  a mixture fit} } The first option is#'   simpler but slower and stochastic.
-  Defaults to using samp_stats and mix_fit if all three are supplied (but
-  don't do that anyway).
+The required input is either \itemize{ \item{}{the path to the gene
+  family file and the metadata file} \item{}{OR a set of sample statistics
+  and a mixture fit} } The first option is simpler but slower and (very
+  slightly) stochastic. Defaults to using samp_stats and mix_fit if all three
+  are supplied (but don't do that anyway).
 }

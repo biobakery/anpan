@@ -7,7 +7,7 @@ read_meta = function(meta_path,
   meta_cov
 }
 
-read_bug = function(bug_file, meta,
+read_bug = function(bug_file, meta = NULL,
                     remove_pattern = "_Abundance-RPKs") {
   nc = readLines(bug_file,
                  n = 1) %>%
@@ -17,14 +17,16 @@ read_bug = function(bug_file, meta,
 
   gf = fread(bug_file,
              colClasses = list(character = 1, numeric = 2:nc)) %>%
-    dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need dplyr
+    dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
 
   names(gf)[1] = "gene"
 
   gf$gene = gsub("\\|(.*)", "", gf$gene)
   # ^ This removes the |species_id part of the identifier to make it easier to read
 
-  gf = gf %>% dplyr::select(gene, any_of(unique(meta$sampleID)))
+  if (!is.null(meta)){
+    gf = gf %>% dplyr::select(gene, any_of(unique(meta$sampleID)))
+  }
 
   melt(gf, id.vars = "gene", variable.name = 'sampleID', value.name = "abd")
 }

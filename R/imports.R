@@ -1,2 +1,2 @@
-#' @import data.table dplyr
+#' @import data.table dplyr ggplot2
 NULL

@@ -50,6 +50,11 @@
 #                  value.var = 'present')
 # wide_subset = wide_dat[,1:50]
 
+get_bug_name = function(bug_file,
+                        remove_pattern = ".genefamilies.tsv") {
+  gsub(remove_pattern, "", basename(bug_file))
+}
+
 
 fit_glms = function(model_input, out_dir) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
@@ -168,29 +173,46 @@ fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 #' @param meta_file path to a metadata tsv. Must contain the specify covariates
 #' @param model_type either "scone" or "glm"
 #' @param covariates covariates to account for
+#' @param save_filter_stats logical indicating whether to save filter statistics
 #' @export
 scone = function(bug_file,
                  meta_file,
                  out_dir,
                  model_type = "scone",
-                 covariates = c("age", "sex")) {
+                 covariates = c("age", "sex"),
+                 save_filter_stats = FALSE) {
 
 
 # Checks ------------------------------------------------------------------
-
+  message("Preparing the mise en place (checking inputs)...")
 
   if (!(model_type %in% c("scone", "glm"))) stop('model_type must be either "scone" or "glm"')
 
-  bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
+  bug_name = get_bug_name(bug_file)
   n_lines = R.utils::countLines(bug_file)
 
+  if (!grepl('/$', out_dir)){
+    out_dir = paste0(out_dir, "/")
+  }
 
+  if (!dir.exists(out_dir)){
+    message("* Output directory doesn't exist. Creating it.")
+    dir.create(out_dir)
+  }
+
+  if (save_filter_stats) {
+    message("* Creating the filter stats directory in the output directory.")
+    filter_stats_dir = paste0(out_dir, "filter_stats/")
+    dir.create(filter_stats_dir)
+  }
 
 
 # Filtering ---------------------------------------------------------------
 
+  message("Reading and filtering the data.")
   model_input = read_and_filter(bug_file, read_meta(meta_file),
-                                pivot_wide = model_type == "scone")
+                                pivot_wide = model_type == "scone",
+                                save_filter_stats = save_filter_stats)
 
 
 # Fitting -----------------------------------------------------------------

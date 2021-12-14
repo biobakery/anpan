@@ -153,7 +153,10 @@ check_mix_fit = function(mix_fit) {
 
 #' @export
 filter_gf = function(gf, filtering_method = "med_by_nz_components",
-                     plot_mix = FALSE) {
+                     plot_mix = FALSE,
+                     save_filter_stats = FALSE,
+                     filter_stats_dir = NULL,
+                     bug_name = NULL) {
 
   if (filtering_method != "med_by_nz_components") stop("Only median by zero observation count filtering is currently implemented")
 
@@ -166,6 +169,15 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
 
   if (!mix_checks) {
     stop("Mixture fitting seems to have failed")
+  }
+
+  if (save_filter_stats) {
+    if (!dir.exists(filter_stats_dir)) {
+      stop("filter_stats_dir doesn't exist!")
+    }
+    mix_fit_res = mix_fit$res
+    save(samp_stats, mix_fit_res,
+         file = paste0(filter_stats_dir, bug_name, ".RData"))
   }
 
   if (plot_mix) {
@@ -185,29 +197,11 @@ filter_gf = function(gf, filtering_method = "med_by_nz_components",
   return(filtered_gf)
 }
 
-read_and_label = function(bug_file, meta_cov,
-                          minmax_thresh = 5) {
-  # Would be better to make this function an argument of read_and_filter
-
-  n_lines = R.utils::countLines(bug_file)
-
-  if (n_lines > 161000) {
-    stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
-  }
-
-  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
-  ][(varies_enough)
-  ][,.(gene, sampleID, abd)]
-
-  filtered_gf = filter_gf(gf,
-                          filtering_method = "med_by_nz_components")
-  filtered_gf
-}
-
-
 read_and_filter = function(bug_file, meta_cov,
                            pivot_wide = TRUE,
-                           minmax_thresh = 5) {
+                           minmax_thresh = 5,
+                           save_filter_stats = FALSE,
+                           filter_stats_dir = NULL) {
 
   n_lines = R.utils::countLines(bug_file)
 
@@ -215,11 +209,20 @@ read_and_filter = function(bug_file, meta_cov,
     stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
   }
 
+  if (save_filter_stats & is.null(filter_stats_dir)){
+    stop("You said save the filter statistics but didn't provide filter_stats_dir")
+  }
+
+  bug_name = get_bug_name(bug_file)
+
   gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
   ][(varies_enough)
   ][,.(gene, sampleID, abd)]
 
-  filtered_gf = filter_gf(gf, filtering_method = "med_by_nz_components") # Might need to reapply the minmax_thresh here
+  filtered_gf = filter_gf(gf, filtering_method = "med_by_nz_components",
+                          save_filter_stats = save_filter_stats,
+                          filter_stats_dir = filter_stats_dir,
+                          bug_name = bug_name) # Might need to reapply the minmax_thresh here
 
   joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene, present, sampleID, age, gender, crc)]
 
