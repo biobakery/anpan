@@ -32,7 +32,7 @@ read_bug = function(bug_file, meta = NULL,
 }
 
 get_file_list = function(file_dir) {
-  list.files(file_dir, full.names = TRUE, pattern = "*.binary.tsv")
+  list.files(file_dir, full.names = TRUE, pattern = "*.genefamilies.tsv")
 }
 
 

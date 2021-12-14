@@ -232,6 +232,30 @@ scone = function(bug_file,
 }
 
 #' @export
+scone_batch = function(bug_dir,
+                       meta_file,
+                       out_dir,
+                       model_type = "scone",
+                       covariates = c("age", "gender"),
+                       save_filter_stats = TRUE){
+
+  bug_files = get_file_list(bug_dir)
+  # scone is parallelized internally, so just map here.
+  all_bug_terms = purrr::map(bug_files,
+                             scone,
+                             meta_file = meta_file,
+                             out_dir = out_dir,
+                             model_type = model_type,
+                             covariates = covariates,
+                             save_filter_stats = save_filter_stats) %>%
+    bind_rows
+
+  readr::write_tsv(all_bug_terms,
+                   file = file.path(out_dir, 'all_bug_gene_terms.tsv'))
+
+}
+
+#' @export
 summarise_scone = function(model_fit) {
   post_sum = brms::posterior_summary(model_fit)
 
