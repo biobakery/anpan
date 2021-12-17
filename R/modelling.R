@@ -129,7 +129,8 @@ scone = function(bug_file,
                  out_dir,
                  model_type = "scone",
                  covariates = c("age", "gender"),
-                 filtering_method = "med_by_nz_components",
+                 filtering_method = "kmeans",
+                 plot_ext = "png",
                  save_filter_stats = TRUE) {
 
 
@@ -147,11 +148,19 @@ scone = function(bug_file,
   }
 
   if (save_filter_stats) {
-    message("* Creating the filter stats directory in the output directory.")
     filter_stats_dir = file.path(out_dir, "filter_stats")
-    plot_dir = file.path(filter_stats_dir, 'plots')
-    if (!dir.exists(filter_stats_dir)) dir.create(filter_stats_dir)
-    if (!dir.exists(plot_dir)) dir.create(plot_dir)
+    fs_plot_dir = file.path(filter_stats_dir, 'plots')
+    if (!dir.exists(filter_stats_dir)) {
+      message("* Creating the filter stats directory in the output directory.")
+      dir.create(filter_stats_dir)
+    }
+    if (!dir.exists(fs_plot_dir)) dir.create(fs_plot_dir)
+  }
+
+  plot_dir = file.path(out_dir, 'plots')
+  if (!dir.exists(plot_dir)) {
+    message("* Creating output plots directory.")
+    dir.create(plot_dir)
   }
 
 
@@ -171,6 +180,9 @@ scone = function(bug_file,
                scone = fit_scone(model_input, out_dir),
                glm = fit_glms(model_input, out_dir, bug_name = bug_name))
 
+  make_data_plot(res, covariates, model_input, plot_dir = plot_dir,
+                 bug_name = bug_name, plot_ext = plot_ext)
+
 
 # Summarizing -------------------------------------------------------------
 # Only needed for scone
@@ -187,7 +199,8 @@ scone_batch = function(bug_dir,
                        out_dir,
                        model_type = "scone",
                        covariates = c("age", "gender"),
-                       filtering_method = "med_by_nz_components",
+                       filtering_method = "kmeans",
+                       plot_ext = "png",
                        save_filter_stats = TRUE) {
 
   bug_files = get_file_list(bug_dir)
@@ -199,8 +212,11 @@ scone_batch = function(bug_dir,
                              model_type = model_type,
                              filtering_method = filtering_method,
                              covariates = covariates,
-                             save_filter_stats = save_filter_stats) %>%
-    bind_rows
+                             save_filter_stats = save_filter_stats,
+                             plot_ext = plot_ext) %>%
+    purrr::imap(\(.x, .y) mutate(.x, bug_name = basename(bug_files)[.y])) %>%
+    bind_rows %>%
+    mutate(q_global = p.adjust(p.value, method = "fdr"))
 
   readr::write_tsv(all_bug_terms,
                    file = file.path(out_dir, 'all_bug_gene_terms.tsv'))

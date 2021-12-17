@@ -10,7 +10,8 @@ scone(
   out_dir,
   model_type = "scone",
   covariates = c("age", "gender"),
-  filtering_method = "med_by_nz_components",
+  filtering_method = "kmeans",
+  plot_ext = "png",
   save_filter_stats = TRUE
 )
 }

@@ -140,7 +140,7 @@ get_component_densities = function(mix_fit, plot = FALSE) {
       theme_light()
   }
 
-  samp_df[,.(sampleID, in_right)]
+  samp_df[,.(sampleID, in_right, left_dens, right_dens)]
 }
 
 # TODO implement this

@@ -14,7 +14,10 @@ Imports:
     cmdstanr,
     data.table,
     dplyr,
+    purrr,
     tibble,
     tidyr,
-    furrr
+    furrr,
+    ggnewscale,
+    patchwork
 RoxygenNote: 7.1.1

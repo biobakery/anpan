@@ -43,13 +43,13 @@ make_line_plot = function(bug_file = NULL,
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }
 
-  p = fgf[, labd := log10(abd)][is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
+  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
     dplyr::mutate(labelled_as = factor(c('present', 'absent')[in_right + 1],
                                        levels = c("present", "absent"))) %>%
     ggplot(aes(i, labd)) +
     geom_line(aes(group = sampleID,
                   color = labelled_as),
-              alpha = .33) +
+              alpha = .30) +
     labs(x = NULL,
          y = 'log abundance',
          title = bug_name) +
@@ -168,8 +168,105 @@ make_hex_plot = function(bug_file = NULL,
   p
 }
 
-make_data_plot = function() {
+make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
+                          annotation_file = NULL,
+                          plot_ext = ".pdf",
+                          n_top = 50) {
+  if (!is.null(annotation_file)) {
+    anno = fread(annotation_file) # must have two columns: gene and annotation
+  }
 
+  gene_levels = res[1:n_top,]$gene
+
+  color_bars = model_input[, .(sampleID, age, gender, crc)] %>% #TODO covariates
+    unique %>% .[order(crc, gender, age)]
+  color_bars$sampleID = factor(color_bars$sampleID,
+                               levels = unique(color_bars$sampleID))
+
+  plot_data = model_input[gene %in% res[1:n_top,]$gene] %>%
+    mutate(gene = factor(gene, levels = gene_levels),
+           sampleID = factor(sampleID,
+                             levels = levels(color_bars$sampleID)))
+  # TODO covariates plot on top
+   # %>%
+   #  ggplot(aes(sampleID, gene)) +
+   #  geom_tile
+
+
+  n_healthy = sum(color_bars$crc == 0) # TODO outcome name
+
+  anno_plot = color_bars %>% mutate(status = c("Healthy", "CRC")[crc + 1]) %>%
+    ggplot(aes(x = sampleID)) +
+    geom_tile(aes(y = 1, fill = gender)) +
+    scale_fill_manual(values = c("male" = "cornflowerblue",
+                                 "female" = "sienna1")) +
+
+    ggnewscale::new_scale("fill") +
+    geom_tile(aes(x = sampleID, y = 2, fill = age)) +
+    scale_fill_viridis_c() +
+
+    ggnewscale::new_scale("fill") +
+    geom_tile(aes(y = 3, fill = status)) +
+    scale_fill_manual(values = c("Healthy" = 'antiquewhite3', 'CRC' = 'indianred2')) +
+
+    coord_cartesian(expand = FALSE) +
+    labs(y = NULL,
+         x = NULL) +
+    theme(axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.border = element_blank())
+
+  plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
+
+  plot_data$sampleID = factor(plot_data$sampleID,
+                              levels = unique(color_bars$sampleID))
+  plot_data$gene = factor(plot_data$gene,
+                          levels = gene_levels)
+
+
+  plot_data = plot_data %>%
+    mutate(g_lab = map2_chr(gene, annotation, \(.x, .y) if_else(is.na(.y),
+                                                                as.character(.x),
+                                                                paste(.x, ": ", .y, sep = ""))))
+
+  lab_df = plot_data[,.(gene, g_lab)] %>%
+    unique
+
+  ns = n_distinct(plot_data$sampleID)
+
+  pres_plot = plot_data %>%
+    mutate(crc = c("Healthy", "CRC")[crc + 1],
+           present = as.logical(present)) %>%
+    ggplot(aes(y = gene, x = sampleID)) +
+    geom_tile(aes(fill = present)) +
+    geom_vline(lwd = .5,
+               color = 'black',
+               xintercept = n_healthy + .5) +
+    scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse")) +
+    scale_y_discrete(breaks = lab_df$gene,
+                     labels = lab_df$g_lab) +
+    labs(x = "samples",
+         y = NULL) +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          panel.border = element_blank()) +
+    coord_cartesian(expand = FALSE)
+
+  anno_plot / pres_plot +
+    plot_layout(heights = c(1, 11),
+                guides = 'collect') +
+    plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+
+  w = ifelse(max(nchar(lab_df$g_lab)) > 50,
+             12, 8)
+  ggsave(plot = p,
+         width = w,
+         height = 10,
+         filename = file.path(plot_dir, paste0(bug_name, "_data.", plot_ext)))
+
+  p
 }
 
 make_interval_plot = function() {
