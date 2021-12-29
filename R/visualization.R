@@ -254,10 +254,11 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
           panel.border = element_blank()) +
     coord_cartesian(expand = FALSE)
 
-  anno_plot / pres_plot +
-    plot_layout(heights = c(1, 11),
-                guides = 'collect') +
-    plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+  p = patchwork::wrap_plots(anno_plot, pres_plot,
+                            ncol = 1,
+                            heights = c(1, 11),
+                            guides = 'collect') +
+    patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
 
   w = ifelse(max(nchar(lab_df$g_lab)) > 50,
              12, 8)

@@ -1,2 +1,2 @@
-#' @import data.table dplyr ggplot2
+#' @import data.table dplyr ggplot2 patchwork
 NULL

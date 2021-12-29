@@ -130,10 +130,11 @@ scone = function(bug_file,
                  model_type = "scone",
                  covariates = c("age", "gender"),
                  filtering_method = "kmeans",
+                 annotation_file = NULL,
                  plot_ext = "png",
                  save_filter_stats = TRUE) {
 
-
+  message(annotation_file)
 # Checks ------------------------------------------------------------------
   message("Preparing the mise en place (checking inputs)...")
 
@@ -143,7 +144,7 @@ scone = function(bug_file,
   n_lines = R.utils::countLines(bug_file)
 
   if (!dir.exists(out_dir)) {
-    message("* Output directory doesn't exist. Creating it.")
+    message("* Creating output directory.")
     dir.create(out_dir)
   }
 
@@ -181,6 +182,7 @@ scone = function(bug_file,
                glm = fit_glms(model_input, out_dir, bug_name = bug_name))
 
   make_data_plot(res, covariates, model_input, plot_dir = plot_dir,
+                 annotation_file = annotation_file,
                  bug_name = bug_name, plot_ext = plot_ext)
 
 
@@ -200,8 +202,11 @@ scone_batch = function(bug_dir,
                        model_type = "scone",
                        covariates = c("age", "gender"),
                        filtering_method = "kmeans",
+                       annotation_file = NULL,
                        plot_ext = "png",
                        save_filter_stats = TRUE) {
+
+  message(annotation_file)
 
   bug_files = get_file_list(bug_dir)
   # scone is parallelized internally, so just map here.
@@ -213,6 +218,7 @@ scone_batch = function(bug_dir,
                              filtering_method = filtering_method,
                              covariates = covariates,
                              save_filter_stats = save_filter_stats,
+                             annotation_file = annotation_file,
                              plot_ext = plot_ext) %>%
     purrr::imap(\(.x, .y) mutate(.x, bug_name = basename(bug_files)[.y])) %>%
     bind_rows %>%
