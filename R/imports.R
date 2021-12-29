@@ -1,2 +1,3 @@
-#' @import data.table dplyr ggplot2 patchwork
+#' @import dplyr ggplot2 patchwork
+#' @rawNamespace import(data.table, except = c(first, last, between))
 NULL
