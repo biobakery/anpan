@@ -19,5 +19,6 @@ Imports:
     tidyr,
     furrr,
     ggnewscale,
-    patchwork
+    patchwork,
+    progressr
 RoxygenNote: 7.1.1

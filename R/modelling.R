@@ -8,7 +8,7 @@ fit_glms = function(model_input, out_dir, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
-  # p <- progressor(steps = dplyr::n_distinct(model_input$gene))
+  p <- progressor(steps = dplyr::n_distinct(model_input$gene))
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
   glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
                                        safely_fit_glm) # TODO progress bar with progressr
@@ -61,7 +61,7 @@ check_prevalence_okay = function(gene_dat, prevalence_filter) {
 fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
 
   if (!check_prevalence_okay(gene_dat, prevalence_filter)) {
-    # p()
+    p()
     return(data.table(term = character(),
                       estimate = numeric(),
                       std.error = numeric(),
@@ -74,13 +74,13 @@ fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
             family = 'binomial') %>%
     broom::tidy() %>%
     as.data.table()
-  # p()
+  p()
   return(res)
 }
 
 safely_fit_glm = purrr::safely(fit_glm)
 
-fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
+fit_anpan = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
                     save_summ = FALSE) {
   form = brms::bf(n_crc ~ stdCovariates + unirefs, nl = TRUE) +
     brms::lf(stdCovariates  ~ 1 + age + gender , center = TRUE) +
@@ -115,19 +115,19 @@ fit_scone = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 
 }
 
-#' Run scone
+#' Run anpan
 #'
-#' @description Run the scone model on a single bug
+#' @description Run the anpan model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv. Must contain the specify covariates
-#' @param model_type either "scone" or "glm"
+#' @param model_type either "anpan" or "glm"
 #' @param covariates covariates to account for CURRENTLY IGNORED
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @export
-scone = function(bug_file,
+anpan = function(bug_file,
                  meta_file,
                  out_dir,
-                 model_type = "scone",
+                 model_type = "anpan",
                  covariates = c("age", "gender"),
                  filtering_method = "kmeans",
                  annotation_file = NULL,
@@ -138,7 +138,7 @@ scone = function(bug_file,
 # Checks ------------------------------------------------------------------
   message("Preparing the mise en place (checking inputs)...")
 
-  if (!(model_type %in% c("scone", "glm"))) stop('model_type must be either "scone" or "glm"')
+  if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
 
   bug_name = get_bug_name(bug_file)
   n_lines = R.utils::countLines(bug_file)
@@ -169,7 +169,7 @@ scone = function(bug_file,
 
   message("Reading and filtering the data.")
   model_input = read_and_filter(bug_file, read_meta(meta_file),
-                                pivot_wide = model_type == "scone",
+                                pivot_wide = model_type == "anpan",
                                 filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir)
@@ -178,7 +178,7 @@ scone = function(bug_file,
 # Fitting -----------------------------------------------------------------
 
   res = switch(model_type,
-               scone = fit_scone(model_input, out_dir),
+               anpan = fit_anpan(model_input, out_dir),
                glm = fit_glms(model_input, out_dir, bug_name = bug_name))
 
   make_data_plot(res, covariates, model_input, plot_dir = plot_dir,
@@ -187,7 +187,7 @@ scone = function(bug_file,
 
 
 # Summarizing -------------------------------------------------------------
-# Only needed for scone
+# Only needed for anpan
 
 # Write output ------------------------------------------------------------
 # Done inside fit_glms()
@@ -196,10 +196,10 @@ scone = function(bug_file,
 }
 
 #' @export
-scone_batch = function(bug_dir,
+anpan_batch = function(bug_dir,
                        meta_file,
                        out_dir,
-                       model_type = "scone",
+                       model_type = "anpan",
                        covariates = c("age", "gender"),
                        filtering_method = "kmeans",
                        annotation_file = NULL,
@@ -209,9 +209,9 @@ scone_batch = function(bug_dir,
   message(annotation_file)
 
   bug_files = get_file_list(bug_dir)
-  # scone is parallelized internally, so just map here.
+  # anpan is parallelized internally, so just map here.
   all_bug_terms = purrr::map(bug_files,
-                             scone,
+                             anpan,
                              meta_file = meta_file,
                              out_dir = out_dir,
                              model_type = model_type,
@@ -230,7 +230,7 @@ scone_batch = function(bug_dir,
 }
 
 #' @export
-summarise_scone = function(model_fit) {
+summarise_anpan = function(model_fit) {
   post_sum = brms::posterior_summary(model_fit)
 
   post_df = post_sum %>%
