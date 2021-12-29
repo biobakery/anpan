@@ -8,11 +8,11 @@ fit_glms = function(model_input, out_dir, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
-  p <- progressr::progressor(steps = dplyr::n_distinct(model_input$gene))
+  # p <- progressr::progressor(steps = dplyr::n_distinct(model_input$gene))
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
   glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
                                        function(.x){
-                                         p()
+                                         # p()
                                          safely_fit_glm(.x)
                                        }) # TODO progress bar with progressr
 
