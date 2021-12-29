@@ -8,10 +8,13 @@ fit_glms = function(model_input, out_dir, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
-  p <- progressor(steps = dplyr::n_distinct(model_input$gene))
+  p <- progressr::progressor(steps = dplyr::n_distinct(model_input$gene))
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
   glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
-                                       safely_fit_glm) # TODO progress bar with progressr
+                                       function(.x){
+                                         p()
+                                         safely_fit_glm(.x)
+                                       }) # TODO progress bar with progressr
 
 
   failed = glm_fits[sapply(glm_fits$glm_res,
@@ -61,7 +64,6 @@ check_prevalence_okay = function(gene_dat, prevalence_filter) {
 fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
 
   if (!check_prevalence_okay(gene_dat, prevalence_filter)) {
-    p()
     return(data.table(term = character(),
                       estimate = numeric(),
                       std.error = numeric(),
@@ -74,7 +76,6 @@ fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
             family = 'binomial') %>%
     broom::tidy() %>%
     as.data.table()
-  p()
   return(res)
 }
 
@@ -134,7 +135,7 @@ anpan = function(bug_file,
                  plot_ext = "png",
                  save_filter_stats = TRUE) {
 
-  message(annotation_file)
+
 # Checks ------------------------------------------------------------------
   message("Preparing the mise en place (checking inputs)...")
 
@@ -205,8 +206,6 @@ anpan_batch = function(bug_dir,
                        annotation_file = NULL,
                        plot_ext = "png",
                        save_filter_stats = TRUE) {
-
-  message(annotation_file)
 
   bug_files = get_file_list(bug_dir)
   # anpan is parallelized internally, so just map here.
