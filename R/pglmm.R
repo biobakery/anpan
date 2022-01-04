@@ -136,8 +136,8 @@ anpan_pglmm = function(meta_file,
 
 
   if (test_signal) {
-    hyp_str <- "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
-    (hyp <- brms::hypothesis(model_fit, hyp_str, class = NULL))
+    hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
+    hyp = brms::hypothesis(model_fit, hyp_str, class = NULL)
 
     model_fit$fit %>%
       as.data.frame() %>%
