@@ -116,16 +116,16 @@ anpan_pglmm = function(meta_file,
 
   model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cov_mat))"))
 
-  model_fit = brm(formula = model_formula,
-                  data = model_input,
-                  family = gaussian(), #TODO alternate outcome families
-                  data2 = list(cov_mat = cov_mat),
-                  prior = c(
-                    prior(normal(mean(model_input[[outcome]]), 3*sd(model_input[[outcome]])), "Intercept"),
-                    prior(student_t(3, 0, 20), "sd"),
-                    prior(student_t(3, 0, 20), "sigma")
-                  ),
-                  backend = "cmdstanr")
+  model_fit = brms::brm(formula = model_formula,
+                        data = model_input,
+                        family = stats::gaussian(), #TODO alternate outcome families
+                        data2 = list(cov_mat = cov_mat),
+                        prior = c(
+                          prior(rstanarm::normal(mean(model_input[[outcome]]), 3*sd(model_input[[outcome]])), "Intercept"),
+                          prior(rstanarm::student_t(3, 0, 20), "sd"),
+                          prior(rstanarm::student_t(3, 0, 20), "sigma")
+                        ),
+                        backend = "cmdstanr")
 
   model_fit
 

@@ -25,7 +25,8 @@ installed from CRAN:
                        "furrr", 
                        "ggnewscale",
                        "patchwork", 
-                       "progressr")) # Ncpus = 4 to go faster
+                       "progressr",
+                       "rstanarm")) # Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
