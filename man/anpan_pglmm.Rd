@@ -12,6 +12,7 @@ anpan_pglmm(
   plot_cov_mat = TRUE,
   outcome = "age",
   verbose = TRUE,
+  test_signal = TRUE,
   ...
 )
 }
@@ -25,6 +26,8 @@ anpan_pglmm(
 \item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{outcome}{the name of the outcome variable}
+
+\item{test_signal}{compute the phylogenetic signal}
 
 \item{...}{other arguments to pass to brms::brm}
 }

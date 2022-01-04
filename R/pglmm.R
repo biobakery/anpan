@@ -71,6 +71,7 @@
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param ... other arguments to pass to brms::brm
+#' @param test_signal compute the phylogenetic signal
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary. The dots can be used
@@ -87,6 +88,7 @@ anpan_pglmm = function(meta_file,
                        plot_cov_mat = TRUE,
                        outcome = "age",
                        verbose = TRUE,
+                       test_signal = TRUE,
                        ...) {
   meta = read_meta(meta_file,
                    select_cols = c("sample_id", covariates, outcome))
@@ -99,6 +101,8 @@ anpan_pglmm = function(meta_file,
   if (plot_cov_mat) {
     p = make_cov_mat_plot(cov_mat,
                           bug_name = basename(tree_file))
+    if (verbose) message("Plotting covariance matrix...")
+    print(p)
   }
 
   model_input = meta %>%
@@ -127,8 +131,41 @@ anpan_pglmm = function(meta_file,
                           brms::prior(student_t(3, 0, 20), "sd"),
                           brms::prior(student_t(3, 0, 20), "sigma")
                         ),
-                        backend = "cmdstanr")
+                        backend = "cmdstanr",
+                        ...)
 
-  model_fit
+
+  if (test_signal) {
+    hyp_str <- "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
+    (hyp <- brms::hypothesis(model_fit, hyp_str, class = NULL))
+
+    model_fit$fit %>%
+      as.data.frame() %>%
+      tibble::as_tibble() %>%
+      dplyr::mutate(i = 1:n()) %>%
+      tidyr::pivot_longer(-i, 'param', 'value')
+
+    outcome_signal = model_fit$fit %>%
+      as.data.frame() %>%
+      tibble::as_tibble() %>%
+      dplyr::mutate(i = 1:n()) %>%
+      dplyr::mutate(phy_signal = sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2)) %>%
+      dplyr::select(phy_signal)
+
+    hp = outcome_signal %>%
+      ggplot(aes(phy_signal)) +
+      geom_density() +
+      labs(title = 'Phylogenetic signal posterior') +
+      theme_light()
+
+    print(hp)
+  } else {
+    outcome_signal = NULL
+    hyp = NULL
+  }
+
+  list(model_fit = model_fit,
+       phylogenetic_signal_test = hyp,
+       phylogenetic_signal_post = outcome_signal)
 
 }
