@@ -79,6 +79,7 @@
 #'   The prior for the intercept is a normal distribution centered on the mean
 #'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
 #' @inheritParams anpan
+#' @export
 anpan_pglmm = function(meta_file,
                        tree_file,
                        trim_pattern = NULL,
