@@ -122,11 +122,13 @@ fit_anpan = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 #'
 #' @description Run the anpan model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
-#' @param meta_file path to a metadata tsv. Must contain the specify covariates
+#' @param meta_file path to a metadata tsv.
 #' @param model_type either "anpan" or "glm"
 #' @param covariates covariates to account for
 #' @param outcome the name of the outcome variable
 #' @param save_filter_stats logical indicating whether to save filter statistics
+#' @details The specified metadata file must contain columns matching "sample_id"
+#'   and the specified covariates and outcome variables.
 #' @export
 anpan = function(bug_file,
                  meta_file,
@@ -173,7 +175,10 @@ anpan = function(bug_file,
 # Filtering ---------------------------------------------------------------
 
   message("Reading and filtering the data.")
-  model_input = read_and_filter(bug_file, read_meta(meta_file),
+  metadata = read_meta(meta_file,
+                       select_cols = c("sample_id", outcome, covariates))
+
+  model_input = read_and_filter(bug_file, meta_cov = metadata,
                                 pivot_wide = model_type == "anpan",
                                 filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,

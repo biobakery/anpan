@@ -1,8 +1,18 @@
 read_meta = function(meta_path,
-                     select_cols = c("sampleID", "age", "gender", "crc")) {
+                     select_cols = c("sample_id", "age", "gender", "crc")) {
 
-  meta = fread(meta_path) # 'data/CRC_analysis_metadata_final_version.tsv'
-  meta$crc = c(CRC = TRUE, control = FALSE)[meta$study_condition]
+  meta = fread(meta_path)
+
+  # Handle missing or alternative sample_id column names
+  if (!("sample_id" %in% names(meta))) {
+    if (sum(c("sampleID", "SampleID", "sampID", "samp_id", "sample_ID")  %in% names(meta)) == 1) {
+      sid_i = which(names(meta) %in% c("sampleID", "SampleID", "sampID", "samp_id", "sample_ID"))
+      names(meta)[sid_i] = 'sample_id'
+    } else {
+      stop("Couldn't find the sample_id column in the metadata file.")
+    }
+  }
+
   meta_cov = meta %>% dplyr::select(all_of(select_cols))
   meta_cov
 }
@@ -25,10 +35,10 @@ read_bug = function(bug_file, meta = NULL,
   # ^ This removes the |species_id part of the identifier to make it easier to read
 
   if (!is.null(meta)){
-    gf = gf %>% dplyr::select(gene, any_of(unique(meta$sampleID)))
+    gf = gf %>% dplyr::select(gene, any_of(unique(meta$sample_id)))
   }
 
-  melt(gf, id.vars = "gene", variable.name = 'sampleID', value.name = "abd")
+  melt(gf, id.vars = "gene", variable.name = 'sample_id', value.name = "abd")
 }
 
 get_file_list = function(file_dir) {

@@ -55,28 +55,28 @@ get_q_large = function(gf_file) {
 
     gf = gf %>%
       melt(id.vars = c("u", "s"),
-           variable.name = 'sampleID',
+           variable.name = 'sample_id',
            value.name = "abd")
 
-    gf$sampleID = factor(gf$sampleID,
+    gf$sample_id = factor(gf$sample_id,
                          levels = s_ids)
 
     if (i == 1){
       chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                                n_nz = sum(abd > 0),
                                                qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
-        data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-        .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
+                                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
+        data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+        .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
         .[]
     } else {
       chunk_set = rbind(chunk_set,
                         chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                                                  n_nz = sum(abd > 0),
                                                                  qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
-                          data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-                          .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
+                                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
+                          data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+                          .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
                           .[])
     }
   }
@@ -97,14 +97,14 @@ get_samp_stats = function(gf){
   gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
                                n_nz = sum(abd > 0),
                                qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sampleID] %>%
-    data.table::dcast(sampleID + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-    .[, n_diff := (n_lo - n_hi), by = sampleID] %>%
+                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
+    data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
+    .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
     .[]
 }
 
 fit_mixture = function(samp_stats) {
-  em_input = na.omit(samp_stats[,.(sampleID, n_z, q50)])
+  em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
   em_input$n_z = scale(em_input$n_z)
   em_input$q50 = scale(em_input$q50)
 
@@ -140,7 +140,7 @@ get_component_densities = function(mix_fit, plot = FALSE) {
       theme_light()
   }
 
-  samp_df[,.(sampleID, in_right, left_dens, right_dens)]
+  samp_df[,.(sample_id, in_right, left_dens, right_dens)]
 }
 
 # TODO implement this
@@ -180,10 +180,10 @@ filter_with_mixture = function(gf,
   }
 
   mix_labels = get_component_densities(mix_fit)
-  label_df = mix_labels[samp_stats, on = "sampleID"]
+  label_df = mix_labels[samp_stats, on = "sample_id"]
   label_df$in_right[is.na(label_df$in_right)] = TRUE # all zero samples don't have the species
 
-  filtered_gf = label_df[,.(sampleID, in_right)][gf, on = "sampleID"]
+  filtered_gf = label_df[,.(sample_id, in_right)][gf, on = "sample_id"]
   filtered_gf$abd[filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
 
@@ -195,7 +195,7 @@ filter_with_kmeans = function(gf,
                               save_filter_stats,
                               filter_stats_dir,
                               bug_name) {
-  em_input = na.omit(samp_stats[,.(sampleID, n_z, q50)])
+  em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
   em_input$n_z = scale(em_input$n_z)
   em_input$q50 = scale(em_input$q50)
 
@@ -218,7 +218,7 @@ filter_with_kmeans = function(gf,
                         bug_name)
   }
 
-  filtered_gf = samp_stats[,.(sampleID, in_right)][gf, on = "sampleID"]
+  filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
 
   filtered_gf$abd[filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
@@ -279,20 +279,20 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   bug_name = get_bug_name(bug_file)
 
-  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
+  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sample_id, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
   ][(varies_enough)
-  ][,.(gene, sampleID, abd)]
+  ][,.(gene, sample_id, abd)]
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
                           save_filter_stats = save_filter_stats,
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
 
-  joined = filtered_gf[meta_cov, on = 'sampleID', nomatch = 0][,.(gene, present, sampleID, age, gender, crc)]
+  joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0][,.(gene, present, sample_id, age, gender, crc)]
 
   if (pivot_wide) {
     wide_dat = dcast(joined,
-                     age + gender + sampleID + crc ~ gene, # TODO generalize covariates
+                     age + gender + sample_id + crc ~ gene, # TODO generalize covariates
                      value.var = 'present')
 
     return(wide_dat)

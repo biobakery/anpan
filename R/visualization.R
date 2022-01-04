@@ -43,11 +43,11 @@ make_line_plot = function(bug_file = NULL,
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }
 
-  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sampleID][] %>%
+  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] %>%
     dplyr::mutate(labelled_as = factor(c('present', 'absent')[in_right + 1],
                                        levels = c("present", "absent"))) %>%
     ggplot(aes(i, labd)) +
-    geom_line(aes(group = sampleID,
+    geom_line(aes(group = sample_id,
                   color = labelled_as),
               alpha = .30) +
     labs(x = NULL,
@@ -115,9 +115,9 @@ make_hex_plot = function(bug_file = NULL,
   to_compute = (!is.null(bug_file) & !is.null(meta_file))
 
   if (to_compute) {
-    gf = read_bug(bug_file, meta = read_meta(meta_file))[,.(gene, sampleID, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
+    gf = read_bug(bug_file, meta = read_meta(meta_file))[,.(gene, sample_id, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
     ][(varies_enough)
-    ][,.(gene, sampleID, abd)]
+    ][,.(gene, sample_id, abd)]
 
     samp_stats = get_samp_stats(gf)
 
@@ -128,7 +128,7 @@ make_hex_plot = function(bug_file = NULL,
     stop("You somehow misspecified your inputs. Specify either a gene family file and metadata file OR a sample statistics data frame and a mixture fit object")
   }
 
-  em_input = na.omit(samp_stats[,.(sampleID, n_z, q50)])
+  em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
   em_input$sn_z = scale(em_input$n_z)
   em_input$sq50 = scale(em_input$q50)
   input_scales = em_input[,.(m_n_z = mean(n_z),
@@ -178,31 +178,31 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
 
   gene_levels = res[1:n_top,]$gene
 
-  color_bars = model_input[, .(sampleID, age, gender, crc)] %>% #TODO covariates
+  color_bars = model_input[, .(sample_id, age, gender, crc)] %>% #TODO covariates
     unique %>% .[order(crc, gender, age)]
-  color_bars$sampleID = factor(color_bars$sampleID,
-                               levels = unique(color_bars$sampleID))
+  color_bars$sample_id = factor(color_bars$sample_id,
+                               levels = unique(color_bars$sample_id))
 
   plot_data = model_input[gene %in% res[1:n_top,]$gene] %>%
     mutate(gene = factor(gene, levels = gene_levels),
-           sampleID = factor(sampleID,
-                             levels = levels(color_bars$sampleID)))
+           sample_id = factor(sample_id,
+                             levels = levels(color_bars$sample_id)))
   # TODO covariates plot on top
    # %>%
-   #  ggplot(aes(sampleID, gene)) +
+   #  ggplot(aes(sample_id, gene)) +
    #  geom_tile
 
 
   n_healthy = sum(color_bars$crc == 0) # TODO outcome name
 
   anno_plot = color_bars %>% mutate(status = c("Healthy", "CRC")[crc + 1]) %>%
-    ggplot(aes(x = sampleID)) +
+    ggplot(aes(x = sample_id)) +
     geom_tile(aes(y = 1, fill = gender)) +
     scale_fill_manual(values = c("male" = "cornflowerblue",
                                  "female" = "sienna1")) +
 
     ggnewscale::new_scale("fill") +
-    geom_tile(aes(x = sampleID, y = 2, fill = age)) +
+    geom_tile(aes(x = sample_id, y = 2, fill = age)) +
     scale_fill_viridis_c() +
 
     ggnewscale::new_scale("fill") +
@@ -220,8 +220,8 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
 
   plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
 
-  plot_data$sampleID = factor(plot_data$sampleID,
-                              levels = unique(color_bars$sampleID))
+  plot_data$sample_id = factor(plot_data$sample_id,
+                              levels = unique(color_bars$sample_id))
   plot_data$gene = factor(plot_data$gene,
                           levels = gene_levels)
 
@@ -234,12 +234,12 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
   lab_df = plot_data[,.(gene, g_lab)] %>%
     unique
 
-  ns = n_distinct(plot_data$sampleID)
+  ns = n_distinct(plot_data$sample_id)
 
   pres_plot = plot_data %>%
     mutate(crc = c("Healthy", "CRC")[crc + 1],
            present = as.logical(present)) %>%
-    ggplot(aes(y = gene, x = sampleID)) +
+    ggplot(aes(y = gene, x = sample_id)) +
     geom_tile(aes(fill = present)) +
     geom_vline(lwd = .5,
                color = 'black',
