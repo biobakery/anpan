@@ -25,7 +25,8 @@ The goal of anpan is to consolidate statistical methods for strain analysis. Thi
 anpan requires the following R packages, most of which which can be installed from CRAN:
 
 ```
-install.packages(c("brms", 
+install.packages(c("ape", 
+                   "brms", 
                    "data.table", 
                    "dplyr", 
                    "purrr", 
@@ -34,7 +35,7 @@ install.packages(c("brms",
                    "furrr", 
                    "ggnewscale",
                    "patchwork", 
-                   "progressr"))
+                   "progressr")) # Ncpus = 4 to go faster
 
 install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```

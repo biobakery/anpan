@@ -20,11 +20,11 @@ anpan(
 \arguments{
 \item{bug_file}{path to a gene family file (usually probably from HUMAnN)}
 
-\item{meta_file}{path to a metadata tsv.}
+\item{meta_file}{path to a metadata tsv}
 
 \item{model_type}{either "anpan" or "glm"}
 
-\item{covariates}{covariates to account for}
+\item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{outcome}{the name of the outcome variable}
 

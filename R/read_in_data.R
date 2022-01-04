@@ -1,7 +1,7 @@
-read_meta = function(meta_path,
+read_meta = function(meta_file,
                      select_cols = c("sample_id", "age", "gender", "crc")) {
 
-  meta = fread(meta_path)
+  meta = fread(meta_file)
 
   # Handle missing or alternative sample_id column names
   if (!("sample_id" %in% names(meta))) {

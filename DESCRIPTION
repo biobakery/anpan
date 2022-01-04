@@ -20,5 +20,6 @@ Imports:
     furrr,
     ggnewscale,
     patchwork,
-    progressr
+    progressr,
+    ape
 RoxygenNote: 7.1.1

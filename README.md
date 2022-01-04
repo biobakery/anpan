@@ -15,7 +15,8 @@ outcomes, phylogenetic association testing, and ….
 anpan requires the following R packages, most of which which can be
 installed from CRAN:
 
-    install.packages(c("brms", 
+    install.packages(c("ape", 
+                       "brms", 
                        "data.table", 
                        "dplyr", 
                        "purrr", 
@@ -24,7 +25,7 @@ installed from CRAN:
                        "furrr", 
                        "ggnewscale",
                        "patchwork", 
-                       "progressr"))
+                       "progressr")) # Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 

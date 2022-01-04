@@ -318,3 +318,27 @@ make_composite_plot = function(bug_file,
   }
 
 }
+
+make_cov_mat_plot = function(cov_mat,
+                             bug_name = NULL){
+  cov_mat %>%
+    as.data.frame %>%
+    tibble::rownames_to_column('rn') %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(rn = factor(rn,
+                       levels = unique(rn))) %>%
+    tidyr::pivot_longer(-rn,
+                 names_to = 'V2',
+                 values_to = 'cov') %>%
+    dplyr::mutate(V2 = factor(V2,
+                       levels = levels(rn))) %>%
+    ggplot(aes(rn, V2)) +
+    geom_tile(aes(fill = cov)) +
+    labs(x = "sample1",
+         y = "sample2",
+         title = paste0(bug_name, " tree\nas a covariance matrix")) +
+    scale_fill_viridis_c() +
+    theme(axis.text = element_blank(),
+          axis.ticks = element_blank()) +
+    coord_equal()
+}

@@ -137,9 +137,9 @@ fit_anpan = function(model_input, bug_name,
 #'
 #' @description Run the anpan model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
-#' @param meta_file path to a metadata tsv.
+#' @param meta_file path to a metadata tsv
 #' @param model_type either "anpan" or "glm"
-#' @param covariates covariates to account for
+#' @param covariates covariates to account for (as a vector of strings)
 #' @param outcome the name of the outcome variable
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @details The specified metadata file must contain columns matching "sample_id"

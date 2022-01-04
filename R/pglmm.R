@@ -67,9 +67,65 @@
 # base_tree_model$fit %>% as.data.frame() %>%
 #   posterior::summarise_draws() %>% arrange(-abs(mean))
 
-anpan_pglmm = function(meta_path,
-                       tree_path) {
-  meta = read_meta(meta_path,
-                   select_cols = c("sample_id", ))
+#' @title Run a phylogenetic generalized linear mixed model
+#' @param tree_file path to a .tre file
+#' @param trim_pattern optional pattern to trim from tip labels of the tree
+#' @param ... other arguments to pass to brms::brm
+#' @details the tip labels of the tree must be the sample ids from the metadata.
+#'   You can use the \code{trim_pattern} argument to automatically trim off any
+#'   consistent pattern from the tip labels if necessary. The dots can be used
+#'   to pass cores=4 to brms to make the chains run in parallel.
+#'
+#'   The prior for the intercept is a normal distribution centered on the mean
+#'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
+#' @inheritParams anpan
+anpan_pglmm = function(meta_file,
+                       tree_file,
+                       trim_pattern = NULL,
+                       covariates = NULL,
+                       plot_cov_mat = TRUE,
+                       outcome = "age",
+                       verbose = TRUE,
+                       ...) {
+  meta = read_meta(meta_file,
+                   select_cols = c("sample_id", covariates, outcome))
+
+  bug_tree = ape::read.tree(tree_file)
+
+  bug_tree$tip.label = gsub("_bowtie2", "", bug_tree$tip.label)
+  cov_mat = ape::vcv.phylo(bug_tree)
+
+  if (plot_cov_mat) {
+    p = make_cov_mat_plot(cov_mat,
+                          bug_name = basename(tree_file))
+  }
+
+  model_input = meta %>%
+    dplyr::filter(sample_id %in% bug_tree$tip.label)
+
+  if (nrow(model_input) < nrow(meta) & verbose){
+    message(paste0(nrow(model_input), ' samples out of ', nrow(meta), " present in the metadata included in the analysis." ))
+  }
+
+  if (!is.null(covariates)) {
+    cov_str = paste0(paste(covariates, collapse = " + "), " + ")
+  } else {
+    cov_str = NULL
+  }
+
+  model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cov_mat))"))
+
+  model_fit = brm(formula = model_formula,
+                  data = model_input,
+                  family = gaussian(), #TODO alternate outcome families
+                  data2 = list(cov_mat = cov_mat),
+                  prior = c(
+                    prior(normal(mean(model_input[[outcome]]), 3*sd(model_input[[outcome]])), "Intercept"),
+                    prior(student_t(3, 0, 20), "sd"),
+                    prior(student_t(3, 0, 20), "sigma")
+                  ),
+                  backend = "cmdstanr")
+
+  model_fit
 
 }

@@ -19,7 +19,7 @@ make_line_plot(
 
 \item{meta_file}{a path to the corresponding metadata file}
 
-\item{covariates}{covariates to account for}
+\item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{outcome}{the name of the outcome variable}
 
