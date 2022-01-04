@@ -4,7 +4,7 @@ get_bug_name = function(bug_file,
 }
 
 
-fit_glms = function(model_input, out_dir, bug_name) {
+fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
@@ -13,7 +13,7 @@ fit_glms = function(model_input, out_dir, bug_name) {
   glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
                                        function(.x){
                                          # p()
-                                         safely_fit_glm(.x)
+                                         safely_fit_glm(.x, covariates = covariates, outcome = outcome)
                                        }) # TODO progress bar with progressr
 
 
@@ -61,7 +61,7 @@ check_prevalence_okay = function(gene_dat, prevalence_filter) {
 }
 
 #' Fit a GLM to one gene
-fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
+fit_glm = function(gene_dat, covariates, outcome, out_dir, prevalence_filter = .05) {
 
   if (!check_prevalence_okay(gene_dat, prevalence_filter)) {
     return(data.table(term = character(),
@@ -71,7 +71,9 @@ fit_glm = function(gene_dat, out_dir, prevalence_filter = .05) {
                       p.value = numeric()))
   }
 
-  res = glm(crc ~ age + gender + present, # TODO adjustable covariates
+  glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
+
+  res = glm(glm_formula, # TODO adjustable covariates
             data = gene_dat,
             family = 'binomial') %>%
     broom::tidy() %>%
@@ -122,7 +124,8 @@ fit_anpan = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv. Must contain the specify covariates
 #' @param model_type either "anpan" or "glm"
-#' @param covariates covariates to account for CURRENTLY IGNORED
+#' @param covariates covariates to account for
+#' @param outcome the name of the outcome variable
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @export
 anpan = function(bug_file,
@@ -130,6 +133,7 @@ anpan = function(bug_file,
                  out_dir,
                  model_type = "anpan",
                  covariates = c("age", "gender"),
+                 outcome = "crc",
                  filtering_method = "kmeans",
                  annotation_file = NULL,
                  plot_ext = "png",
@@ -179,8 +183,12 @@ anpan = function(bug_file,
 # Fitting -----------------------------------------------------------------
 
   res = switch(model_type,
-               anpan = fit_anpan(model_input, out_dir),
-               glm = fit_glms(model_input, out_dir, bug_name = bug_name))
+               anpan = fit_anpan(model_input,
+                                 out_dir),
+               glm = fit_glms(model_input, out_dir,
+                              covariates = covariates,
+                              outcome = outcome,
+                              bug_name = bug_name))
 
   make_data_plot(res, covariates, model_input, plot_dir = plot_dir,
                  annotation_file = annotation_file,

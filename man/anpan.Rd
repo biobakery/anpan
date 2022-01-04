@@ -10,6 +10,7 @@ anpan(
   out_dir,
   model_type = "anpan",
   covariates = c("age", "gender"),
+  outcome = "crc",
   filtering_method = "kmeans",
   annotation_file = NULL,
   plot_ext = "png",
@@ -23,7 +24,9 @@ anpan(
 
 \item{model_type}{either "anpan" or "glm"}
 
-\item{covariates}{covariates to account for CURRENTLY IGNORED}
+\item{covariates}{covariates to account for}
+
+\item{outcome}{the name of the outcome variable}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 }
