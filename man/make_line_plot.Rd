@@ -7,6 +7,8 @@
 make_line_plot(
   bug_file = NULL,
   meta_file = NULL,
+  covariates,
+  outcome,
   fgf = NULL,
   bug_name = NULL,
   plot_dir = NULL
@@ -16,6 +18,10 @@ make_line_plot(
 \item{bug_file}{a path to a gene family file}
 
 \item{meta_file}{a path to the corresponding metadata file}
+
+\item{covariates}{covariates to account for}
+
+\item{outcome}{the name of the outcome variable}
 
 \item{fgf}{a filtered gene family data frame}
 

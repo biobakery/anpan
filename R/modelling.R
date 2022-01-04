@@ -45,13 +45,14 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   return(bug_terms)
 }
 
-check_prevalence_okay = function(gene_dat, prevalence_filter) {
+check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
 
-  min_prev_by_outcome = table(gene_dat[,.(present, crc)]) %>%
+  min_prev_by_outcome = gene_dat %>% dplyr::select(dplyr::all_of(c("present", outcome))) %>%
+    table() %>%
     apply(2, \(.x) .x / sum(.x)) %>%
     apply(2, min) # It has to be variable above the prevalence filter in BOTH groups
 
-  if (n_distinct(gene_dat$crc) != 2 |                             # If only one outcome shows up
+  if (n_distinct(gene_dat[[outcome]]) != 2 |                             # If only one outcome shows up
       n_distinct(gene_dat$present) == 1 |                         # or if the gene is omni-present or omni-absent
       all(min_prev_by_outcome < prevalence_filter)) {             # or if it doesn't get through the prevalence filter
     return(FALSE) # Then it's not okay
@@ -63,7 +64,7 @@ check_prevalence_okay = function(gene_dat, prevalence_filter) {
 #' Fit a GLM to one gene
 fit_glm = function(gene_dat, covariates, outcome, out_dir, prevalence_filter = .05) {
 
-  if (!check_prevalence_okay(gene_dat, prevalence_filter)) {
+  if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
     return(data.table(term = character(),
                       estimate = numeric(),
                       std.error = numeric(),
@@ -83,29 +84,43 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir, prevalence_filter = .
 
 safely_fit_glm = purrr::safely(fit_glm)
 
-fit_anpan = function(model_input, bug_name, tpc = 4, ncore = 4, out_path,
+fit_anpan = function(model_input, bug_name,
+                     covariates,
+                     outcome,
+                     tpc = 4, ncore = 4, out_path,
                     save_summ = FALSE) {
-  form = brms::bf(n_crc ~ stdCovariates + unirefs, nl = TRUE) +
-    brms::lf(stdCovariates  ~ 1 + age + gender , center = TRUE) +
-    brms::lf(as.formula(paste0("unirefs ~ 0 + ",
-                               paste(names(model_input)[-(1:5)],
+
+  main_formula = as.formula(paste0(outcome, " ~ stdCovariates + genes"))
+  std_formula = as.formula(paste0("stdCovariates ~ 1 + ", paste(covariates, collapse = " + ")))
+
+
+  form = brms::bf(main_formula, nl = TRUE) +
+    brms::lf(std_formula, center = TRUE) +
+    brms::lf(as.formula(paste0("genes ~ 0 + ",
+                               paste(names(model_input)[!(names(model_input) %in% c(covariates, outcome))],
                                      collapse = " + "))), cmc = FALSE)
 
   p = brms::set_prior("horseshoe(par_ratio = .005)",
-                      class = 'b', nlpar = "unirefs") +
+                      class = 'b', nlpar = "genes") +
     brms::prior(normal(0,2),
                 class = "b", nlpar = 'stdCovariates')
 
+  if (dplyr::n_distinct(model_input[[outcome]]) == 2){
+    mod_family = brms::bernoulli()
+  } else {
+    mod_family = stats::gaussian()
+  }
+
   model_fit = brms::brm(form,
-            prior = p,
-            data = model_input,
-            family = brms::bernoulli(),
-            refresh = 50,
-            control = list(adapt_delta = .9),
-            backend = 'cmdstanr',
-            chains = 4,
-            cores = ncore,
-            threads = brms::threading(tpc))
+                        prior = p,
+                        data = model_input,
+                        family = mod_family,
+                        refresh = 50,
+                        control = list(adapt_delta = .9),
+                        backend = 'cmdstanr',
+                        chains = 4,
+                        cores = ncore,
+                        threads = brms::threading(tpc))
 
   summ = summarise_fit(model_fit)
 
@@ -180,6 +195,8 @@ anpan = function(bug_file,
 
   model_input = read_and_filter(bug_file, meta_cov = metadata,
                                 pivot_wide = model_type == "anpan",
+                                covariates = covariates,
+                                outcome = outcome,
                                 filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir)
@@ -195,7 +212,11 @@ anpan = function(bug_file,
                               outcome = outcome,
                               bug_name = bug_name))
 
-  make_data_plot(res, covariates, model_input, plot_dir = plot_dir,
+  make_data_plot(res = res,
+                 covariates = covariates,
+                 outcome = outcome,
+                 model_input = model_input,
+                 plot_dir = plot_dir,
                  annotation_file = annotation_file,
                  bug_name = bug_name, plot_ext = plot_ext)
 
@@ -215,6 +236,7 @@ anpan_batch = function(bug_dir,
                        out_dir,
                        model_type = "anpan",
                        covariates = c("age", "gender"),
+                       outcome = "crc",
                        filtering_method = "kmeans",
                        annotation_file = NULL,
                        plot_ext = "png",
@@ -229,6 +251,7 @@ anpan_batch = function(bug_dir,
                              model_type = model_type,
                              filtering_method = filtering_method,
                              covariates = covariates,
+                             outcome = outcome,
                              save_filter_stats = save_filter_stats,
                              annotation_file = annotation_file,
                              plot_ext = plot_ext) %>%

@@ -1,32 +1,3 @@
-# Do outlier detection on number of confidently detected genes
-# library(data.table)
-# library(tidyverse); theme_set(theme_light())
-# library(patchwork)
-# library(furrr);
-
-# windoze = grepl("Windows",
-#                 Sys.info()['sysname'])
-#
-# if (windoze) {
-#   gf_files = list.files("../../../../strain_stats/data/genefamilies/",
-#                         full.names = TRUE)
-#   out_dir = "outputs/"
-#   meta = read_tsv('data/CRC_analysis_metadata_final_version.tsv')
-#   plan(multisession, workers = 6)
-# } else {
-#   gf_files = list.files("/n/holystore01/LABS/huttenhower_lab/Users/yyan/humann2_bug_gene/franzosa/bb3_version/output/genefamilies",
-#                         full.names = TRUE)
-#   out_dir = "/n/hutlab12_nobackup/users/aghazi/strain_stats/outputs/"
-#   meta = read_tsv('/n/home11/aghazi/strain_stats/data/CRC_analysis_metadata_final_version.tsv')
-#   plan(multisession, workers = 32)
-#
-#   if (!dir.exists('outputs/n_z_by_quantiles')) {
-#     dir.create('outputs/n_z_by_quantiles')
-#     dir.create('outputs/n_z_by_quantiles/hexs')
-#     dir.create('outputs/n_z_by_quantiles/hists')
-#   }
-# }
-
 get_q_large = function(gf_file) {
   # If the gene family file is large (e.g. E coli), we have to get the quantiles in chunks
   # TODO Test this function specifically
@@ -229,6 +200,8 @@ filter_with_kmeans = function(gf,
 #' @export
 filter_gf = function(gf,
                      filtering_method = "med_by_nz_components",
+                     covariates,
+                     outcome,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
                      bug_name = NULL) {
@@ -254,6 +227,8 @@ filter_gf = function(gf,
   if (save_filter_stats) {
     make_line_plot(fgf = filtered_gf,
                    bug_name = bug_name,
+                   covariates = covariates,
+                   outcome = outcome,
                    plot_dir = file.path(filter_stats_dir, "plots"))
   }
 
@@ -263,6 +238,8 @@ filter_gf = function(gf,
 read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
                            minmax_thresh = 5,
+                           covariates,
+                           outcome,
                            filtering_method = "med_by_nz_components",
                            save_filter_stats = FALSE,
                            filter_stats_dir = NULL) {
@@ -284,15 +261,22 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   ][,.(gene, sample_id, abd)]
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
+                          covariates = covariates,
+                          outcome = outcome,
                           save_filter_stats = save_filter_stats,
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
 
-  joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0][,.(gene, present, sample_id, age, gender, crc)]
+  select_cols = c("gene", "present", "sample_id", covariates, outcome)
+  joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0] %>%
+    dplyr::select(dplyr::all_of(select_cols))
 
   if (pivot_wide) {
+    spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
+                           sep = "") %>%
+      as.formula()
     wide_dat = dcast(joined,
-                     age + gender + sample_id + crc ~ gene, # TODO generalize covariates
+                     formula = spread_formula,
                      value.var = 'present')
 
     return(wide_dat)

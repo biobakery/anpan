@@ -26,18 +26,24 @@ get_transformed_ellipse = function(id, mix_fit, A, input_scales){
 #' @param bug_name name of the bug
 #' @details The required input is either \itemize{ \item{the gene family file
 #'   and the metadata file} \item{OR a pre-filtered gene family file}}
+#' @inheritParams anpan
 #' @export
 make_line_plot = function(bug_file = NULL,
                           meta_file = NULL,
+                          covariates,
+                          outcome,
                           fgf = NULL,
                           bug_name = NULL,
                           plot_dir = NULL) {
 
   precomputed = !is.null(fgf)
   to_compute = !is.null(bug_file) & !is.null(meta_file)
+
   if (!(precomputed|to_compute)) {
     # filtered gene families
     fgf = read_and_filter(bug_file,
+                          covariates = covariates,
+                          outcome = outcome,
                           read_meta(meta_file), pivot_wide = FALSE)
 
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
@@ -168,7 +174,7 @@ make_hex_plot = function(bug_file = NULL,
   p
 }
 
-make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
+make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
                           annotation_file = NULL,
                           plot_ext = ".pdf",
                           n_top = 50) {
@@ -178,8 +184,14 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
 
   gene_levels = res[1:n_top,]$gene
 
-  color_bars = model_input[, .(sample_id, age, gender, crc)] %>% #TODO covariates
-    unique %>% .[order(crc, gender, age)]
+  select_cols = c("sample_id", covariates, outcome)
+  order_cols = c(outcome, rev(covariates))
+
+  color_bars = model_input %>%
+    dplyr::select(dplyr::all_of(select_cols)) %>%
+    unique %>%
+    setorderv(cols = order_cols, na.last = TRUE)
+
   color_bars$sample_id = factor(color_bars$sample_id,
                                levels = unique(color_bars$sample_id))
 
@@ -187,26 +199,25 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
-  # TODO covariates plot on top
-   # %>%
-   #  ggplot(aes(sample_id, gene)) +
-   #  geom_tile
 
+  n_healthy = sum(color_bars[[outcome]] == 0)
 
-  n_healthy = sum(color_bars$crc == 0) # TODO outcome name
+  if (length(covariates) > 2) {
+    stop("data plots can't handle more than two covariates right now")
+  }
 
-  anno_plot = color_bars %>% mutate(status = c("Healthy", "CRC")[crc + 1]) %>%
+  anno_plot = color_bars %>%
     ggplot(aes(x = sample_id)) +
-    geom_tile(aes(y = 1, fill = gender)) +
+    geom_tile(aes_string(y = 1, fill = covariates[2])) +
     scale_fill_manual(values = c("male" = "cornflowerblue",
                                  "female" = "sienna1")) +
 
     ggnewscale::new_scale("fill") +
-    geom_tile(aes(x = sample_id, y = 2, fill = age)) +
+    geom_tile(aes_string(x = "sample_id", y = 2, fill = covariates[1])) +
     scale_fill_viridis_c() +
 
     ggnewscale::new_scale("fill") +
-    geom_tile(aes(y = 3, fill = status)) +
+    geom_tile(aes_string(y = 3, fill = outcome)) +
     scale_fill_manual(values = c("Healthy" = 'antiquewhite3', 'CRC' = 'indianred2')) +
 
     coord_cartesian(expand = FALSE) +
@@ -237,8 +248,7 @@ make_data_plot = function(res, covariates, model_input, plot_dir, bug_name,
   ns = n_distinct(plot_data$sample_id)
 
   pres_plot = plot_data %>%
-    mutate(crc = c("Healthy", "CRC")[crc + 1],
-           present = as.logical(present)) %>%
+    mutate(present = as.logical(present)) %>%
     ggplot(aes(y = gene, x = sample_id)) +
     geom_tile(aes(fill = present)) +
     geom_vline(lwd = .5,
@@ -276,12 +286,19 @@ make_interval_plot = function() {
 
 make_composite_plot = function(bug_file,
                                model_results,
+                               covariates,
+                               outcome,
                                return_components = FALSE) {
 
-  lp = make_line_plot(bug_file) #
+  lp = make_line_plot(bug_file,
+                      covariates = covariates,
+                      outcome = outcome) #
   hp = make_hex_plot(bug_file)
 
-  dp = make_data_plot(bug_file, model_results, annotation_file)
+  dp = make_data_plot(bug_file,
+                      covariates = covariates,
+                      outcome = outcome,
+                      model_results, annotation_file)
   ip = make_int_plot(model_results)
 
   layout_str = "

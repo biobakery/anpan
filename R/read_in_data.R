@@ -13,7 +13,7 @@ read_meta = function(meta_path,
     }
   }
 
-  meta_cov = meta %>% dplyr::select(all_of(select_cols))
+  meta_cov = meta %>% dplyr::select(dplyr::all_of(select_cols))
   meta_cov
 }
 

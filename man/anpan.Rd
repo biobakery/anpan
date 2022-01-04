@@ -20,7 +20,7 @@ anpan(
 \arguments{
 \item{bug_file}{path to a gene family file (usually probably from HUMAnN)}
 
-\item{meta_file}{path to a metadata tsv. Must contain the specify covariates}
+\item{meta_file}{path to a metadata tsv.}
 
 \item{model_type}{either "anpan" or "glm"}
 
@@ -32,4 +32,8 @@ anpan(
 }
 \description{
 Run the anpan model on a single bug
+}
+\details{
+The specified metadata file must contain columns matching "sample_id"
+  and the specified covariates and outcome variables.
 }
