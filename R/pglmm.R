@@ -123,7 +123,7 @@ anpan_pglmm = function(meta_file,
                         family = stats::gaussian(), #TODO alternate outcome families
                         data2 = list(cov_mat = cov_mat),
                         prior = c(
-                          brms::prior(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
+                          brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
                           brms::prior(student_t(3, 0, 20), "sd"),
                           brms::prior(student_t(3, 0, 20), "sigma")
                         ),
