@@ -2,6 +2,7 @@
 
 export(anpan)
 export(anpan_batch)
+export(anpan_pglmm)
 export(filter_gf)
 export(make_hex_plot)
 export(make_line_plot)
