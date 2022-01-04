@@ -206,6 +206,9 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
     stop("data plots can't handle more than two covariates right now")
   }
 
+  # TODO adapt to continuous outcome
+  outcome_fill_values = c("FALSE" = 'antiquewhite3', 'TRUE' = 'indianred2')
+
   anno_plot = color_bars %>%
     ggplot(aes(x = sample_id)) +
     geom_tile(aes_string(y = 1, fill = covariates[2])) +
@@ -218,7 +221,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
 
     ggnewscale::new_scale("fill") +
     geom_tile(aes_string(y = 3, fill = outcome)) +
-    scale_fill_manual(values = c("Healthy" = 'antiquewhite3', 'CRC' = 'indianred2')) +
+    scale_fill_manual(values = outcome_fill_values) +
 
     coord_cartesian(expand = FALSE) +
     labs(y = NULL,
