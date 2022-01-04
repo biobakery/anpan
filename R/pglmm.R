@@ -121,9 +121,9 @@ anpan_pglmm = function(meta_file,
                         family = stats::gaussian(), #TODO alternate outcome families
                         data2 = list(cov_mat = cov_mat),
                         prior = c(
-                          prior(rstanarm::normal(mean(model_input[[outcome]]), 3*sd(model_input[[outcome]])), "Intercept"),
-                          prior(rstanarm::student_t(3, 0, 20), "sd"),
-                          prior(rstanarm::student_t(3, 0, 20), "sigma")
+                          brms::prior(rstanarm::normal(mean(model_input[[outcome]]), 3*sd(model_input[[outcome]])), "Intercept"),
+                          brms::prior(rstanarm::student_t(3, 0, 20), "sd"),
+                          brms::prior(rstanarm::student_t(3, 0, 20), "sigma")
                         ),
                         backend = "cmdstanr")
 
