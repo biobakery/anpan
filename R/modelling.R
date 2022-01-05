@@ -8,13 +8,17 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
-  # p <- progressr::progressor(steps = dplyr::n_distinct(model_input$gene))
+  # p <- progressr::progressor(along = glm_fits$data_subset)
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
   glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
                                        function(.x){
-                                         # p()
-                                         safely_fit_glm(.x, covariates = covariates, outcome = outcome)
-                                       }) # TODO progress bar with progressr
+                                         # p();
+                                         safely_fit_glm(.x,
+                                                        covariates = covariates,
+                                                        outcome = outcome)
+                                       })
+  # TODO progress bar with progressr
+  # What I have here doesn't work for some reason.
 
 
   failed = glm_fits[sapply(glm_fits$glm_res,
@@ -154,11 +158,12 @@ anpan = function(bug_file,
                  filtering_method = "kmeans",
                  annotation_file = NULL,
                  plot_ext = "png",
-                 save_filter_stats = TRUE) {
+                 save_filter_stats = TRUE,
+                 verbose = TRUE) {
 
 
 # Checks ------------------------------------------------------------------
-  message("Preparing the mise en place (checking inputs)...")
+  if (verbose) message("Preparing the mise en place (checking inputs)...")
 
   if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
 
@@ -166,7 +171,7 @@ anpan = function(bug_file,
   n_lines = R.utils::countLines(bug_file)
 
   if (!dir.exists(out_dir)) {
-    message("* Creating output directory.")
+    if (verbose) message("* Creating output directory.")
     dir.create(out_dir)
   }
 
@@ -174,7 +179,7 @@ anpan = function(bug_file,
     filter_stats_dir = file.path(out_dir, "filter_stats")
     fs_plot_dir = file.path(filter_stats_dir, 'plots')
     if (!dir.exists(filter_stats_dir)) {
-      message("* Creating the filter stats directory in the output directory.")
+      if (verbose) message("* Creating the filter stats directory in the output directory.")
       dir.create(filter_stats_dir)
     }
     if (!dir.exists(fs_plot_dir)) dir.create(fs_plot_dir)
@@ -182,14 +187,14 @@ anpan = function(bug_file,
 
   plot_dir = file.path(out_dir, 'plots')
   if (!dir.exists(plot_dir)) {
-    message("* Creating output plots directory.")
+    if (verbose) message("* Creating output plots directory.")
     dir.create(plot_dir)
   }
 
 
 # Filtering ---------------------------------------------------------------
-
-  message("Reading and filtering the data.")
+  if (verbose) message(paste0("Beginning to analyze ", bug_file))
+  if (verbose) message("Reading and filtering the data.")
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates))
 
@@ -240,7 +245,8 @@ anpan_batch = function(bug_dir,
                        filtering_method = "kmeans",
                        annotation_file = NULL,
                        plot_ext = "png",
-                       save_filter_stats = TRUE) {
+                       save_filter_stats = TRUE,
+                       verbose = TRUE) {
 
   bug_files = get_file_list(bug_dir)
   # anpan is parallelized internally, so just map here.
@@ -254,7 +260,8 @@ anpan_batch = function(bug_dir,
                              outcome = outcome,
                              save_filter_stats = save_filter_stats,
                              annotation_file = annotation_file,
-                             plot_ext = plot_ext) %>%
+                             plot_ext = plot_ext,
+                             verbose = verbose) %>%
     purrr::imap(\(.x, .y) mutate(.x, bug_name = basename(bug_files)[.y])) %>%
     bind_rows %>%
     mutate(q_global = p.adjust(p.value, method = "fdr"))
