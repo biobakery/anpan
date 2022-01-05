@@ -9,6 +9,7 @@ anpan_pglmm(
   tree_file,
   trim_pattern = NULL,
   covariates = NULL,
+  family = stats::gaussian(),
   plot_cov_mat = TRUE,
   outcome = "age",
   verbose = TRUE,
@@ -24,6 +25,8 @@ anpan_pglmm(
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{family}{family object for the error distribution}
 
 \item{outcome}{the name of the outcome variable}
 
@@ -42,4 +45,8 @@ the tip labels of the tree must be the sample ids from the metadata.
 
   The prior for the intercept is a normal distribution centered on the mean
   of the outcome variable with a standard deviation of 3*sd(outcome variable)
+
+  The default error distribution for the outcome is \code{stats::gaussian()}.
+  You could change this to a phylogenetic logistic regression by changing
+  \code{family} to brms::bernoulli() for example.
 }

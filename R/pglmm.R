@@ -70,6 +70,7 @@
 #' @title Run a phylogenetic generalized linear mixed model
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
+#' @param family family object for the error distribution
 #' @param ... other arguments to pass to brms::brm
 #' @param test_signal compute the phylogenetic signal
 #' @details the tip labels of the tree must be the sample ids from the metadata.
@@ -79,12 +80,17 @@
 #'
 #'   The prior for the intercept is a normal distribution centered on the mean
 #'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
+#'
+#'   The default error distribution for the outcome is \code{stats::gaussian()}.
+#'   You could change this to a phylogenetic logistic regression by changing
+#'   \code{family} to brms::bernoulli() for example.
 #' @inheritParams anpan
 #' @export
 anpan_pglmm = function(meta_file,
                        tree_file,
                        trim_pattern = NULL,
                        covariates = NULL,
+                       family = stats::gaussian(),
                        plot_cov_mat = TRUE,
                        outcome = "age",
                        verbose = TRUE,
@@ -124,7 +130,7 @@ anpan_pglmm = function(meta_file,
   n_sd = 3*sd(model_input[[outcome]])
   model_fit = brms::brm(formula = model_formula,
                         data = model_input,
-                        family = stats::gaussian(), #TODO alternate outcome families
+                        family = family,
                         data2 = list(cov_mat = cov_mat),
                         prior = c(
                           brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
