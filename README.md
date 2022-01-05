@@ -50,7 +50,7 @@ now this only works for glm-based models.
 ``` r
 library(tidyverse)
 library(data.table)
-library(furrr); plan(multisession, workers = 2) # Run on two cores
+library(furrr); plan(multisession, workers = 2) # Run with two background processes on the local machine
 library(progressr); handlers(global=TRUE) # show progress bars for long computations
 library(anpan)
 
@@ -68,3 +68,24 @@ anpan_batch(bug_dir = "/path/to/gene_families/",
 
 This will create the output directory with tables of regression
 coefficients, top-results plots, and filter statistics.
+
+## Example - phylogenetic generalized linear mixed model
+
+You can run a PGLMM with the `anpan_pglmm` function. This fits a model
+where the covariance matrix of outcomes is determined from the
+phylogenetic tree. Right now there’s only gaussian outcomes, and no
+regularization on the covariance matrix.
+
+``` r
+meta_file = "/path/to/metadata.tsv" 
+tree_file = "/path/to/file.tre"
+
+anpan_pglmm(meta_file,
+            tree_file,
+            trim_pattern = "_bowtie2",
+            covariates = NULL,
+            plot_cov_mat = TRUE,
+            outcome = "age",
+            verbose = TRUE,
+            cores = 4)
+```
