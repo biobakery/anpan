@@ -58,8 +58,13 @@ You can filter large uniref tables and look for associations with outcomes (whil
 ```{r example, eval=FALSE}
 library(tidyverse)
 library(data.table)
-library(furrr); plan(multisession, workers = 2) # Run with two background processes on the local machine
-library(progressr); handlers(global=TRUE) # show progress bars for long computations
+
+library(furrr) 
+plan(multisession, workers = 2) # Run with two background processes on the local machine
+
+library(progressr)
+handlers(global=TRUE) # show progress bars for long computations
+
 library(anpan)
 
 

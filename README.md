@@ -50,8 +50,13 @@ now this only works for glm-based models.
 ``` r
 library(tidyverse)
 library(data.table)
-library(furrr); plan(multisession, workers = 2) # Run with two background processes on the local machine
-library(progressr); handlers(global=TRUE) # show progress bars for long computations
+
+library(furrr) 
+plan(multisession, workers = 2) # Run with two background processes on the local machine
+
+library(progressr)
+handlers(global=TRUE) # show progress bars for long computations
+
 library(anpan)
 
 
