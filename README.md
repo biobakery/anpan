@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# anpan
+# anpan <img src="man/figures/logo.png" align="right"/>
 
 <!-- badges: start -->
 <!-- badges: end -->
@@ -26,7 +26,7 @@ installed from CRAN:
                        "ggnewscale",
                        "patchwork", 
                        "progressr",
-                       "rstanarm")) # Ncpus = 4 to go faster
+                       "rstanarm")) # add Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 

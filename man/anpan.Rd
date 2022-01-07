@@ -14,7 +14,8 @@ anpan(
   filtering_method = "kmeans",
   annotation_file = NULL,
   plot_ext = "png",
-  save_filter_stats = TRUE
+  save_filter_stats = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
