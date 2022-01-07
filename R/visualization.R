@@ -178,7 +178,9 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
                           annotation_file = NULL,
                           plot_ext = ".pdf",
                           n_top = 50) {
+
   if (!is.null(annotation_file)) {
+    # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
     anno = fread(annotation_file) # must have two columns: gene and annotation
   }
 
@@ -319,8 +321,16 @@ make_composite_plot = function(bug_file,
 
 }
 
+#' @export
 make_cov_mat_plot = function(cov_mat,
                              bug_name = NULL){
+
+  if (!is.null(bug_name)) {
+    title_str = paste0(bug_name, " tree\nas a covariance matrix")
+  } else {
+    title_str = NULL
+  }
+
   cov_mat %>%
     as.data.frame %>%
     tibble::rownames_to_column('rn') %>%
@@ -336,7 +346,7 @@ make_cov_mat_plot = function(cov_mat,
     geom_tile(aes(fill = cov)) +
     labs(x = "sample1",
          y = "sample2",
-         title = paste0(bug_name, " tree\nas a covariance matrix")) +
+         title = title_str) +
     scale_fill_viridis_c() +
     theme(axis.text = element_blank(),
           axis.ticks = element_blank()) +

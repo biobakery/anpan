@@ -205,6 +205,7 @@ anpan = function(bug_file,
                                 filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir)
+  # TODO write out model_input
 
 
 # Fitting -----------------------------------------------------------------
