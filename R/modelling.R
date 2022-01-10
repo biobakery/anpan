@@ -23,16 +23,16 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
 
 
   failed = glm_fits[sapply(glm_fits$glm_res,
-                           \(.x) !is.null(.x$error))]
+                           function(.x) !is.null(.x$error))]
   if (nrow(failed) > 0){
     # TODO Write out the failures to a warning file with a message
   }
 
   worked = glm_fits[sapply(glm_fits$glm_res,
-                           \(.x) is.null(.x$error))]
+                           function(.x) is.null(.x$error))]
 
   # V Find the data.table way to unnest. tidyr is slow.
-  all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, \(.x) .x$result))],
+  all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, function(.x) .x$result))],
                             cols = c(glm_res))
 
   readr::write_tsv(all_terms,
@@ -54,7 +54,7 @@ check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
 
   min_prev_by_outcome = gene_dat %>% dplyr::select(dplyr::all_of(c("present", outcome))) %>%
     table() %>%
-    apply(2, \(.x) .x / sum(.x)) %>%
+    apply(2, function(.x) .x / sum(.x)) %>%
     apply(2, min) # It has to be variable above the prevalence filter in BOTH groups
 
   if (n_distinct(gene_dat[[outcome]]) != 2 |                             # If only one outcome shows up
@@ -276,7 +276,7 @@ anpan_batch = function(bug_dir,
                              annotation_file = annotation_file,
                              plot_ext = plot_ext,
                              verbose = verbose) %>%
-    purrr::imap(\(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
+    purrr::imap(function(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
     bind_rows %>%
     mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     data.table::as.data.table()

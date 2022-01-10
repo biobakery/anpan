@@ -270,7 +270,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
 
 
   plot_data = plot_data %>%
-    mutate(g_lab = map2_chr(gene, annotation, \(.x, .y) if_else(is.na(.y),
+    mutate(g_lab = map2_chr(gene, annotation, function(.x, .y) if_else(is.na(.y),
                                                                 as.character(.x),
                                                                 paste(.x, ": ", .y, sep = ""))))
 
