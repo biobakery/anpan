@@ -281,6 +281,7 @@ anpan_batch = function(bug_dir,
     mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     data.table::as.data.table()
 
+  filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
     purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
