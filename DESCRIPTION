@@ -22,5 +22,6 @@ Imports:
     patchwork,
     progressr,
     ape,
-    rstanarm
+    rstanarm,
+    ggplot2
 RoxygenNote: 7.1.1
