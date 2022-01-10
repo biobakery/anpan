@@ -261,7 +261,9 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
           axis.ticks.x = element_blank(),
           panel.border = element_blank())
 
-  plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
+  if (!is.null(annotation_file)) {
+    plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
+  }
 
   plot_data$sample_id = factor(plot_data$sample_id,
                               levels = unique(color_bars$sample_id))
@@ -269,13 +271,23 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
                           levels = gene_levels)
 
 
-  plot_data = plot_data %>%
-    mutate(g_lab = map2_chr(gene, annotation, function(.x, .y) if_else(is.na(.y),
-                                                                as.character(.x),
-                                                                paste(.x, ": ", .y, sep = ""))))
+  if (!is.null(annotation_file)) {
+    plot_data = plot_data %>%
+      mutate(g_lab = map2_chr(gene, annotation, function(.x, .y) if_else(is.na(.y),
+                                                                         as.character(.x),
+                                                                         paste(.x, ": ", .y, sep = ""))))
+    lab_df = plot_data[,.(gene, g_lab)] %>%
+      unique
 
-  lab_df = plot_data[,.(gene, g_lab)] %>%
-    unique
+    y_scale = scale_y_discrete(breaks = lab_df$gene,
+                               labels = lab_df$g_lab)
+    w = ifelse(max(nchar(lab_df$g_lab)) > 50,
+               12, 8)
+  } else {
+    lab_df = plot_data[,.(gene)] %>% unique
+    y_scale = scale_y_discrete(breaks = lab_df$gene)
+    w = 8
+  }
 
   ns = n_distinct(plot_data$sample_id)
 
@@ -287,8 +299,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
                color = 'black',
                xintercept = n_healthy + .5) +
     scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse")) +
-    scale_y_discrete(breaks = lab_df$gene,
-                     labels = lab_df$g_lab) +
+    y_scale +
     labs(x = "samples",
          y = NULL) +
     theme(axis.text.x = element_blank(),
@@ -302,8 +313,6 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
                             guides = 'collect') +
     patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
 
-  w = ifelse(max(nchar(lab_df$g_lab)) > 50,
-             12, 8)
   ggsave(plot = p,
          width = w,
          height = 10,
@@ -312,7 +321,22 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
   p
 }
 
-make_interval_plot = function() {
+make_interval_plot = function(res,
+                              covariates, outcome, model_input, plot_dir, bug_name,
+                              annotation_file = NULL,
+                              plot_ext = ".pdf",
+                              n_top = 50,
+                              q_threshold = NULL) {
+  if (!is.null(annotation_file)) {
+    # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
+    anno = fread(annotation_file) # must have two columns: gene and annotation
+  }
+
+  if (!is.null(q_threshold)) {
+    gene_levels = res[q_global < q_threshold]$gene
+  } else {
+    gene_levels = res[1:n_top,]$gene
+  }
 
 }
 
@@ -331,7 +355,7 @@ make_composite_plot = function(bug_file,
                       covariates = covariates,
                       outcome = outcome,
                       model_results, annotation_file)
-  ip = make_int_plot(model_results)
+  ip = make_interval_plot(model_results)
 
   layout_str = "
   AACD
@@ -350,7 +374,7 @@ make_composite_plot = function(bug_file,
 
 #' @export
 make_cov_mat_plot = function(cov_mat,
-                             bug_name = NULL){
+                             bug_name = NULL) {
 
   if (!is.null(bug_name)) {
     title_str = paste0(bug_name, " tree\nas a covariance matrix")
