@@ -23,5 +23,9 @@ Imports:
     progressr,
     ape,
     rstanarm,
-    ggplot2
+    ggplot2,
+    R.utils,
+    broom,
+    mixtools,
+    readr
 RoxygenNote: 7.1.1
