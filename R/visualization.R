@@ -321,11 +321,15 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
       geom_vline(xintercept = 0,
                  lty = 2,
                  color = 'grey30') +
-      theme(panel.grid.major.y = element_blank(),
+      theme(panel.background = element_rect(fill = "white",
+                                            colour = NA),
+            panel.border = element_rect(fill = NA,
+                                        colour = "grey70", size = rel(1)),
+            panel.grid = element_line(colour = "grey87"),
+            panel.grid.major.y = element_blank(),
             axis.text.y = element_blank(),
             axis.ticks.y = element_blank(),
-            axis.title.y = element_blank()) +
-      theme_light()
+            axis.title.y = element_blank())
 
     design_str = "
     AAAAA#
