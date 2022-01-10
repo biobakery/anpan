@@ -207,7 +207,11 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
     anno = fread(annotation_file) # must have two columns: gene and annotation
   }
 
-  gene_levels = res[1:n_top,]$gene
+  if (!is.null(q_threshold)) {
+    gene_levels = res[q_global < q_threshold]$gene
+  } else {
+    gene_levels = res[1:n_top,]$gene
+  }
 
   select_cols = c("sample_id", covariates, outcome)
   order_cols = c(outcome, rev(covariates))
@@ -220,7 +224,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
   color_bars$sample_id = factor(color_bars$sample_id,
                                levels = unique(color_bars$sample_id))
 
-  plot_data = model_input[gene %in% res[1:n_top,]$gene] %>%
+  plot_data = model_input[gene %in% gene_levels] %>%
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))

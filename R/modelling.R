@@ -1,5 +1,6 @@
 get_bug_name = function(bug_file,
                         remove_pattern = ".genefamilies.tsv") {
+  # TODO make this function smarter.
   gsub(remove_pattern, "", basename(bug_file))
 }
 
@@ -142,6 +143,7 @@ fit_anpan = function(model_input, bug_name,
 #' @description Run the anpan model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
+#' @param out_dir path to the desired output directory
 #' @param model_type either "anpan" or "glm"
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param outcome the name of the outcome variable
@@ -206,6 +208,10 @@ anpan = function(bug_file,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir)
   # TODO write out model_input
+  if (save_filter_stats) {
+    readr::write_tsv(model_input,
+                     file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv")))
+  }
 
 
 # Fitting -----------------------------------------------------------------
@@ -218,14 +224,6 @@ anpan = function(bug_file,
                               outcome = outcome,
                               bug_name = bug_name))
 
-  make_data_plot(res = res,
-                 covariates = covariates,
-                 outcome = outcome,
-                 model_input = model_input,
-                 plot_dir = plot_dir,
-                 annotation_file = annotation_file,
-                 bug_name = bug_name, plot_ext = plot_ext)
-
 
 # Summarizing -------------------------------------------------------------
 # Only needed for anpan
@@ -236,6 +234,18 @@ anpan = function(bug_file,
   return(res)
 }
 
+#' Apply anpan to a many bugs
+#'
+#' @description This function calls anpan() on each gene family file in the
+#'   \code{bug_dir} directory and makes a composite data + results plot for
+#'   each.
+#'
+#' @param bug_dir a directory of gene family files
+#' @param plot_results logical indicating whether or not to plot the results
+#' @param covariates character vector of covariates to include in the model
+#'
+#' @inheritParams make_data_plot
+#' @inheritParams anpan
 #' @export
 anpan_batch = function(bug_dir,
                        meta_file,
@@ -245,9 +255,12 @@ anpan_batch = function(bug_dir,
                        outcome = "crc",
                        filtering_method = "kmeans",
                        annotation_file = NULL,
-                       plot_ext = "png",
                        save_filter_stats = TRUE,
-                       verbose = TRUE) {
+                       verbose = TRUE,
+                       plot_results = TRUE,
+                       plot_ext = "png",
+                       q_threshold = NULL,
+                       n_top = 50) {
 
   bug_files = get_file_list(bug_dir)
   # anpan is parallelized internally, so just map here.
@@ -263,9 +276,24 @@ anpan_batch = function(bug_dir,
                              annotation_file = annotation_file,
                              plot_ext = plot_ext,
                              verbose = verbose) %>%
-    purrr::imap(\(.x, .y) mutate(.x, bug_name = basename(bug_files)[.y])) %>%
+    purrr::imap(\(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
     bind_rows %>%
     mutate(q_global = p.adjust(p.value, method = "fdr"))
+
+  plot_dir = file.path(out_dir, 'plots')
+  if (plot_results) {
+    purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
+                function(bug_name, s){make_data_plot(res = s,
+                                                     bug_name = bug_name,
+                                                     covariates = covariates,
+                                                     outcome = outcome,
+                                                     model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv"))),
+                                                     plot_dir = plot_dir,
+                                                     annotation_file = annotation_file,
+                                                     plot_ext = plot_ext,
+                                                     n_top = n_top,
+                                                     q_threshold = q_threshold)})
+  }
 
   readr::write_tsv(all_bug_terms,
                    file = file.path(out_dir, 'all_bug_gene_terms.tsv'))

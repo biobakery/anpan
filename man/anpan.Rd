@@ -23,6 +23,8 @@ anpan(
 
 \item{meta_file}{path to a metadata tsv}
 
+\item{out_dir}{path to the desired output directory}
+
 \item{model_type}{either "anpan" or "glm"}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
