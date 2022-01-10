@@ -210,7 +210,7 @@ anpan = function(bug_file,
   # TODO write out model_input
   if (save_filter_stats) {
     readr::write_tsv(model_input,
-                     file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv")))
+                     file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
   }
 
 
@@ -287,7 +287,7 @@ anpan_batch = function(bug_dir,
                                                      bug_name = bug_name,
                                                      covariates = covariates,
                                                      outcome = outcome,
-                                                     model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv"))),
+                                                     model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
                                                      plot_dir = plot_dir,
                                                      annotation_file = annotation_file,
                                                      plot_ext = plot_ext,
