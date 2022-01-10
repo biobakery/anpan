@@ -41,7 +41,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   bug_terms = all_terms %>%
     dplyr::filter(term == "presentTRUE") %>%
     dplyr::arrange(p.value) %>%
-    dplyr::mutate(q = p.adjust(p.value, method = 'fdr')) %>%
+    dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) %>%
     dplyr::select(-term)
 
   readr::write_tsv(bug_terms,
