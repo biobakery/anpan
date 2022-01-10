@@ -324,7 +324,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
       theme(panel.grid.major.y = element_blank(),
             axis.text.y = element_blank(),
             axis.ticks.y = element_blank(),
-            axis.title.y = element_blank())
+            axis.title.y = element_blank()) +
+      theme_light()
 
     design_str = "
     AAAAA#
