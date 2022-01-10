@@ -278,11 +278,12 @@ anpan_batch = function(bug_dir,
                              verbose = verbose) %>%
     purrr::imap(\(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
     bind_rows %>%
-    mutate(q_global = p.adjust(p.value, method = "fdr"))
+    mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
+    data.table::as.data.table()
 
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
-    purrr::pmap(all_bug_terms[,list(s = list(.SD)), by = bug_name],
+    purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
                 function(bug_name, s){make_data_plot(res = s,
                                                      bug_name = bug_name,
                                                      covariates = covariates,
