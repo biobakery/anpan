@@ -244,7 +244,7 @@ anpan = function(bug_file,
 #' @param plot_results logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
 #'
-#' @inheritParams make_data_plot
+#' @inheritParams make_results_plot
 #' @inheritParams anpan
 #' @export
 anpan_batch = function(bug_dir,
@@ -285,7 +285,7 @@ anpan_batch = function(bug_dir,
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
     purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
-                function(bug_name, s){make_data_plot(res = s,
+                function(bug_name, s){make_results_plot(res = s,
                                                      bug_name = bug_name,
                                                      covariates = covariates,
                                                      outcome = outcome,

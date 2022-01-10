@@ -196,11 +196,13 @@ make_hex_plot = function(bug_file = NULL,
 #'   "gene" and "annotation".
 #'
 #'   \code{n_top} is ignored if \code{q_threshold} is specified.
-make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
+#' @export
+make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
                           annotation_file = NULL,
                           plot_ext = ".pdf",
                           n_top = 50,
-                          q_threshold = NULL) {
+                          q_threshold = NULL,
+                          show_intervals = TRUE) {
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
@@ -229,7 +231,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
 
-  n_healthy = sum(color_bars[[outcome]] == 0)
+  n_healthy = sum(color_bars[[outcome]] == 0) # TODO adapt to continuous outcome
 
   if (length(covariates) > 2) {
     stop("data plots can't handle more than two covariates right now")
@@ -268,7 +270,7 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
   plot_data$sample_id = factor(plot_data$sample_id,
                               levels = unique(color_bars$sample_id))
   plot_data$gene = factor(plot_data$gene,
-                          levels = gene_levels)
+                          levels = rev(gene_levels))
 
 
   if (!is.null(annotation_file)) {
@@ -307,11 +309,49 @@ make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_n
           panel.border = element_blank()) +
     coord_cartesian(expand = FALSE)
 
-  p = patchwork::wrap_plots(anno_plot, pres_plot,
-                            ncol = 1,
-                            heights = c(1, 11),
-                            guides = 'collect') +
-    patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+  if (show_intervals) {
+    int_plot = plot_data[,.(estimate, gene, std.error)] %>% unique %>%
+      ggplot(aes(estimate, gene)) +
+      geom_segment(aes(y = gene,
+                       yend = gene,
+                       x = estimate - 1.96*std.error,
+                       xend = estimate + 1.96*std.error),
+                   color = 'grey20') +
+      geom_point(color = "grey10") +
+      geom_vline(xintercept = 0,
+                 lty = 2,
+                 color = 'grey30') +
+      theme(panel.grid.major.y = element_blank(),
+            axis.text.y = element_blank(),
+            axis.ticks.y = element_blank(),
+            axis.title.y = element_blank())
+
+    design_str = "
+    AAAAA#
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    BBBBBC
+    " # lol
+
+    p = patchwork::wrap_plots(anno_plot, pres_plot, int_plot,
+                              ncol = 2,
+                              guides = 'collect',
+                              design = design_str) +
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+  } else {
+    p = patchwork::wrap_plots(anno_plot, pres_plot,
+                              ncol = 1,
+                              heights = c(1, 11),
+                              guides = 'collect') +
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+  }
 
   ggsave(plot = p,
          width = w,
@@ -333,12 +373,19 @@ make_interval_plot = function(res,
   }
 
   if (!is.null(q_threshold)) {
-    gene_levels = res[q_global < q_threshold]$gene
+    plot_data = res[q_global < q_threshold]
+    gene_levels = plot_data$gene
   } else {
-    gene_levels = res[1:n_top,]$gene
+    plot_data = res[1:n_top,]
+    gene_levels = plot_data$gene
   }
+  plot_data$gene = factor(plot_data$gene,
+                          levels = rev(gene_levels))
+
+
 
 }
+
 
 make_composite_plot = function(bug_file,
                                model_results,
