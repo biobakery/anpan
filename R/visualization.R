@@ -174,10 +174,33 @@ make_hex_plot = function(bug_file = NULL,
   p
 }
 
+#' Plot the data for top results
+#'
+#' @description This funciton makes a tile plot of the top results of a fit
+#'   alongside another tile plot showing the covariates included. Optional
+#'   annotations can be included.
+#' @param res a data frame of model results (from \code{anpan} or
+#'   \code{anpan_batch})
+#' @param covariates character string of the covariates to show
+#' @param outcome character string of the outcome variable
+#' @param model_input data frame of the model input
+#' @param plot_dir directory to write output to
+#' @param bug_name character string giving the name to use in the title/output
+#'   file
+#' @param annotation_file optional path file giving annotations
+#' @param plot_ext extension to use for plots
+#' @param n_top number of top elements to show from the results
+#' @param q_threshold FDR threshold to use for inclusion in the plot.
+#'
+#' @details If included, \code{annotation_file} must be a tsv with two columns:
+#'   "gene" and "annotation".
+#'
+#'   \code{n_top} is ignored if \code{q_threshold} is specified.
 make_data_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
                           annotation_file = NULL,
                           plot_ext = ".pdf",
-                          n_top = 50) {
+                          n_top = 50,
+                          q_threshold = NULL) {
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
