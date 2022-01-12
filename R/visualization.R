@@ -286,12 +286,14 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
       unique
 
     y_scale = scale_y_discrete(breaks = lab_df$gene,
-                               labels = lab_df$g_lab)
+                               labels = lab_df$g_lab,
+                               position = 'right')
     w = ifelse(max(nchar(lab_df$g_lab)) > 50,
                12, 8)
   } else {
     lab_df = plot_data[,.(gene)] %>% unique
-    y_scale = scale_y_discrete(breaks = lab_df$gene)
+    y_scale = scale_y_discrete(breaks = lab_df$gene,
+                               position = 'right')
     w = 8
   }
 
@@ -336,17 +338,17 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
             axis.title.y = element_blank())
 
     design_str = "
-    AAAAA#
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
-    BBBBBC
+    #AAAAA
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
+    CBBBBB
     " # lol
 
     p = patchwork::wrap_plots(anno_plot, pres_plot, int_plot,
