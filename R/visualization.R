@@ -207,6 +207,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
     anno = fread(annotation_file) # must have two columns: gene and annotation
+  } else {
+    anno = NULL
   }
 
   if (!is.null(q_threshold)) {
@@ -265,6 +267,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 
   if (!is.null(annotation_file)) {
     plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
+  } else {
+    plot_data = as.data.table(res)[plot_data, on = 'gene']
   }
 
   plot_data$sample_id = factor(plot_data$sample_id,
