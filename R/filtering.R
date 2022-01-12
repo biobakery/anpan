@@ -262,12 +262,12 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
              varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
           by = gene]
 
-  n_start = nrow(gf)
+  n_start = dplyr::n_distinct(gf$gene)
   gf = gf[(varies_enough)][,.(gene, sample_id, abd)]
-  n_end = nrow(gf)
+  n_end = dplyr::n_distinct(gf$gene)
 
   if (n_end != n_start & verbose) {
-    message(paste0("* Prevalence filter dropped ", n_end - n_start, " genes."))
+    message(paste0("* Prevalence filter dropped ", n_start - n_start, " genes."))
   }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
