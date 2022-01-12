@@ -242,7 +242,8 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                            outcome,
                            filtering_method = "med_by_nz_components",
                            save_filter_stats = FALSE,
-                           filter_stats_dir = NULL) {
+                           filter_stats_dir = NULL,
+                           verbose = TRUE) {
 
   n_lines = R.utils::countLines(bug_file)
 
@@ -256,9 +257,18 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   bug_name = get_bug_name(bug_file)
 
-  gf = read_bug(bug_file, meta = meta_cov)[,.(gene, sample_id, abd, varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh), by = gene
-  ][(varies_enough)
-  ][,.(gene, sample_id, abd)]
+  gf = read_bug(bug_file, meta = meta_cov)
+  gf = gf[,.(gene, sample_id, abd,
+             varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
+          by = gene]
+
+  n_start = nrow(gf)
+  gf = gf[(varies_enough)][,.(gene, sample_id, abd)]
+  n_end = nrow(gf)
+
+  if (n_end != n_start & verbose) {
+    message(paste0("* Prevalence filter dropped ", n_end - n_start, " genes."))
+  }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
                           covariates = covariates,

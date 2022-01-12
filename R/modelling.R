@@ -206,7 +206,8 @@ anpan = function(bug_file,
                                 outcome = outcome,
                                 filtering_method = filtering_method,
                                 save_filter_stats = save_filter_stats,
-                                filter_stats_dir = filter_stats_dir)
+                                filter_stats_dir = filter_stats_dir,
+                                verbose = verbose)
   # TODO write out model_input
   if (save_filter_stats) {
     readr::write_tsv(model_input,
