@@ -355,13 +355,15 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
                               ncol = 2,
                               guides = 'collect',
                               design = design_str) +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+                                 theme = theme(legend.position = "left"))
   } else {
     p = patchwork::wrap_plots(anno_plot, pres_plot,
                               ncol = 1,
                               heights = c(1, 11),
                               guides = 'collect') +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""))
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+                                 theme = theme(legend.position = "left"))
   }
 
   ggsave(plot = p,
