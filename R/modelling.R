@@ -219,7 +219,7 @@ anpan = function(bug_file,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir,
                                 verbose = verbose)
-  # TODO write out model_input
+
   if (save_filter_stats) {
     readr::write_tsv(model_input,
                      file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
