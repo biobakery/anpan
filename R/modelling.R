@@ -100,11 +100,13 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
 
 safely_fit_glm = purrr::safely(fit_glm)
 
-fit_anpan = function(model_input, bug_name,
+fit_anpan = function(model_input,
+                     out_dir,
+                     bug_name,
                      covariates,
                      outcome,
-                     tpc = 4, ncore = 4, out_path,
-                    save_summ = FALSE) {
+                     ...,
+                     save_summ = FALSE) {
 
   main_formula = as.formula(paste0(outcome, " ~ stdCovariates + genes"))
   std_formula = as.formula(paste0("stdCovariates ~ 1 + ", paste(covariates, collapse = " + ")))
@@ -113,7 +115,7 @@ fit_anpan = function(model_input, bug_name,
   form = brms::bf(main_formula, nl = TRUE) +
     brms::lf(std_formula, center = TRUE) +
     brms::lf(as.formula(paste0("genes ~ 0 + ",
-                               paste(names(model_input)[!(names(model_input) %in% c(covariates, outcome))],
+                               paste(names(model_input)[!(names(model_input) %in% c(covariates, outcome, "sample_id"))],
                                      collapse = " + "))), cmc = FALSE)
 
   p = brms::set_prior("horseshoe(par_ratio = .005)",
@@ -122,6 +124,7 @@ fit_anpan = function(model_input, bug_name,
                 class = "b", nlpar = 'stdCovariates')
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2){
+    # TODO allow the user to specify a family that overrides this logic
     mod_family = brms::bernoulli()
   } else {
     mod_family = stats::gaussian()
@@ -131,18 +134,15 @@ fit_anpan = function(model_input, bug_name,
                         prior = p,
                         data = model_input,
                         family = mod_family,
-                        refresh = 50,
                         control = list(adapt_delta = .9),
                         backend = 'cmdstanr',
-                        chains = 4,
-                        cores = ncore,
-                        threads = brms::threading(tpc))
+                        ...)
 
   summ = summarise_fit(model_fit)
 
   if (save_summ) {
     save(summ,
-         file = file.path(out_path, paste0(bug_name, ".RData"))) # TODO make the parts of this work
+         file = file.path(out_dir, paste0(bug_name, ".RData"))) # TODO make the parts of this work
   }
 
   model_fit
@@ -159,6 +159,7 @@ fit_anpan = function(model_input, bug_name,
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param outcome the name of the outcome variable
 #' @param save_filter_stats logical indicating whether to save filter statistics
+#' @param ... arguments to pass to brms::brm()
 #' @details The specified metadata file must contain columns matching "sample_id"
 #'   and the specified covariates and outcome variables.
 #' @export
@@ -172,7 +173,8 @@ anpan = function(bug_file,
                  annotation_file = NULL,
                  plot_ext = "png",
                  save_filter_stats = TRUE,
-                 verbose = TRUE) {
+                 verbose = TRUE,
+                 ...) {
 
 
 # Checks ------------------------------------------------------------------
@@ -229,12 +231,16 @@ anpan = function(bug_file,
 # Fitting -----------------------------------------------------------------
 
   res = switch(model_type,
-               anpan = fit_anpan(model_input,
-                                 out_dir),
-               glm = fit_glms(model_input, out_dir,
-                              covariates = covariates,
-                              outcome = outcome,
-                              bug_name = bug_name))
+               anpan = fit_anpan(model_input = model_input,
+                                 out_dir = out_dir,
+                                 covariates = covariates,
+                                 outcome = outcome,
+                                 bug_name = bug_name,
+                                 ...),
+               glm   = fit_glms(model_input, out_dir,
+                                covariates = covariates,
+                                outcome = outcome,
+                                bug_name = bug_name))
 
 
 # Summarizing -------------------------------------------------------------
@@ -255,7 +261,7 @@ anpan = function(bug_file,
 #' @param bug_dir a directory of gene family files
 #' @param plot_results logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
-#'
+#' @param ... arguments to pass to brms::brm()
 #' @inheritParams make_results_plot
 #' @inheritParams anpan
 #' @export
@@ -272,12 +278,13 @@ anpan_batch = function(bug_dir,
                        plot_results = TRUE,
                        plot_ext = "png",
                        q_threshold = NULL,
-                       n_top = 50) {
+                       n_top = 50,
+                       ...) {
 
   bug_files = get_file_list(bug_dir)
   # anpan is parallelized internally, so just map here.
-  all_bug_terms = purrr::map(bug_files,
-                             anpan,
+  all_bug_terms = purrr::map(.x = bug_files,
+                             .f = anpan,
                              meta_file = meta_file,
                              out_dir = out_dir,
                              model_type = model_type,
@@ -287,10 +294,11 @@ anpan_batch = function(bug_dir,
                              save_filter_stats = save_filter_stats,
                              annotation_file = annotation_file,
                              plot_ext = plot_ext,
-                             verbose = verbose) %>%
+                             verbose = verbose,
+                             ...) %>%
     purrr::imap(function(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
-    bind_rows %>%
-    mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
+    dplyr::bind_rows() %>%
+    dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     data.table::as.data.table()
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
