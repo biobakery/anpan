@@ -6,6 +6,14 @@ get_bug_name = function(bug_file,
 
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
+
+  if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
+    # TODO let the user specify a family that overrides this logic
+    mod_family = "binomial"
+  } else {
+    mod_family = "gaussian"
+  }
+
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
@@ -16,7 +24,8 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
                                          # p();
                                          safely_fit_glm(.x,
                                                         covariates = covariates,
-                                                        outcome = outcome)
+                                                        outcome = outcome,
+                                                        mod_family = mod_family)
                                        })
   # TODO progress bar with progressr
   # What I have here doesn't work for some reason.
@@ -67,7 +76,9 @@ check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
 }
 
 #' Fit a GLM to one gene
-fit_glm = function(gene_dat, covariates, outcome, out_dir, prevalence_filter = .05) {
+fit_glm = function(gene_dat, covariates, outcome, out_dir,
+                   mod_family,
+                   prevalence_filter = .05) {
 
   if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
     return(data.table(term = character(),
