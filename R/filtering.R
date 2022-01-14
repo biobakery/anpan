@@ -273,7 +273,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   if (n_end == 1) filtering_method = "none"
 
   if ((n_end != n_start) & verbose) {
-    message(paste0("* Prevalence filter dropped ", n_start - n_end, " genes."))
+    message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes."))
   }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
