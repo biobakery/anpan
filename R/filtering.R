@@ -175,7 +175,7 @@ filter_with_kmeans = function(gf,
 
   samp_stats$in_right = NA
   samp_stats$clust = NA
-  low_clust = which.min(km_res$centers[,2])
+  low_clust = which.max(km_res$centers[,1])
 
   samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
   samp_stats$clust[is.na(samp_stats$q50)] = low_clust
