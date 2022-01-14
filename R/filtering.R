@@ -85,8 +85,6 @@ fit_mixture = function(samp_stats) {
   return(list(res = mf, input = em_input))
 }
 
-
-
 get_component_densities = function(mix_fit, plot = FALSE) {
   input_mat = as.matrix(mix_fit$input[,-1])
 
@@ -222,9 +220,11 @@ filter_gf = function(gf,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
                                      bug_name = bug_name)
+  } else if (filtering_method == "none") {
+    filtered_gf = gf
   }
 
-  if (save_filter_stats) {
+  if (save_filter_stats & filtering_method != "none") {
     make_line_plot(fgf = filtered_gf,
                    bug_name = bug_name,
                    covariates = covariates,
@@ -237,7 +237,7 @@ filter_gf = function(gf,
 
 read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
-                           minmax_thresh = 5,
+                           minmax_thresh = 5, # TODO expose this higher up
                            covariates,
                            outcome,
                            filtering_method = "kmeans",
@@ -270,8 +270,10 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   gf = gf[(varies_enough)][,.(gene, sample_id, abd)]
   n_end = dplyr::n_distinct(gf$gene)
 
-  if (n_end != n_start & verbose) {
-    message(paste0("* Prevalence filter dropped ", n_start - n_start, " genes."))
+  if (n_end == 1) filtering_method = "none"
+
+  if ((n_end != n_start) & verbose) {
+    message(paste0("* Prevalence filter dropped ", n_start - n_end, " genes."))
   }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
