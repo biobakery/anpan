@@ -206,7 +206,7 @@ filter_gf = function(gf,
 
   if (!(filtering_method %in% c("med_by_nz_components", "kmeans"))) stop("Specified filtering method not implemented")
 
-  samp_stats = get_samp_stats(gf)
+  if (filtering_method != "none") samp_stats = get_samp_stats(gf)
 
   if (filtering_method == "med_by_nz_components"){
     filtered_gf = filter_with_mixture(gf,
@@ -273,7 +273,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   if (n_end == 1) filtering_method = "none"
 
   if ((n_end != n_start) & verbose) {
-    message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes."))
+    message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
   }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
