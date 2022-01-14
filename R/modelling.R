@@ -134,7 +134,6 @@ fit_anpan = function(model_input,
                         prior = p,
                         data = model_input,
                         family = mod_family,
-                        control = list(adapt_delta = .9),
                         backend = 'cmdstanr',
                         ...)
 
@@ -178,6 +177,7 @@ anpan = function(bug_file,
 
 
 # Checks ------------------------------------------------------------------
+  # TODO separate the checks out to a distinct function.
   if (verbose) message("Preparing the mise en place (checking inputs)...")
 
   if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
@@ -206,6 +206,10 @@ anpan = function(bug_file,
     dir.create(plot_dir)
   }
 
+  warnings_file = file.path(out_dir, "warnings.txt")
+  if (!file.exists(warnings_file)) {
+    file.create(warnings_file)
+  }
 
 # Filtering ---------------------------------------------------------------
   if (verbose) message(paste0("Beginning to analyze ", bug_file))
@@ -221,6 +225,15 @@ anpan = function(bug_file,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir,
                                 verbose = verbose)
+
+  if (nrow(model_input) == 0) {
+    # ^ if nothing passed the prevalence filter:
+    readr::write_lines(paste0(bug_file, " contained no genes that passed the prevalence filter."),
+                       file = warnings_file,
+                       append = TRUE)
+
+    return(data.table::data.table())
+  }
 
   if (save_filter_stats) {
     readr::write_tsv(model_input,
@@ -250,6 +263,15 @@ anpan = function(bug_file,
 # Done inside fit_glms()
 
   return(res)
+}
+
+add_bug_name = function(.x, .y, bug_files) {
+  if (nrow(.x) == 0) {
+    return(.x)
+  } else {
+    return(dplyr::mutate(.x,
+                         bug_name = get_bug_name(basename(bug_files)[.y])))
+  }
 }
 
 #' Apply anpan to a many bugs
@@ -296,7 +318,7 @@ anpan_batch = function(bug_dir,
                              plot_ext = plot_ext,
                              verbose = verbose,
                              ...) %>%
-    purrr::imap(function(.x, .y) mutate(.x, bug_name = get_bug_name(basename(bug_files)[.y]))) %>%
+    purrr::imap(add_bug_name, bug_files = bug_files) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     data.table::as.data.table()

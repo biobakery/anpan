@@ -15,7 +15,8 @@ anpan(
   annotation_file = NULL,
   plot_ext = "png",
   save_filter_stats = TRUE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -32,6 +33,8 @@ anpan(
 \item{outcome}{the name of the outcome variable}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
+
+\item{...}{arguments to pass to brms::brm()}
 }
 \description{
 Run the anpan model on a single bug

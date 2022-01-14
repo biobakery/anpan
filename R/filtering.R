@@ -240,7 +240,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                            minmax_thresh = 5,
                            covariates,
                            outcome,
-                           filtering_method = "med_by_nz_components",
+                           filtering_method = "kmeans",
                            save_filter_stats = FALSE,
                            filter_stats_dir = NULL,
                            verbose = TRUE) {
@@ -258,9 +258,13 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   bug_name = get_bug_name(bug_file)
 
   gf = read_bug(bug_file, meta = meta_cov)
-  gf = gf[,.(gene, sample_id, abd,
+  gf = gf[,.(sample_id, abd,
              varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
           by = gene]
+
+  if (!any(gf$varies_enough)) {
+    return(data.table::data.table())
+  }
 
   n_start = dplyr::n_distinct(gf$gene)
   gf = gf[(varies_enough)][,.(gene, sample_id, abd)]

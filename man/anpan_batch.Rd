@@ -18,7 +18,8 @@ anpan_batch(
   plot_results = TRUE,
   plot_ext = "png",
   q_threshold = NULL,
-  n_top = 50
+  n_top = 50,
+  ...
 )
 }
 \arguments{
@@ -45,6 +46,8 @@ anpan_batch(
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
 
 \item{n_top}{number of top elements to show from the results}
+
+\item{...}{arguments to pass to brms::brm()}
 }
 \description{
 This function calls anpan() on each gene family file in the

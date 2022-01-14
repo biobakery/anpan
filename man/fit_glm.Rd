@@ -4,7 +4,14 @@
 \alias{fit_glm}
 \title{Fit a GLM to one gene}
 \usage{
-fit_glm(gene_dat, covariates, outcome, out_dir, prevalence_filter = 0.05)
+fit_glm(
+  gene_dat,
+  covariates,
+  outcome,
+  out_dir,
+  mod_family,
+  prevalence_filter = 0.05
+)
 }
 \description{
 Fit a GLM to one gene
