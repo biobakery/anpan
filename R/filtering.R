@@ -204,7 +204,7 @@ filter_gf = function(gf,
                      filter_stats_dir = NULL,
                      bug_name = NULL) {
 
-  if (!(filtering_method %in% c("med_by_nz_components", "kmeans"))) stop("Specified filtering method not implemented")
+  if (!(filtering_method %in% c("med_by_nz_components", "kmeans", "none"))) stop("Specified filtering method not implemented")
 
   if (filtering_method != "none") samp_stats = get_samp_stats(gf)
 
@@ -222,6 +222,7 @@ filter_gf = function(gf,
                                      bug_name = bug_name)
   } else if (filtering_method == "none") {
     filtered_gf = gf
+    filtered_gf$present = filtered_gf$abd > 0
   }
 
   if (save_filter_stats & filtering_method != "none") {
