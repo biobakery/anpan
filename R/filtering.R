@@ -249,7 +249,8 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   n_lines = R.utils::countLines(bug_file)
 
   if (n_lines > 161000) {
-    stop("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
+    warning("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
+    return(NULL)
   }
 
   if (save_filter_stats & is.null(filter_stats_dir)){

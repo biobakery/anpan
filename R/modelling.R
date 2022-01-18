@@ -226,6 +226,13 @@ anpan = function(bug_file,
                                 filter_stats_dir = filter_stats_dir,
                                 verbose = verbose)
 
+  if (is.null(model_input)){
+    readr::write_lines(paste0(bug_file, " was skipped."),
+                       file = warnings_file,
+                       append = TRUE)
+    return(data.table::data.table())
+  }
+
   if (nrow(model_input) == 0) {
     # ^ if nothing passed the prevalence filter:
     readr::write_lines(paste0(bug_file, " contained no genes that passed the prevalence filter."),
