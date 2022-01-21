@@ -19,14 +19,11 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
   # p <- progressr::progressor(along = glm_fits$data_subset)
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
-  glm_fits$glm_res = furrr::future_map(glm_fits$data_subset,
-                                       function(.x){
-                                         # p();
-                                         safely_fit_glm(.x,
-                                                        covariates = covariates,
-                                                        outcome = outcome,
-                                                        mod_family = mod_family)
-                                       })
+  glm_fits$glm_res = furrr::future_map(.x = glm_fits$data_subset,
+                                       .f = safely_fit_glm,
+                                       covariates = covariates,
+                                       outcome = outcome,
+                                       mod_family = mod_family)
   # TODO progress bar with progressr
   # What I have here doesn't work for some reason.
 
