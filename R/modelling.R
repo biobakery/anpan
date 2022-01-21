@@ -42,7 +42,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
                             cols = c(glm_res))
 
   readr::write_tsv(all_terms,
-                   file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv")))
+                   file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
 
   bug_terms = all_terms %>%
     dplyr::filter(term == "presentTRUE") %>%
@@ -51,7 +51,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
     dplyr::select(-term)
 
   readr::write_tsv(bug_terms,
-                   file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv")))
+                   file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv.gz")))
 
   return(bug_terms)
 }
