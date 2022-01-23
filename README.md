@@ -7,10 +7,25 @@
 <!-- badges: end -->
 
 The goal of anpan is to consolidate statistical methods for strain
-analysis. This includes testing genetic elements for association with
-outcomes, phylogenetic association testing, and ….
+analysis. This includes testing automated filtering of metagenomic
+functional profiles, genetic elements for association with outcomes, and
+phylogenetic association testing.
 
 ## Requirements
+
+anpan uses Stan, which means your R installation needs to be able to
+compile C++14 code. On Linux this means you will need to create a
+Makevars file if you don’t already have one set up using the following R
+command (instructions for other operating systems can be found at [this
+link](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)):
+
+    dotR <- file.path(Sys.getenv("HOME"), ".R")
+    if (!file.exists(dotR)) dir.create(dotR)
+    M <- file.path(dotR, "Makevars")
+    if (!file.exists(M)) file.create(M)
+    cat("\nCXX14FLAGS=-O3 -march=native -mtune=native -fPIC",
+        "CXX14=g++", # or clang++ but you may need a version postfix
+        file = M, sep = "\n", append = TRUE)
 
 anpan requires the following R packages, most of which which can be
 installed from CRAN:
