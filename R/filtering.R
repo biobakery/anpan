@@ -215,14 +215,12 @@ filter_gf = function(gf,
   if (filtering_method == "med_by_nz_components"){
     filtered_gf = filter_with_mixture(gf,
                                       samp_stats = samp_stats,
-                                      discard_absent_samples = discard_absent_samples,
                                       save_filter_stats = save_filter_stats,
                                       filter_stats_dir = filter_stats_dir,
                                       bug_name = bug_name)
   } else if (filtering_method == 'kmeans') {
     filtered_gf = filter_with_kmeans(gf = gf,
                                      samp_stats = samp_stats,
-                                     discard_absent_samples = discard_absent_samples,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
                                      bug_name = bug_name)
