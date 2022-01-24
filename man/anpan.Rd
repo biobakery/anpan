@@ -12,6 +12,7 @@ anpan(
   covariates = c("age", "gender"),
   outcome = "crc",
   filtering_method = "kmeans",
+  discard_absent_samples = TRUE,
   annotation_file = NULL,
   plot_ext = "png",
   save_filter_stats = TRUE,
@@ -31,6 +32,8 @@ anpan(
 \item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{outcome}{the name of the outcome variable}
+
+\item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 

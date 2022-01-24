@@ -12,6 +12,7 @@ anpan_batch(
   covariates = c("age", "gender"),
   outcome = "crc",
   filtering_method = "kmeans",
+  discard_absent_samples = TRUE,
   annotation_file = NULL,
   save_filter_stats = TRUE,
   verbose = TRUE,
@@ -34,6 +35,8 @@ anpan_batch(
 \item{covariates}{character vector of covariates to include in the model}
 
 \item{outcome}{character string of the outcome variable}
+
+\item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
 
 \item{annotation_file}{optional path file giving annotations}
 
