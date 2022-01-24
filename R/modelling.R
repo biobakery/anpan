@@ -178,7 +178,7 @@ anpan = function(bug_file,
 
 # Checks ------------------------------------------------------------------
   # TODO separate the checks out to a distinct function.
-  if (verbose) message("Preparing the mise en place (checking inputs)...")
+  if (verbose) message("\nPreparing the mise en place (checking inputs)...")
 
   if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
 
@@ -214,7 +214,7 @@ anpan = function(bug_file,
   }
 
 # Filtering ---------------------------------------------------------------
-  if (verbose) message(paste0("\nBeginning to analyze ", bug_file))
+  if (verbose) message(paste0("Beginning to analyze ", bug_file))
   if (verbose) message("Reading and filtering the data.")
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates))
