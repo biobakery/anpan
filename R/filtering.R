@@ -124,6 +124,7 @@ check_mix_fit = function(mix_fit) {
 
 filter_with_mixture = function(gf,
                                samp_stats,
+                               discard_absent_samples = TRUE,
                                save_filter_stats,
                                filter_stats_dir,
                                bug_name){
@@ -149,12 +150,19 @@ filter_with_mixture = function(gf,
   }
 
   mix_labels = get_component_densities(mix_fit)
-  label_df = mix_labels[samp_stats, on = "sample_id"]
+  label_df = mix_labels[samp_stats, on = "sample_id"] # TODO write out this table
   label_df$in_right[is.na(label_df$in_right)] = TRUE # all zero samples don't have the species
 
   filtered_gf = label_df[,.(sample_id, in_right)][gf, on = "sample_id"]
-  filtered_gf$abd[filtered_gf$in_right] = 0
-  filtered_gf$present = filtered_gf$abd > 0
+
+  if (discard_absent_samples) {
+    filtered_gf$abd[filtered_gf$in_right] = 0
+    filtered_gf$present = filtered_gf$abd > 0
+    filtered_gf = filtered_gf[!(in_right)]
+  } else {
+    filtered_gf$abd[filtered_gf$in_right] = 0
+    filtered_gf$present = filtered_gf$abd > 0
+  }
 
   filtered_gf
 }
@@ -162,11 +170,15 @@ filter_with_mixture = function(gf,
 filter_with_kmeans = function(gf,
                               samp_stats,
                               save_filter_stats,
+                              discard_absent_samples = TRUE,
                               filter_stats_dir,
                               bug_name) {
   em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
   em_input$n_z = scale(em_input$n_z)
-  em_input$q50 = scale(em_input$q50)
+
+  scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
+  # TODO make sure this doesn't mess up anything downstream
+  em_input$q50 = scale(em_input$q50) / scrunch
 
   km_res = kmeans(as.matrix(em_input[,-1]),
                   centers = matrix(c(-1,1,1,-1), nrow = 2))
@@ -189,8 +201,14 @@ filter_with_kmeans = function(gf,
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
 
-  filtered_gf$abd[filtered_gf$in_right] = 0
-  filtered_gf$present = filtered_gf$abd > 0
+  if (discard_absent_samples) {
+    filtered_gf$abd[filtered_gf$in_right] = 0
+    filtered_gf$present = filtered_gf$abd > 0
+    filtered_gf = filtered_gf[!(in_right)]
+  } else {
+    filtered_gf$abd[filtered_gf$in_right] = 0
+    filtered_gf$present = filtered_gf$abd > 0
+  }
 
   filtered_gf
 }
@@ -200,6 +218,7 @@ filter_gf = function(gf,
                      filtering_method = "med_by_nz_components",
                      covariates,
                      outcome,
+                     discard_absent_samples = TRUE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
                      bug_name = NULL) {
@@ -211,12 +230,14 @@ filter_gf = function(gf,
   if (filtering_method == "med_by_nz_components"){
     filtered_gf = filter_with_mixture(gf,
                                       samp_stats = samp_stats,
+                                      discard_absent_samples = discard_absent_samples,
                                       save_filter_stats = save_filter_stats,
                                       filter_stats_dir = filter_stats_dir,
                                       bug_name = bug_name)
   } else if (filtering_method == 'kmeans') {
     filtered_gf = filter_with_kmeans(gf = gf,
                                      samp_stats = samp_stats,
+                                     discard_absent_samples = discard_absent_samples,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
                                      bug_name = bug_name)
@@ -242,6 +263,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                            covariates,
                            outcome,
                            filtering_method = "kmeans",
+                           discard_absent_samples = TRUE,
                            save_filter_stats = FALSE,
                            filter_stats_dir = NULL,
                            verbose = TRUE) {
@@ -282,6 +304,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                           covariates = covariates,
                           outcome = outcome,
                           save_filter_stats = save_filter_stats,
+                          discard_absent_samples = discard_absent_samples,
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
 

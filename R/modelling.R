@@ -43,6 +43,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
 
   readr::write_tsv(all_terms,
                    file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
+  # TODO write this and the one two lines down to a "bug_results/" directory rather than the top level output directory
 
   bug_terms = all_terms %>%
     dplyr::filter(term == "presentTRUE") %>%
@@ -153,6 +154,7 @@ fit_anpan = function(model_input,
 #' @param out_dir path to the desired output directory
 #' @param model_type either "anpan" or "glm"
 #' @param covariates covariates to account for (as a vector of strings)
+#' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @param ... arguments to pass to brms::brm()
@@ -166,6 +168,7 @@ anpan = function(bug_file,
                  covariates = c("age", "gender"),
                  outcome = "crc",
                  filtering_method = "kmeans",
+                 discard_absent_samples = TRUE,
                  annotation_file = NULL,
                  plot_ext = "png",
                  save_filter_stats = TRUE,
@@ -219,6 +222,7 @@ anpan = function(bug_file,
                                 covariates = covariates,
                                 outcome = outcome,
                                 filtering_method = filtering_method,
+                                discard_absent_samples = discard_absent_samples,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir,
                                 verbose = verbose)
@@ -287,6 +291,7 @@ add_bug_name = function(.x, .y, bug_files) {
 #' @param bug_dir a directory of gene family files
 #' @param plot_results logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
+#' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param ... arguments to pass to brms::brm()
 #' @inheritParams make_results_plot
 #' @inheritParams anpan
@@ -298,6 +303,7 @@ anpan_batch = function(bug_dir,
                        covariates = c("age", "gender"),
                        outcome = "crc",
                        filtering_method = "kmeans",
+                       discard_absent_samples = TRUE,
                        annotation_file = NULL,
                        save_filter_stats = TRUE,
                        verbose = TRUE,
@@ -315,6 +321,7 @@ anpan_batch = function(bug_dir,
                              out_dir = out_dir,
                              model_type = model_type,
                              filtering_method = filtering_method,
+                             discard_absent_samples = discard_absent_samples,
                              covariates = covariates,
                              outcome = outcome,
                              save_filter_stats = save_filter_stats,
@@ -344,7 +351,7 @@ anpan_batch = function(bug_dir,
   }
 
   readr::write_tsv(all_bug_terms,
-                   file = file.path(out_dir, 'all_bug_gene_terms.tsv'))
+                   file = file.path(out_dir, 'all_bug_gene_terms.tsv')) #TODO reorder columns
 
 }
 
