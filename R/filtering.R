@@ -290,14 +290,23 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
 
-  if (save_filter_stats & filtering_method != "none") {
+  if (filtering_method != "none") { # TODO separate these four blocks out to a distinct function
     sample_labels = unique(filtered_gf[,.(sample_id, bug_present = !in_right)])
+    n_absent = sum(!sample_labels$bug_present)
+  }
+
+  if (verbose & n_absent > 0 & filtering_method != "none") {
+    message(paste0("* ", n_absent, " samples out of ", nrow(sample_labels), " were determined to not have ", bug_name, " present."))
+  }
+
+  if (save_filter_stats & filtering_method != "none") {
     readr::write_tsv(sample_labels,
                      file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
   }
 
   if (discard_absent_samples & filtering_method != "none") {
     filtered_gf = filtered_gf[!(in_right)]
+    if (n_absent != 0 & verbose) message("* Samples with no ", bug_name, " discarded.")
   }
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
