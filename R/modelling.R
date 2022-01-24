@@ -193,11 +193,13 @@ anpan = function(bug_file,
   if (save_filter_stats) {
     filter_stats_dir = file.path(out_dir, "filter_stats")
     fs_plot_dir = file.path(filter_stats_dir, 'plots')
+    fs_labs_dir = file.path(filter_stats_dir, 'labels')
     if (!dir.exists(filter_stats_dir)) {
       if (verbose) message("* Creating the filter stats directory in the output directory.")
       dir.create(filter_stats_dir)
     }
     if (!dir.exists(fs_plot_dir)) dir.create(fs_plot_dir)
+    if (!dir.exists(fs_labs_dir)) dir.create(fs_labs_dir)
   }
 
   plot_dir = file.path(out_dir, 'plots')

@@ -124,7 +124,6 @@ check_mix_fit = function(mix_fit) {
 
 filter_with_mixture = function(gf,
                                samp_stats,
-                               discard_absent_samples = TRUE,
                                save_filter_stats,
                                filter_stats_dir,
                                bug_name){
@@ -155,14 +154,8 @@ filter_with_mixture = function(gf,
 
   filtered_gf = label_df[,.(sample_id, in_right)][gf, on = "sample_id"]
 
-  if (discard_absent_samples) {
-    filtered_gf$abd[filtered_gf$in_right] = 0
-    filtered_gf$present = filtered_gf$abd > 0
-    filtered_gf = filtered_gf[!(in_right)]
-  } else {
-    filtered_gf$abd[filtered_gf$in_right] = 0
-    filtered_gf$present = filtered_gf$abd > 0
-  }
+  filtered_gf$abd[filtered_gf$in_right] = 0
+  filtered_gf$present = filtered_gf$abd > 0
 
   filtered_gf
 }
@@ -170,7 +163,6 @@ filter_with_mixture = function(gf,
 filter_with_kmeans = function(gf,
                               samp_stats,
                               save_filter_stats,
-                              discard_absent_samples = TRUE,
                               filter_stats_dir,
                               bug_name) {
   em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
@@ -200,15 +192,8 @@ filter_with_kmeans = function(gf,
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
-
-  if (discard_absent_samples) {
-    filtered_gf$abd[filtered_gf$in_right] = 0
-    filtered_gf$present = filtered_gf$abd > 0
-    filtered_gf = filtered_gf[!(in_right)]
-  } else {
-    filtered_gf$abd[filtered_gf$in_right] = 0
-    filtered_gf$present = filtered_gf$abd > 0
-  }
+  filtered_gf$abd[filtered_gf$in_right] = 0
+  filtered_gf$present = filtered_gf$abd > 0
 
   filtered_gf
 }
@@ -304,9 +289,18 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                           covariates = covariates,
                           outcome = outcome,
                           save_filter_stats = save_filter_stats,
-                          discard_absent_samples = discard_absent_samples,
                           filter_stats_dir = filter_stats_dir,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
+
+  if (save_filter_stats & filtering_method != "none") {
+    sample_labels = unique(filtered_gf[,.(sample_id, bug_present = !in_right)])
+    readr::write_tsv(sample_labels,
+                     file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
+  }
+
+  if (discard_absent_samples & filtering_method != "none") {
+    filtered_gf = filtered_gf[!(in_right)]
+  }
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
   joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0] %>%
