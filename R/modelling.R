@@ -214,7 +214,7 @@ anpan = function(bug_file,
   }
 
 # Filtering ---------------------------------------------------------------
-  if (verbose) message(paste0("Beginning to analyze ", bug_file))
+  if (verbose) message(paste0("\nBeginning to analyze ", bug_file))
   if (verbose) message("Reading and filtering the data.")
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates))
