@@ -295,16 +295,16 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
     n_absent = sum(!sample_labels$bug_present)
   }
 
-  if (verbose & n_absent > 0 & filtering_method != "none") {
+  if (verbose && filtering_method != "none" && n_absent > 0) {
     message(paste0("* ", n_absent, " samples out of ", nrow(sample_labels), " were determined to not have ", bug_name, " present."))
   }
 
-  if (save_filter_stats & filtering_method != "none") {
+  if (save_filter_stats && filtering_method != "none") {
     readr::write_tsv(sample_labels,
                      file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
   }
 
-  if (discard_absent_samples & filtering_method != "none") {
+  if (discard_absent_samples && filtering_method != "none") {
     filtered_gf = filtered_gf[!(in_right)]
     if (n_absent != 0 & verbose) message("* Samples with no ", bug_name, " discarded.")
   }
