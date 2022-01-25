@@ -246,7 +246,14 @@ anpan = function(bug_file,
   }
 
   if (save_filter_stats) {
-    readr::write_tsv(model_input,
+    spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
+                           sep = "") %>%
+      as.formula()
+
+    wide_dat = dcast(model_input,
+                     formula = spread_formula,
+                     value.var = 'present')
+    readr::write_tsv(wide_dat,
                      file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
   }
 
