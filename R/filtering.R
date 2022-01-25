@@ -200,9 +200,9 @@ filter_with_kmeans = function(gf,
 
 #' @export
 filter_gf = function(gf,
-                     filtering_method = "med_by_nz_components",
-                     covariates,
-                     outcome,
+                     filtering_method = "kmeans",
+                     covariates = NULL,
+                     outcome = NULL,
                      discard_absent_samples = TRUE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
@@ -240,11 +240,12 @@ filter_gf = function(gf,
   return(filtered_gf)
 }
 
+#' @export
 read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
                            minmax_thresh = 5, # TODO expose this higher up
-                           covariates,
-                           outcome,
+                           covariates = NULL,
+                           outcome = NULL,
                            filtering_method = "kmeans",
                            discard_absent_samples = TRUE,
                            save_filter_stats = FALSE,
@@ -264,7 +265,9 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   bug_name = get_bug_name(bug_file)
 
-  gf = read_bug(bug_file, meta = meta_cov)
+  gf = read_bug(bug_file, meta = meta_cov) # Read in the whole genefamily file
+
+  # Run the initial prevalence filter
   gf = gf[,.(sample_id, abd,
              varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
           by = gene]
@@ -281,6 +284,16 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   if ((n_end != n_start) & verbose) {
     message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
+    initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv")
+    drop_df = data.table(bug = bug_name,
+                         n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
+    if (!file.exists(initial_prev_filter)) {
+      fwrite(drop_df,
+             file = initial_prev_filter)
+    } else {
+      fwrite(drop_df,
+             file = initial_prev_filter, append = TRUE)
+    }
   }
 
   filtered_gf = filter_gf(gf, filtering_method = filtering_method,
@@ -317,6 +330,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
     spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
                            sep = "") %>%
       as.formula()
+
     wide_dat = dcast(joined,
                      formula = spread_formula,
                      value.var = 'present')

@@ -17,6 +17,7 @@ read_meta = function(meta_file,
   meta_cov
 }
 
+#' @export
 read_bug = function(bug_file, meta = NULL,
                     remove_pattern = "_Abundance-RPKs") {
   nc = readLines(bug_file,
