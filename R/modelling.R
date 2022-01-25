@@ -353,7 +353,7 @@ anpan_batch = function(bug_dir,
   }
 
   readr::write_tsv(all_bug_terms,
-                   file = file.path(out_dir, 'all_bug_gene_terms.tsv')) #TODO reorder columns
+                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz')) #TODO reorder columns
 
 }
 
