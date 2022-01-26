@@ -323,8 +323,14 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   }
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
-  joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0] %>%
-    dplyr::select(dplyr::all_of(select_cols))
+
+  if (!is.null(meta_cov)) {
+    joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0] %>%
+      dplyr::select(dplyr::all_of(select_cols))
+  } else {
+    joined = filtered_gf %>%
+      dplyr::select(dplyr::all_of(select_cols))
+  }
 
   if (pivot_wide) {
     spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
