@@ -13,10 +13,11 @@ phylogenetic association testing.
 
 ## Requirements
 
-anpan uses Stan, which means your R installation needs to be able to
-compile C++14 code. On Linux this means you will need to create a
-Makevars file if you don’t already have one set up using the following R
-command (instructions for other operating systems can be found at [this
+anpan currently depends on `rstan`, which means your R installation
+needs to be able to compile C++14 code. On Linux this means you will
+need to create a Makevars file if you don’t already have one set up
+using the following R command (instructions for other operating systems
+can be found at [this
 link](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)):
 
     dotR <- file.path(Sys.getenv("HOME"), ".R")
@@ -26,6 +27,8 @@ link](https://github.com/stan-dev/rstan/wiki/RStan-Getting-Started)):
     cat("\nCXX14FLAGS=-O3 -march=native -mtune=native -fPIC",
         "CXX14=g++", # or clang++ but you may need a version postfix
         file = M, sep = "\n", append = TRUE)
+
+The rstan dependency should hopefully be removed soon.
 
 anpan requires the following R packages, most of which which can be
 installed from CRAN:
