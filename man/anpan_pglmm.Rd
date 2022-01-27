@@ -48,5 +48,5 @@ the tip labels of the tree must be the sample ids from the metadata.
 
   The default error distribution for the outcome is \code{stats::gaussian()}.
   You could change this to a phylogenetic logistic regression by changing
-  \code{family} to brms::bernoulli() for example.
+  \code{family} to \code{brms::bernoulli()} for example.
 }

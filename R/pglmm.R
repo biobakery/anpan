@@ -1,72 +1,3 @@
-# library(tidyverse); theme_set(theme_light())
-# library(brms)
-# library(patchwork)
-# library(shadowtext)
-# library(ggbeeswarm)
-#
-# meta_adult = read_csv("data/current_cross_sectional_metadata.csv") %>%
-#   mutate(outcome = c("case", "control")[grepl("HC|NIJP", x = diagnosis) + 1]) %>%
-#   select(sample_id = X1, age, gender, outcome)
-# meta_jia = read_csv("data/current_jia_metadata.csv") %>%
-#   mutate(outcome = c("case", "control")[grepl("HC", x = subtype) + 1]) %>%
-#   select(sample_id = SampleID, age, gender, outcome)
-#
-# meta = rbind(meta_jia, meta_adult)
-#
-# trees = list.files("../../../../strain_stats/data/age_trees",
-#                    pattern = ".tre$",
-#                    full.names = TRUE)
-#
-# bug_file = trees[1]
-#
-# bug_tree = ape::read.tree(bug_file)
-# bug_tree$tip.label = bug_tree$tip.label %>%
-#   gsub("_bowtie2", "", .)
-# cov_mat = ape::vcv.phylo(bug_tree)
-#
-# meta_gender_n = meta %>% count(gender, outcome)
-#
-# model_input %>%
-#   ggplot(aes(gender, outcome)) +
-#   geom_jitter(width = .2, height = .2, color = 'lightblue3') +
-#   geom_shadowtext(data = meta_gender_n,
-#                   aes(label = n),
-#                   size = 10)
-# ggsave("outputs/gender_by_outcome.png", width = 6, height = 5)
-#
-# model_input %>%
-#   ggplot(aes(age, outcome)) +
-#   geom_beeswarm(groupOnX = FALSE, cex = 1.7)
-# ggsave("outputs/age_by_outcome.png", width = 7, height = 5)
-#
-# model_input = meta %>%
-#   filter(sample_id %in% bug_tree$tip.label) %>%
-#   mutate(outcome = dplyr::case_when(outcome == 'case' ~ 1,
-#                                     outcome == "control" ~ 0))
-#
-# base_age_model = brm(outcome ~ age,
-#                      data = model_input,
-#                      family = bernoulli(),
-#
-#                      prior = c(
-#                        prior(normal(0, 50), "Intercept"),
-#                        prior(student_t(3, 0, 20), "sd")
-#                      ),
-#                      cores = 4)
-#
-# base_tree_model = brm(outcome ~ (1|gr(sample_id, cov = cov_mat)),
-#                       data = model_input,
-#                       family = bernoulli(),
-#                       data2 = list(cov_mat = cov_mat),
-#                       prior = c(
-#                         prior(normal(0, 50), "Intercept"),
-#                         prior(student_t(3, 0, 20), "sd")
-#                       ),
-#                       cores = 4)
-#
-# base_tree_model$fit %>% as.data.frame() %>%
-#   posterior::summarise_draws() %>% arrange(-abs(mean))
-
 #' @title Run a phylogenetic generalized linear mixed model
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
@@ -83,7 +14,7 @@
 #'
 #'   The default error distribution for the outcome is \code{stats::gaussian()}.
 #'   You could change this to a phylogenetic logistic regression by changing
-#'   \code{family} to brms::bernoulli() for example.
+#'   \code{family} to \code{brms::bernoulli()} for example.
 #' @inheritParams anpan
 #' @export
 anpan_pglmm = function(meta_file,
@@ -126,22 +57,29 @@ anpan_pglmm = function(meta_file,
 
   model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cov_mat))"))
 
-  n_mean = mean(model_input[[outcome]])
-  n_sd = 3*sd(model_input[[outcome]])
+  # TODO figure out how to set priors as a function of family and # and structure of covariates
+  if (family$family == "gaussian") {
+    n_mean = mean(model_input[[outcome]])
+    n_sd = 3*sd(model_input[[outcome]])
+    prior_vec = c(
+      brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
+      brms::prior(student_t(3, 0, 20), "sd"),
+      brms::prior(student_t(3, 0, 20), "sigma")
+    )
+  } else if (family$family == "bernoulli") {
+    prior_vec = NULL
+  }
+
   model_fit = brms::brm(formula = model_formula,
                         data = model_input,
                         family = family,
                         data2 = list(cov_mat = cov_mat),
-                        prior = c(
-                          brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
-                          brms::prior(student_t(3, 0, 20), "sd"),
-                          brms::prior(student_t(3, 0, 20), "sigma")
-                        ),
+                        prior = prior_vec,
                         backend = "cmdstanr",
                         ...)
 
 
-  if (test_signal) {
+  if (test_signal && family$family != "bernoulli") {
     hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
     hyp = brms::hypothesis(model_fit, hyp_str, class = NULL)
 
