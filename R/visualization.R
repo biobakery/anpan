@@ -413,10 +413,11 @@ make_interval_plot = function(res,
 #' @export
 make_p_value_histogram = function(all_bug_terms,
                                   out_dir = NULL,
-                                  plot_ext = "png") {
+                                  plot_ext = "png",
+                                  n_bins = 50) {
   p = all_bug_terms %>%
     ggplot(aes(`p.value`)) +
-    geom_histogram(breaks = seq(0, 1, length.out = 50)) +
+    geom_histogram(breaks = seq(0, 1, length.out = n_bins)) +
     labs(title = "p-value histogram for all bug:gene glm fits",
          subtitle = paste0("There are ",
                            dplyr::n_distinct(all_bug_terms$bug_name), " unique bugs, ",

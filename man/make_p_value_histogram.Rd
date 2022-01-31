@@ -4,7 +4,12 @@
 \alias{make_p_value_histogram}
 \title{Make a p-value histogram}
 \usage{
-make_p_value_histogram(all_bug_terms, out_dir = NULL, plot_ext = "png")
+make_p_value_histogram(
+  all_bug_terms,
+  out_dir = NULL,
+  plot_ext = "png",
+  n_bins = 50
+)
 }
 \arguments{
 \item{all_bug_terms}{a data frame of bug:gene glm fits}
