@@ -399,6 +399,39 @@ make_interval_plot = function(res,
 
 }
 
+#' Make a p-value histogram
+#'
+#' @description This function makes a p-value histogram from a collection of
+#'   bug:gene glm fits.
+#'
+#' @param all_bug_terms a data frame of bug:gene glm fits
+#' @param out_dir string giving the output directory
+#' @param plot_ext string giving the extension to use
+#' @details The plot will be written out to \code{aaa_p_value_histogram.<ext>}
+#'   in the specified output directory. The "aaa" is there for alphabetical
+#'   superiority.
+#' @export
+make_p_value_histogram = function(all_bug_terms,
+                                  out_dir = NULL,
+                                  plot_ext = "png") {
+  p = all_bug_terms %>%
+    ggplot(aes(`p.value`)) +
+    geom_histogram(breaks = seq(0, 1, length.out = 50)) +
+    labs(title = "p-value histogram for all bug:gene glm fits",
+         subtitle = paste0("There are ",
+                           dplyr::n_distinct(all_bug_terms$bug_name), " unique bugs, ",
+                           dplyr::n_distinct(all_bug_terms$gene), " unique genes, and ",
+                           nrow(unique(all_bug_terms[,.(bug_name, gene)])), " bug:gene combinations.")) +
+    theme_light()
+
+  if (!is.null(out_dir)) {
+    ggsave(plot = p,
+           filename = file.path(out_dir, paste0("aaa_p_value_histogram.", plot_ext)),
+           width = 8, height = 6)
+  }
+
+  p
+}
 
 make_composite_plot = function(bug_file,
                                model_results,

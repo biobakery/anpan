@@ -360,6 +360,12 @@ anpan_batch = function(bug_dir,
                                                      q_threshold = q_threshold)})
   }
 
+  if (model_type == "glm") {
+    make_p_value_histogram(all_bug_terms,
+                           out_dir = out_dir,
+                           plot_ext = plot_ext)
+  }
+
   readr::write_tsv(all_bug_terms,
                    file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
 
