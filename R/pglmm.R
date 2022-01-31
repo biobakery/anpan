@@ -2,6 +2,8 @@
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param family family object for the error distribution
+#' @param save_object logical indicating whether to save the model fit object
+#' @param out_dir if saving, directory where to save
 #' @param ... other arguments to pass to brms::brm
 #' @param test_signal compute the phylogenetic signal
 #' @details the tip labels of the tree must be the sample ids from the metadata.
@@ -19,16 +21,25 @@
 #' @export
 anpan_pglmm = function(meta_file,
                        tree_file,
+                       out_dir = NULL,
                        trim_pattern = NULL,
                        covariates = NULL,
                        family = stats::gaussian(),
                        plot_cov_mat = TRUE,
                        outcome = "age",
+                       save_object = FALSE,
                        verbose = TRUE,
                        test_signal = TRUE,
                        ...) {
+
+  if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
+
   meta = read_meta(meta_file,
                    select_cols = c("sample_id", covariates, outcome))
+
+  tree_name = basename(tree_file) %>%
+    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$"),
+                             replacement = "")
 
   bug_tree = ape::read.tree(tree_file)
 
@@ -36,9 +47,10 @@ anpan_pglmm = function(meta_file,
   cov_mat = ape::vcv.phylo(bug_tree)
 
   if (plot_cov_mat) {
-    p = make_cov_mat_plot(cov_mat,
+    p = make_cov_mat_plot(cov_mat, # TODO pass tree name to this function for a better title
                           bug_name = basename(tree_file))
     if (verbose) message("Plotting covariance matrix...")
+    # TODO save the plot if out_dir is specified
     print(p)
   }
 
@@ -83,12 +95,6 @@ anpan_pglmm = function(meta_file,
     hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
     hyp = brms::hypothesis(model_fit, hyp_str, class = NULL)
 
-    model_fit$fit %>%
-      as.data.frame() %>%
-      tibble::as_tibble() %>%
-      dplyr::mutate(i = 1:n()) %>%
-      tidyr::pivot_longer(-i, 'param', 'value')
-
     outcome_signal = model_fit$fit %>%
       as.data.frame() %>%
       tibble::as_tibble() %>%
@@ -108,7 +114,25 @@ anpan_pglmm = function(meta_file,
     hyp = NULL
   }
 
-  list(model_fit = model_fit,
+  draws = model_fit$fit %>%
+    as.data.frame() %>%
+    tibble::as_tibble() %>%
+    dplyr::mutate(i = 1:n()) %>%
+    tidyr::pivot_longer(-i, 'param', 'value')
+
+  brms_summary = model_fit %>% summary()
+  param_summary = model_fit %>%
+    posterior::summarise_draws()
+
+  if (save_object) {
+    save(model_fit,
+         file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RData")))
+    # V This is what to use once the model_fit is done with cmdstanr
+    # model_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
+  }
+
+  list(param_summary = param_summary,
+       brms_summary = brms_summary,
        phylogenetic_signal_test = hyp,
        phylogenetic_signal_post = outcome_signal)
 

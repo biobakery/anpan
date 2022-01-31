@@ -7,11 +7,13 @@
 anpan_pglmm(
   meta_file,
   tree_file,
+  out_dir = NULL,
   trim_pattern = NULL,
   covariates = NULL,
   family = stats::gaussian(),
   plot_cov_mat = TRUE,
   outcome = "age",
+  save_object = FALSE,
   verbose = TRUE,
   test_signal = TRUE,
   ...
@@ -22,6 +24,8 @@ anpan_pglmm(
 
 \item{tree_file}{path to a .tre file}
 
+\item{out_dir}{if saving, directory where to save}
+
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
@@ -29,6 +33,8 @@ anpan_pglmm(
 \item{family}{family object for the error distribution}
 
 \item{outcome}{the name of the outcome variable}
+
+\item{save_object}{logical indicating whether to save the model fit object}
 
 \item{test_signal}{compute the phylogenetic signal}
 
