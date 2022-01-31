@@ -411,9 +411,9 @@ make_interval_plot = function(res,
 #'   in the specified output directory. The "aaa" is there for alphabetical
 #'   superiority.
 #'
-#'   If you don't understand the purpose of this type of plot, [this blog post
+#'   If you don't understand the purpose of this type of plot, \href{http://varianceexplained.org/statistics/interpreting-pvalue-histogram/}{this blog post
 #'   by David
-#'   Robinson](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/)
+#'   Robinson}
 #'   has a lot of helpful information.
 #' @export
 make_p_value_histogram = function(all_bug_terms,

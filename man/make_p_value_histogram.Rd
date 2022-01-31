@@ -27,8 +27,8 @@ The plot will be written out to \code{aaa_p_value_histogram.<ext>}
   in the specified output directory. The "aaa" is there for alphabetical
   superiority.
 
-  If you don't understand the purpose of this type of plot, [this blog post
+  If you don't understand the purpose of this type of plot, \href{http://varianceexplained.org/statistics/interpreting-pvalue-histogram/}{this blog post
   by David
-  Robinson](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/)
+  Robinson}
   has a lot of helpful information.
 }
