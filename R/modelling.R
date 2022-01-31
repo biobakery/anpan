@@ -341,7 +341,8 @@ anpan_batch = function(bug_dir,
     purrr::imap(add_bug_name, bug_files = bug_files) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
-    data.table::as.data.table()
+    data.table::as.data.table() %>%
+    dplyr::relocate(bug_name, gene)
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
@@ -360,7 +361,9 @@ anpan_batch = function(bug_dir,
   }
 
   readr::write_tsv(all_bug_terms,
-                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz')) #TODO reorder columns
+                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
+
+  all_bug_terms
 
 }
 
