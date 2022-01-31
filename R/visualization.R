@@ -410,6 +410,11 @@ make_interval_plot = function(res,
 #' @details The plot will be written out to \code{aaa_p_value_histogram.<ext>}
 #'   in the specified output directory. The "aaa" is there for alphabetical
 #'   superiority.
+#'
+#'   If you don't understand the purpose of this type of plot, [this blog post
+#'   by David
+#'   Robinson](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/)
+#'   has a lot of helpful information.
 #' @export
 make_p_value_histogram = function(all_bug_terms,
                                   out_dir = NULL,
