@@ -228,6 +228,11 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
   color_bars$sample_id = factor(color_bars$sample_id,
                                levels = unique(color_bars$sample_id))
 
+  model_input = data.table::melt(model_input,
+                                 id.vars = c(covariates, outcome, "sample_id"),
+                                 variable.name = "gene",
+                                 value.name = "present")
+
   plot_data = model_input[gene %in% gene_levels] %>%
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
