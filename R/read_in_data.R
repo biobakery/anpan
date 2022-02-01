@@ -5,11 +5,15 @@ read_meta = function(meta_file,
 
   # Handle missing or alternative sample_id column names
   if (!("sample_id" %in% names(meta))) {
-    if (sum(c("sampleID", "SampleID", "sampID", "samp_id", "sample_ID")  %in% names(meta)) == 1) {
-      sid_i = which(names(meta) %in% c("sampleID", "SampleID", "sampID", "samp_id", "sample_ID"))
+    alternate_name = grepl(pattern = "samp[l]?[e]?[:punct:]?[i]?[d]?",
+                           x = names(meta),
+                           ignore.case = TRUE)
+    unique_name_found = sum(alternate_name == 1)
+    if (alternate_name_found) {
+      sid_i = which(alternate_name)
       names(meta)[sid_i] = 'sample_id'
     } else {
-      stop("Couldn't find the sample_id column in the metadata file.")
+      stop("Couldn't find a unique sample_id column in the metadata file.")
     }
   }
 
