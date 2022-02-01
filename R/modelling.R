@@ -175,10 +175,10 @@ anpan = function(bug_file,
                  verbose = TRUE,
                  ...) {
 
-
+  n_steps = 3
 # Checks ------------------------------------------------------------------
   # TODO separate the checks out to a distinct function.
-  if (verbose) message("\nPreparing the mise en place (checking inputs)...")
+  if (verbose) message(paste0("\n(1/", n_steps, ") Preparing the mise en place (checking inputs)..."))
 
   if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
 
@@ -214,8 +214,8 @@ anpan = function(bug_file,
   }
 
 # Filtering ---------------------------------------------------------------
-  if (verbose) message(paste0("Beginning to analyze ", bug_file))
-  if (verbose) message("Reading and filtering the data.")
+
+  if (verbose) message(paste0("(2/", n_steps, ") Reading and filtering ", bug_file))
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates))
 
@@ -260,6 +260,7 @@ anpan = function(bug_file,
 
 # Fitting -----------------------------------------------------------------
 
+  if (verbose) message(paste0("(3/", n_steps, ") Fitting models to filtered data"))
   res = switch(model_type,
                anpan = fit_anpan(model_input = model_input,
                                  out_dir = out_dir,
@@ -341,23 +342,23 @@ anpan_batch = function(bug_dir,
     purrr::imap(add_bug_name, bug_files = bug_files) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
-    data.table::as.data.table() %>%
-    dplyr::relocate(bug_name, gene)
+    dplyr::relocate(bug_name, gene) %>%
+    data.table::as.data.table()
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
     purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
                 function(bug_name, s){make_results_plot(res = s,
-                                                     bug_name = bug_name,
-                                                     covariates = covariates,
-                                                     outcome = outcome,
-                                                     model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
-                                                     plot_dir = plot_dir,
-                                                     annotation_file = annotation_file,
-                                                     plot_ext = plot_ext,
-                                                     n_top = n_top,
-                                                     q_threshold = q_threshold)})
+                                                        bug_name = bug_name,
+                                                        covariates = covariates,
+                                                        outcome = outcome,
+                                                        model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
+                                                        plot_dir = plot_dir,
+                                                        annotation_file = annotation_file,
+                                                        plot_ext = plot_ext,
+                                                        n_top = n_top,
+                                                        q_threshold = q_threshold)})
   }
 
   if (model_type == "glm") {
