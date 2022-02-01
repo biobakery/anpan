@@ -294,6 +294,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   if (is_large) {
     warning("This gene family file is huge. It would be better to use read_and_filter_large() here.")
+    # TODO make the downstream functions have a chunked = TRUE argument
     return(NULL)
   }
 
@@ -313,8 +314,14 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   if (dplyr::n_distinct(gf$gene) == 1) filtering_method = "none" # TODO write out to warnings.txt if this happens
 
-  if (filtering_method != "none" && !is_large) samp_stats = get_samp_stats(gf)
+  if (filtering_method != "none" && !is_large) {
+    if (verbose) message("* Computing sample statistics...")
+    samp_stats = get_samp_stats(gf)
+  } else {
+    samp_stats = NA
+  }
 
+  if (verbose) message("* Filtering samples based ")
   filtered_gf = filter_gf(gf,
                           samp_stats = samp_stats,
                           filtering_method = filtering_method,
