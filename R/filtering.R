@@ -285,7 +285,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                            outcome = NULL,
                            filtering_method = "kmeans",
                            discard_absent_samples = TRUE,
-                           save_filter_stats = FALSE,
+                           save_filter_stats = TRUE,
                            filter_stats_dir = NULL,
                            verbose = TRUE) {
 
@@ -311,6 +311,9 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                                  minmax_thresh = minmax_thresh,
                                  filter_stats_dir = filter_stats_dir,
                                  verbose = verbose)
+  if (nrow(gf) == 0) {
+    return(NULL)
+  }
 
   if (dplyr::n_distinct(gf$gene) == 1) filtering_method = "none" # TODO write out to warnings.txt if this happens
 
