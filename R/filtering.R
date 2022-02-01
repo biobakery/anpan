@@ -1,4 +1,4 @@
-get_q_large = function(gf_file) {
+get_samp_stats_large = function(gf_file) {
   # If the gene family file is large (e.g. E coli), we have to get the quantiles in chunks
   # TODO Test this function specifically
 
@@ -200,6 +200,7 @@ filter_with_kmeans = function(gf,
 
 #' @export
 filter_gf = function(gf,
+                     samp_stats,
                      filtering_method = "kmeans",
                      covariates = NULL,
                      outcome = NULL,
@@ -209,8 +210,6 @@ filter_gf = function(gf,
                      bug_name = NULL) {
 
   if (!(filtering_method %in% c("med_by_nz_components", "kmeans", "none"))) stop("Specified filtering method not implemented")
-
-  if (filtering_method != "none") samp_stats = get_samp_stats(gf)
 
   if (filtering_method == "med_by_nz_components"){
     filtered_gf = filter_with_mixture(gf,
@@ -240,32 +239,13 @@ filter_gf = function(gf,
   return(filtered_gf)
 }
 
-#' @export
-read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
-                           pivot_wide = TRUE,
-                           minmax_thresh = 5, # TODO expose this higher up
-                           covariates = NULL,
-                           outcome = NULL,
-                           filtering_method = "kmeans",
-                           discard_absent_samples = TRUE,
-                           save_filter_stats = FALSE,
-                           filter_stats_dir = NULL,
-                           verbose = TRUE) {
+initial_prevalence_filter = function(gf,
+                                     bug_name,
+                                     minmax_thresh,
+                                     filter_stats_dir,
+                                     verbose) {
 
-  n_lines = R.utils::countLines(bug_file)
 
-  if (n_lines > 161000) {
-    warning("This gene family file is huge. Probably E coli. Auto-handling large files isn't implemented yet")
-    return(NULL)
-  }
-
-  if (save_filter_stats & is.null(filter_stats_dir)){
-    stop("You said save the filter statistics but didn't provide filter_stats_dir")
-  }
-
-  bug_name = get_bug_name(bug_file)
-
-  gf = read_bug(bug_file, meta = meta_cov) # Read in the whole genefamily file
 
   # Run the initial prevalence filter
   gf = gf[,.(sample_id, abd,
@@ -280,23 +260,64 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
   gf = gf[(varies_enough)][,.(gene, sample_id, abd)]
   n_end = dplyr::n_distinct(gf$gene)
 
-  if (n_end == 1) filtering_method = "none"
-
   if ((n_end != n_start) & verbose) {
     message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
-    initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv")
+    initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv.gz")
     drop_df = data.table(bug = bug_name,
                          n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
     if (!file.exists(initial_prev_filter)) {
-      fwrite(drop_df,
-             file = initial_prev_filter)
+      readr::write_tsv(drop_df,
+                       file = initial_prev_filter)
     } else {
-      fwrite(drop_df,
-             file = initial_prev_filter, append = TRUE)
+      readr::write_tsv(drop_df,
+                       file = initial_prev_filter, append = TRUE)
     }
   }
 
-  filtered_gf = filter_gf(gf, filtering_method = filtering_method,
+  gf
+}
+
+#' @export
+read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
+                           pivot_wide = TRUE,
+                           minmax_thresh = 5, # TODO expose this higher up
+                           covariates = NULL,
+                           outcome = NULL,
+                           filtering_method = "kmeans",
+                           discard_absent_samples = TRUE,
+                           save_filter_stats = FALSE,
+                           filter_stats_dir = NULL,
+                           verbose = TRUE) {
+
+  n_lines = R.utils::countLines(bug_file)
+  is_large = n_lines > 161000
+
+  if (is_large) {
+    warning("This gene family file is huge. It would be better to use read_and_filter_large() here.")
+    return(NULL)
+  }
+
+  if (save_filter_stats & is.null(filter_stats_dir)) {
+    stop("You said save the filter statistics but didn't provide filter_stats_dir")
+  }
+
+  bug_name = get_bug_name(bug_file)
+
+  gf = read_bug(bug_file, meta = meta_cov)
+
+  gf = initial_prevalence_filter(gf,
+                                 bug_name = bug_name,
+                                 minmax_thresh = minmax_thresh,
+                                 filter_stats_dir = filter_stats_dir,
+                                 verbose = verbose)
+
+  if (dplyr::n_distinct(gf$gene) == 1) filtering_method = "none" # TODO write out to warnings.txt if this happens
+
+  if (filtering_method != "none" && !is_large) samp_stats = get_samp_stats(gf)
+
+  filtered_gf = filter_gf(gf,
+                          samp_stats = samp_stats,
+                          filtering_method = filtering_method,
                           covariates = covariates,
                           outcome = outcome,
                           save_filter_stats = save_filter_stats,
