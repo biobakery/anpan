@@ -49,7 +49,12 @@ installed from CRAN:
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
 If the `cmdstanr` installation doesn’t work you can find more detailed
-instructions [at this link](https://mc-stan.org/cmdstanr/).
+instructions [at this link](https://mc-stan.org/cmdstanr/). Once you’ve
+installed `cmdstanr`, you will need to use it to install CmdStan:
+
+    library(cmdstanr)
+    check_cmdstan_toolchain()
+    install_cmdstan(cores = 2)
 
 ## Installation
 
