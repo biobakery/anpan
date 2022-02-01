@@ -230,7 +230,7 @@ anpan = function(bug_file,
                                 verbose = verbose)
 
   if (is.null(model_input)){
-    readr::write_lines(paste0(bug_file, " was skipped."),
+    readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
                        file = warnings_file,
                        append = TRUE)
     return(data.table::data.table())
