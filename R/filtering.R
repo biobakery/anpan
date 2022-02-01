@@ -290,7 +290,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
                            verbose = TRUE) {
 
   n_lines = R.utils::countLines(bug_file)
-  is_large = n_lines > 161000
+  is_large = n_lines > 200000
 
   if (is_large) {
     warning("This gene family file is huge. It would be better to use read_and_filter_large() here.")
