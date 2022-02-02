@@ -43,7 +43,7 @@ anpan_pglmm = function(meta_file,
 
   bug_tree = ape::read.tree(tree_file)
 
-  bug_tree$tip.label = gsub("_bowtie2", "", bug_tree$tip.label)
+  bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
   cov_mat = ape::vcv.phylo(bug_tree)
 
   if (plot_cov_mat) {
