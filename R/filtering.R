@@ -165,8 +165,9 @@ filter_with_kmeans = function(gf,
                               save_filter_stats,
                               filter_stats_dir,
                               bug_name) {
+
   em_input = na.omit(samp_stats[,.(sample_id, n_z, q50)])
-  if (dplyr::n_distinct(gf$gene) > 70000) em_input$n_z = log1p(em_input$n_z)
+  if (dplyr::n_distinct(gf$gene) > 50000) em_input$n_z = log1p(em_input$n_z)
   em_input$n_z = scale(em_input$n_z)
 
   scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
