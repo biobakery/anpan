@@ -9,7 +9,7 @@ read_meta = function(meta_file,
                            x = names(meta),
                            ignore.case = TRUE)
     unique_name_found = sum(alternate_name == 1)
-    if (alternate_name_found) {
+    if (unique_name_found) {
       sid_i = which(alternate_name)
       names(meta)[sid_i] = 'sample_id'
     } else {
