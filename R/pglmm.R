@@ -21,12 +21,12 @@
 #' @export
 anpan_pglmm = function(meta_file,
                        tree_file,
+                       outcome,
                        out_dir = NULL,
                        trim_pattern = NULL,
                        covariates = NULL,
                        family = stats::gaussian(),
                        plot_cov_mat = TRUE,
-                       outcome = "age",
                        save_object = FALSE,
                        verbose = TRUE,
                        test_signal = TRUE,
