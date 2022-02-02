@@ -46,8 +46,12 @@ anpan_pglmm = function(meta_file,
   bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
   cov_mat = ape::vcv.phylo(bug_tree)
 
+  d = sqrt(diag(cov_mat)) # Not sure if needed
+  cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
+  dimnames(cor_mat) = dimnames(cov_mat)
+
   if (plot_cov_mat) {
-    p = make_cov_mat_plot(cov_mat, # TODO pass tree name to this function for a better title
+    p = make_cov_mat_plot(cov_mat,
                           bug_name = basename(tree_file))
     if (verbose) message("Plotting covariance matrix...")
     # TODO save the plot if out_dir is specified
@@ -57,7 +61,7 @@ anpan_pglmm = function(meta_file,
   model_input = meta %>%
     dplyr::filter(sample_id %in% bug_tree$tip.label)
 
-  if (nrow(model_input) < nrow(meta) & verbose){
+  if (nrow(model_input) < nrow(meta) & verbose) {
     message(paste0(nrow(model_input), ' samples out of ', nrow(meta), " present in the metadata included in the analysis." ))
   }
 
@@ -68,6 +72,12 @@ anpan_pglmm = function(meta_file,
   }
 
   model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cov_mat))"))
+  if (is.null(cov_str)){
+    base_formula = as.formula(paste0(outcome, " ~ 1"))
+  } else {
+    base_formula = as.formula(paste0(outcome, " ~ ", cov_str))
+  }
+
 
   # TODO figure out how to set priors as a function of family and # and structure of covariates
   if (family$family == "gaussian") {
@@ -82,7 +92,7 @@ anpan_pglmm = function(meta_file,
     prior_vec = NULL
   }
 
-  model_fit = brms::brm(formula = model_formula,
+  pglmm_fit = brms::brm(formula = model_formula,
                         data = model_input,
                         family = family,
                         data2 = list(cov_mat = cov_mat),
@@ -90,50 +100,59 @@ anpan_pglmm = function(meta_file,
                         backend = "cmdstanr",
                         ...)
 
+  base_fit = brms::brm(formula = base_formula,
+                       data = model_input,
+                       family = family,
+                       prior = prior_vec[-2],
+                       backend = "cmdstanr",
+                       ...)
+
 
   if (test_signal && family$family != "bernoulli") {
-    hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
-    hyp = brms::hypothesis(model_fit, hyp_str, class = NULL)
+    # hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
+    # hyp = brms::hypothesis(pglmm_fit, hyp_str, class = NULL)
+    #
+    # outcome_signal = pglmm_fit$fit %>%
+    #   as.data.frame() %>%
+    #   tibble::as_tibble() %>%
+    #   dplyr::mutate(i = 1:n()) %>%
+    #   dplyr::mutate(phy_signal = sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2)) %>%
+    #   dplyr::select(phy_signal)
+    #
+    # hp = outcome_signal %>%
+    #   ggplot(aes(phy_signal)) +
+    #   geom_density() +
+    #   labs(title = 'Phylogenetic signal posterior') +
+    #   theme_light()
+    #
+    # print(hp)
 
-    outcome_signal = model_fit$fit %>%
-      as.data.frame() %>%
-      tibble::as_tibble() %>%
-      dplyr::mutate(i = 1:n()) %>%
-      dplyr::mutate(phy_signal = sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2)) %>%
-      dplyr::select(phy_signal)
+    pglmm_loo = loo::loo(pglmm_fit)
+    base_loo = loo::loo(base_fit)
 
-    hp = outcome_signal %>%
-      ggplot(aes(phy_signal)) +
-      geom_density() +
-      labs(title = 'Phylogenetic signal posterior') +
-      theme_light()
+    message("loo comparison: ")
+    comparison = loo_compare(pglmm_loo,
+                             base_loo)
+    print(comparison)
 
-    print(hp)
   } else {
-    outcome_signal = NULL
-    hyp = NULL
+    # outcome_signal = NULL
+    # hyp = NULL
+    pglmm_loo = NULL
+    base_loo = NULL
   }
-
-  draws = model_fit$fit %>%
-    as.data.frame() %>%
-    tibble::as_tibble() %>%
-    dplyr::mutate(i = 1:n()) %>%
-    tidyr::pivot_longer(-i, 'param', 'value')
-
-  brms_summary = model_fit %>% summary()
-  param_summary = model_fit %>%
-    posterior::summarise_draws()
 
   if (save_object) {
-    save(model_fit,
+    save(pglmm_fit,
          file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RData")))
-    # V This is what to use once the model_fit is done with cmdstanr
-    # model_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
+    save(pglmm_fit,
+         file = file.path(out_dir, paste0(tree_name, "_base_fit.RData")))
+    # V This is what to use once the pglmm_fit is done with cmdstanr
+    # pglmm_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
   }
 
-  list(param_summary = param_summary,
-       brms_summary = brms_summary,
-       phylogenetic_signal_test = hyp,
-       phylogenetic_signal_post = outcome_signal)
+  list(pglmm_fit = pglmm_fit,
+       base_fit = base_fit,
+       loo = list(pglmm_loo = pglmm_loo, base_loo = base_loo, comparison = comparison))
 
 }
