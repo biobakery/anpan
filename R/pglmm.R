@@ -108,8 +108,8 @@ anpan_pglmm = function(meta_file,
                        ...)
 
 
-  if (test_signal && family$family != "bernoulli") {
-    # hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
+  if (test_signal) {
+    hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
     # hyp = brms::hypothesis(pglmm_fit, hyp_str, class = NULL)
     #
     # outcome_signal = pglmm_fit$fit %>%
@@ -131,9 +131,23 @@ anpan_pglmm = function(meta_file,
     base_loo = loo::loo(base_fit)
 
     message("loo comparison: ")
-    comparison = loo_compare(pglmm_loo,
+    comparison = loo::loo_compare(pglmm_loo,
                              base_loo)
     print(comparison)
+
+    if (rownames(comparison)[1] == 'pglmm_fit') {
+      p1 = "The phylogenetic model seems to fit better, "
+    } else {
+      p1 = "The phylogenetic model seems to fit worse, "
+    }
+
+    if (abs(comparison[2,1] / comparison[2,2]) > 2) {
+      p2 = "and the difference seems substantial (more than 2 standard errors difference in ELPD)."
+    } else {
+      p2 = "but the difference doesn't seem substantial (less than 2 standard errors difference in ELPD)."
+    }
+
+    message(paste0(p1, p2))
 
   } else {
     # outcome_signal = NULL
