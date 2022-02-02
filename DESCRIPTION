@@ -27,5 +27,6 @@ Imports:
     R.utils,
     broom,
     mixtools,
-    readr
+    readr,
+    loo
 RoxygenNote: 7.1.1
