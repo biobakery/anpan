@@ -13,7 +13,8 @@ get_samp_stats_large = function(gf_file) {
   for (i in 1:10) {
     gf = fread(gf_file,
                colClasses = list(character = 1, numeric = 2:nc),
-               select = c(1, (2:nc)[chunks == i])) %>%
+               select = c(1, (2:nc)[chunks == i]),
+               showProgress = FALSE) %>%
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
     names(gf)[1] = "gene"
@@ -326,7 +327,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
     samp_stats = NA
   }
 
-  if (verbose) message("* Filtering samples based ")
+  # if (verbose) message("* Filtering samples based ")
   filtered_gf = filter_gf(gf,
                           samp_stats = samp_stats,
                           filtering_method = filtering_method,

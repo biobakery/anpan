@@ -1,7 +1,8 @@
 read_meta = function(meta_file,
                      select_cols = c("sample_id", "age", "gender", "crc")) {
 
-  meta = fread(meta_file)
+  meta = fread(meta_file,
+               showProgress = FALSE)
 
   # Handle missing or alternative sample_id column names
   if (!("sample_id" %in% names(meta))) {
@@ -31,7 +32,8 @@ read_bug = function(bug_file, meta = NULL,
     length
 
   gf = fread(bug_file,
-             colClasses = list(character = 1, numeric = 2:nc)) %>%
+             colClasses = list(character = 1, numeric = 2:nc),
+             showProgress = FALSE) %>%
     dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
 
   names(gf)[1] = "gene"
