@@ -281,7 +281,7 @@ initial_prevalence_filter = function(gf,
 }
 
 #' @export
-read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for this step
+read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
                            minmax_thresh = 5, # TODO expose this higher up
                            covariates = NULL,
@@ -307,7 +307,7 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   bug_name = get_bug_name(bug_file)
 
-  gf = read_bug(bug_file, meta = meta_cov)
+  gf = read_bug(bug_file, meta = metadata)
 
   gf = initial_prevalence_filter(gf,
                                  bug_name = bug_name,
@@ -358,8 +358,8 @@ read_and_filter = function(bug_file, meta_cov, # TODO make metadata optional for
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
 
-  if (!is.null(meta_cov)) {
-    joined = filtered_gf[meta_cov, on = 'sample_id', nomatch = 0] %>%
+  if (!is.null(metadata)) {
+    joined = filtered_gf[metadata, on = 'sample_id', nomatch = 0] %>%
       dplyr::select(dplyr::all_of(select_cols))
   } else {
     joined = filtered_gf %>%

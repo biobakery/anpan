@@ -18,8 +18,8 @@ read_meta = function(meta_file,
     }
   }
 
-  meta_cov = meta %>% dplyr::select(dplyr::all_of(select_cols))
-  meta_cov
+  metadata = meta %>% dplyr::select(dplyr::all_of(select_cols))
+  metadata
 }
 
 #' @export

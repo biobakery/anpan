@@ -218,7 +218,7 @@ anpan = function(bug_file,
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates))
 
-  model_input = read_and_filter(bug_file, meta_cov = metadata,
+  model_input = read_and_filter(bug_file, metadata = metadata,
                                 pivot_wide = model_type == "anpan",
                                 covariates = covariates,
                                 outcome = outcome,
