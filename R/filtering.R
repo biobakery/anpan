@@ -82,7 +82,8 @@ filter_with_kmeans = function(gf,
                               bug_name) {
 
   em_input = na.omit(samp_stats[,.(sample_id, n_nz, q50)])
-  if (dplyr::n_distinct(gf$gene) > 50000) em_input$n_nz = log1p(em_input$n_nz)
+  log_it = dplyr::n_distinct(gf$gene) > 50000
+  if (log_it) em_input$n_nz = log1p(em_input$n_nz)
   em_input$n_nz = scale(em_input$n_nz)
 
   scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
@@ -105,7 +106,8 @@ filter_with_kmeans = function(gf,
   if (save_filter_stats) {
     make_kmeans_dotplot(samp_stats = samp_stats,
                         plot_dir = file.path(filter_stats_dir, "plots"),
-                        bug_name)
+                        bug_name,
+                        was_logged = log_it)
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]

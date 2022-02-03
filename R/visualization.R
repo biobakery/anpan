@@ -52,18 +52,25 @@ make_line_plot = function(bug_file = NULL,
 
 make_kmeans_dotplot = function(samp_stats,
                                plot_dir = NULL,
-                               bug_name = NULL) {
+                               bug_name = NULL,
+                               was_logged = FALSE) {
 
+  if (was_logged) {
+    scale_x = scale_x_continuous(trans = "log1p")
+  } else {
+    scale_x = scale_x_continuous()
+  }
   p = samp_stats %>%
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
                                        levels = c("present", "absent"))) %>%
-    ggplot(aes(n_z, q50)) +
+    ggplot(aes(n_nz, q50)) +
     geom_point(aes(color = labelled_as),
                alpha = .5) +
-    scale_color_brewer(palette = "Set1")+
+    scale_color_brewer(palette = "Set1") +
+    scale_x +
     guides(color = guide_none()) +
     labs(title = paste0(bug_name, " - labelled by kmeans"),
-         x = "Number of zero observations",
+         x = "Number of non-zero observations",
          y = 'Median log abundance') +
     theme_light()
 
