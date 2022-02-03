@@ -68,7 +68,6 @@ make_kmeans_dotplot = function(samp_stats,
                alpha = .5) +
     scale_color_brewer(palette = "Set1") +
     scale_x +
-    guides(color = guide_none()) +
     labs(title = paste0(bug_name, " - labelled by kmeans"),
          x = "Number of non-zero observations",
          y = 'Median log abundance') +
