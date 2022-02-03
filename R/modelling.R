@@ -183,7 +183,6 @@ anpan = function(bug_file,
   if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
 
   bug_name = get_bug_name(bug_file)
-  n_lines = R.utils::countLines(bug_file)
 
   if (!dir.exists(out_dir)) {
     if (verbose) message("* Creating output directory.")
