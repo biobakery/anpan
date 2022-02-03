@@ -245,6 +245,7 @@ anpan = function(bug_file,
   }
 
   if (save_filter_stats) {
+    if (verbose) message("* Saving filtered data in wide format. ")
     spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
                            sep = "") %>%
       as.formula()
