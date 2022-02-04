@@ -127,8 +127,15 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 
   if (!is.null(q_threshold)) {
     gene_levels = res[q_global < q_threshold]$gene
+
+    if (length(gene_levels) == 0) {
+      threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
+      gene_levels = res[1:n_top,]$gene
+    }
+    threshold_warning_string = NULL
   } else {
     gene_levels = res[1:n_top,]$gene
+    threshold_warning_string = NULL
   }
 
   input_mat = model_input %>% dplyr::select('sample_id', all_of(gene_levels)) %>%
@@ -312,14 +319,16 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
                               guides = 'collect',
                               design = design_str) +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
-                                 theme = theme(legend.position = "left"))
+                                 theme = theme(legend.position = "left"),
+                                 subtitle = threshold_warning_string)
   } else {
     p = patchwork::wrap_plots(anno_plot, pres_plot,
                               ncol = 1,
                               heights = c(1, 11),
                               guides = 'collect') +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
-                                 theme = theme(legend.position = "left"))
+                                 theme = theme(legend.position = "left"),
+                                 subtitle = threshold_warning_string)
   }
 
   ggsave(plot = p,
