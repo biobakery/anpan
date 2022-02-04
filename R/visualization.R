@@ -13,6 +13,7 @@ make_line_plot = function(bug_file = NULL,
                           outcome,
                           fgf = NULL,
                           bug_name = NULL,
+                          plot_ext = "pdf",
                           plot_dir = NULL) {
 
   precomputed = !is.null(fgf)
@@ -43,7 +44,7 @@ make_line_plot = function(bug_file = NULL,
 
   if (!is.null(plot_dir)) {
     ggsave(p,
-           filename = file.path(plot_dir, paste0(bug_name, "_labelled_lines.png")),
+           filename = file.path(plot_dir, paste0(bug_name, "_labelled_lines.", plot_ext)),
            width = 8, height = 7)
   }
 
@@ -53,7 +54,8 @@ make_line_plot = function(bug_file = NULL,
 make_kmeans_dotplot = function(samp_stats,
                                plot_dir = NULL,
                                bug_name = NULL,
-                               was_logged = FALSE) {
+                               was_logged = FALSE,
+                               plot_ext = "pdf") {
 
   if (was_logged) {
     scale_x = scale_x_continuous(trans = "log1p")
@@ -75,7 +77,7 @@ make_kmeans_dotplot = function(samp_stats,
 
   if (!is.null(plot_dir)) {
     ggsave(p,
-           filename = file.path(plot_dir, paste0(bug_name, "_kmeans.png")),
+           filename = file.path(plot_dir, paste0(bug_name, "_kmeans.", plot_ext)),
            width = 6, height = 4)
   }
 
@@ -330,7 +332,7 @@ make_interval_plot = function(res,
 #' @export
 make_p_value_histogram = function(all_bug_terms,
                                   out_dir = NULL,
-                                  plot_ext = "png",
+                                  plot_ext = "pdf",
                                   n_bins = 50) {
   p = all_bug_terms %>%
     ggplot(aes(`p.value`)) +

@@ -226,6 +226,7 @@ anpan = function(bug_file,
                                 discard_absent_samples = discard_absent_samples,
                                 save_filter_stats = save_filter_stats,
                                 filter_stats_dir = filter_stats_dir,
+                                plot_ext = plot_ext,
                                 verbose = verbose)
 
   if (is.null(model_input)){

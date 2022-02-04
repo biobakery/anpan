@@ -79,7 +79,8 @@ filter_with_kmeans = function(gf,
                               samp_stats,
                               save_filter_stats,
                               filter_stats_dir,
-                              bug_name) {
+                              bug_name,
+                              plot_ext = plot_ext) {
 
   em_input = na.omit(samp_stats[,.(sample_id, n_nz, q50)])
   log_it = dplyr::n_distinct(gf$gene) > 50000
@@ -107,7 +108,8 @@ filter_with_kmeans = function(gf,
     make_kmeans_dotplot(samp_stats = samp_stats,
                         plot_dir = file.path(filter_stats_dir, "plots"),
                         bug_name,
-                        was_logged = log_it)
+                        was_logged = log_it,
+                        plot_ext = plot_ext)
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
@@ -126,6 +128,7 @@ filter_gf = function(gf,
                      discard_absent_samples = TRUE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
+                     plot_ext = "pdf",
                      bug_name = NULL) {
 
   if (!(filtering_method %in% c("kmeans", "none"))) stop("Specified filtering method not implemented")
@@ -135,7 +138,8 @@ filter_gf = function(gf,
                                      samp_stats = samp_stats,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
-                                     bug_name = bug_name)
+                                     bug_name = bug_name,
+                                     plot_ext = plot_ext)
   } else if (filtering_method == "none") {
     filtered_gf = gf
     filtered_gf$present = filtered_gf$abd > 0
@@ -146,7 +150,8 @@ filter_gf = function(gf,
                    bug_name = bug_name,
                    covariates = covariates,
                    outcome = outcome,
-                   plot_dir = file.path(filter_stats_dir, "plots"))
+                   plot_dir = file.path(filter_stats_dir, "plots"),
+                   plot_ext = plot_ext)
   }
 
   return(filtered_gf)
@@ -200,6 +205,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                            discard_absent_samples = TRUE,
                            save_filter_stats = TRUE,
                            filter_stats_dir = NULL,
+                           plot_ext = "pdf",
                            verbose = TRUE) {
 
   n_lines = R.utils::countLines(bug_file)
@@ -245,6 +251,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                           outcome = outcome,
                           save_filter_stats = save_filter_stats,
                           filter_stats_dir = filter_stats_dir,
+                          plot_ext = plot_ext,
                           bug_name = bug_name) # Might need to reapply the minmax_thresh here
 
   if (filtering_method != "none") { # TODO separate these four blocks out to a distinct function
