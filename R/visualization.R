@@ -109,7 +109,7 @@ make_kmeans_dotplot = function(samp_stats,
 #' @export
 make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
                           annotation_file = NULL,
-                          plot_ext = ".pdf",
+                          plot_ext = "pdf",
                           n_top = 50,
                           q_threshold = NULL,
                           show_intervals = TRUE) {
@@ -155,7 +155,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
   }
 
   # TODO adapt to continuous outcome
-  outcome_fill_values = c("FALSE" = 'antiquewhite3', 'TRUE' = 'indianred2')
+  outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
 
   anno_plot = color_bars %>%
     ggplot(aes(x = sample_id)) +
@@ -193,10 +193,10 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 
 
   if (!is.null(annotation_file)) {
-    plot_data = plot_data %>%
-      mutate(g_lab = map2_chr(gene, annotation, function(.x, .y) if_else(is.na(.y),
-                                                                         as.character(.x),
-                                                                         paste(.x, ": ", .y, sep = ""))))
+    plot_data[, g_lab := paste(gene, annotation, sep = ": ")]
+    no_annotation = is.na(plot_data$annotation)
+    plot_data$g_lab[no_annotation] = plot_data$gene[no_annotation]
+
     lab_df = plot_data[,.(gene, g_lab)] %>%
       unique
 
@@ -292,7 +292,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 make_interval_plot = function(res,
                               covariates, outcome, model_input, plot_dir, bug_name,
                               annotation_file = NULL,
-                              plot_ext = ".pdf",
+                              plot_ext = "pdf",
                               n_top = 50,
                               q_threshold = NULL) {
   if (!is.null(annotation_file)) {
