@@ -96,12 +96,13 @@ filter_with_kmeans = function(gf,
 
   samp_stats$in_right = NA
   samp_stats$clust = NA
-  low_clust = which.max(km_res$centers[,1])
+  present_clust = which.max(km_res$centers[,1])
+  absent_clust = which.min(km_res$centers[,1])
 
   samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
-  samp_stats$clust[is.na(samp_stats$q50)] = low_clust
+  samp_stats$clust[is.na(samp_stats$q50)] = absent_clust
 
-  samp_stats$in_right = samp_stats$clust == low_clust
+  samp_stats$in_right = samp_stats$clust == present_clust
   samp_stats$clust = NULL
 
   if (save_filter_stats) {
