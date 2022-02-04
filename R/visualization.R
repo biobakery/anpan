@@ -131,8 +131,9 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
     if (length(gene_levels) == 0) {
       threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
       gene_levels = res[1:n_top,]$gene
+    } else {
+      threshold_warning_string = NULL
     }
-    threshold_warning_string = NULL
   } else {
     gene_levels = res[1:n_top,]$gene
     threshold_warning_string = NULL
