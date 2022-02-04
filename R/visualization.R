@@ -101,18 +101,22 @@ make_kmeans_dotplot = function(samp_stats,
 #' @param plot_ext extension to use for plots
 #' @param n_top number of top elements to show from the results
 #' @param q_threshold FDR threshold to use for inclusion in the plot.
-#'
+#' @param cluster axis to cluster. either "none", "samples", "genes", or "both"
 #' @details If included, \code{annotation_file} must be a tsv with two columns:
 #'   "gene" and "annotation".
 #'
 #'   \code{n_top} is ignored if \code{q_threshold} is specified.
+#'
+#'   When \code{cluster = "none"}, the samples are ordered by metadata and the
+#'   genes are ordered by statistical significance.
 #' @export
 make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
-                          annotation_file = NULL,
-                          plot_ext = "pdf",
-                          n_top = 50,
-                          q_threshold = NULL,
-                          show_intervals = TRUE) {
+                             annotation_file = NULL,
+                             cluster = 'none',
+                             n_top = 50,
+                             q_threshold = NULL,
+                             show_intervals = TRUE,
+                             plot_ext = "pdf") {
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
@@ -127,23 +131,60 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
     gene_levels = res[1:n_top,]$gene
   }
 
+  input_mat = model_input %>% dplyr::select('sample_id', all_of(gene_levels)) %>%
+    tibble::column_to_rownames("sample_id") %>%
+    as.matrix()
+  input_mat = 1*input_mat # convert to numeric
+
+  if (cluster %in% c('genes', 'both')) {
+    g_clust = hclust(dist(t(input_mat)))
+
+    gene_levels = colnames(input_mat)[g_clust$order]
+  }
+
   select_cols = c("sample_id", covariates, outcome)
-  order_cols = c(outcome, rev(covariates))
 
-  color_bars = model_input %>%
-    dplyr::select(dplyr::all_of(select_cols)) %>%
-    unique %>%
-    setorderv(cols = order_cols, na.last = TRUE)
+  if (cluster %in% c('samples', 'both')) {
+    color_bars = model_input %>%
+      dplyr::select(dplyr::all_of(select_cols)) %>%
+      unique
 
-  color_bars$sample_id = factor(color_bars$sample_id,
-                               levels = unique(color_bars$sample_id))
+    if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
+      ctls = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[1]])
+      ctl_clust = hclust(dist(input_mat[rownames(input_mat) %in% ctls,],
+                              method = "binary"))
 
-  model_input = data.table::melt(model_input,
+      cases = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[2]])
+      case_clust = hclust(dist(input_mat[rownames(input_mat) %in% cases,],
+                               method = "binary"))
+
+      s_levels = c(rownames(input_mat)[rownames(input_mat) %in% ctls][ctl_clust$order],
+                   rownames(input_mat)[rownames(input_mat) %in% cases][case_clust$order])
+    } else {
+      s_clust = hclust(dist(input_mat))
+      s_levels = rownames(input_mat)[s_clust$order]
+    }
+
+    color_bars$sample_id = factor(color_bars$sample_id,
+                                  levels = s_levels)
+  } else {
+    order_cols = c(outcome, rev(covariates))
+
+    color_bars = model_input %>%
+      dplyr::select(dplyr::all_of(select_cols)) %>%
+      unique %>%
+      setorderv(cols = order_cols, na.last = TRUE)
+
+    color_bars$sample_id = factor(color_bars$sample_id,
+                                  levels = unique(color_bars$sample_id))
+  }
+
+  model_input = data.table::melt(model_input %>% dplyr::select(all_of(select_cols), all_of(gene_levels)),
                                  id.vars = c(covariates, outcome, "sample_id"),
                                  variable.name = "gene",
                                  value.name = "present")
 
-  plot_data = model_input[gene %in% gene_levels] %>%
+  plot_data = model_input %>%
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
@@ -187,7 +228,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
   }
 
   plot_data$sample_id = factor(plot_data$sample_id,
-                              levels = unique(color_bars$sample_id))
+                              levels = levels(color_bars$sample_id))
   plot_data$gene = factor(plot_data$gene,
                           levels = rev(gene_levels))
 
