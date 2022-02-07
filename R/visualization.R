@@ -109,7 +109,7 @@ make_kmeans_dotplot = function(samp_stats,
 #'   When \code{cluster = "none"}, the samples are ordered by metadata and the
 #'   genes are ordered by statistical significance.
 #' @export
-make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bug_name,
+make_results_plot = function(res, covariates, outcome, model_input, plot_dir = NULL, bug_name,
                              annotation_file = NULL,
                              cluster = 'none',
                              n_top = 50,
@@ -331,10 +331,12 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
                                  subtitle = threshold_warning_string)
   }
 
-  ggsave(plot = p,
-         width = w,
-         height = 10,
-         filename = file.path(plot_dir, paste0(bug_name, "_data.", plot_ext)))
+  if (!is.null(plot_dir)) {
+    ggsave(plot = p,
+           width = w,
+           height = 10,
+           filename = file.path(plot_dir, paste0(bug_name, "_data.", plot_ext)))
+  }
 
   p
 }
