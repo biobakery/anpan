@@ -143,7 +143,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
     as.matrix()
   input_mat = 1*input_mat # convert to numeric
 
-  if (cluster %in% c('genes', 'both')) {
+  if (cluster %in% c('genes', 'both') && ncol(input_mat) > 2) {
     g_clust = hclust(dist(t(input_mat)))
 
     gene_levels = colnames(input_mat)[g_clust$order]
@@ -151,7 +151,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 
   select_cols = c("sample_id", covariates, outcome)
 
-  if (cluster %in% c('samples', 'both')) {
+  if (cluster %in% c('samples', 'both') && nrow(input_mat) > 2) {
     color_bars = model_input %>%
       dplyr::select(dplyr::all_of(select_cols)) %>%
       unique
