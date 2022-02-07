@@ -30,8 +30,12 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
 
   failed = glm_fits[sapply(glm_fits$glm_res,
                            function(.x) !is.null(.x$error))]
-  if (nrow(failed) > 0){
+  if (nrow(failed) > 0) {
     # TODO Write out the failures to a warning file with a message
+    error_dir = file.path(out_dir, "errors")
+    if (!dir.exists(error_dir)) dir.create(error_dir)
+    save(failed,
+         file = file.path(error_dir, paste0("failures_", bug_name, ".RData")))
   }
 
   worked = glm_fits[sapply(glm_fits$glm_res,
