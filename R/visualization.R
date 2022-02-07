@@ -309,8 +309,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
       geom_text(aes(x = star_loc,
                     y = gene,
                     label = p_group), hjust = 0, vjust = .8) +
-      xlim(c(min(int_plot_df$min_val) - .3*est_range,
-             max(int_plot_df$max_val))) +
+      xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
+             max(0, max(int_plot_df$max_val)))) +
       theme(panel.background = element_rect(fill = "white",
                                             colour = NA),
             panel.border = element_rect(fill = NA,
