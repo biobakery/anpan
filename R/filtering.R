@@ -159,17 +159,25 @@ filter_gf = function(gf,
 }
 
 initial_prevalence_filter = function(gf,
+                                     meta, outcome,
                                      bug_name,
                                      minmax_thresh,
                                      filter_stats_dir,
                                      verbose) {
 
+  if (dplyr::n_distinct(meta[[outcome]]) == 2) {
+    select_cols = c(outcome, "sample_id")
 
+    gf = gf[meta[,..select_cols], on = "sample_id"]
 
-  # Run the initial prevalence filter
-  gf = gf[,.(sample_id, abd,
-             varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
-          by = gene]
+    gf = gf[,.(sample_id, abd,
+               varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
+            by = c("gene", outcome)][,.(sample_id, abd, varies_enough = all(varies_enough)), by = gene]
+  } else {
+    gf = gf[,.(sample_id, abd,
+               varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
+            by = gene]
+  }
 
   if (!any(gf$varies_enough)) {
     return(data.table::data.table())
@@ -225,6 +233,8 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   gf = read_bug(bug_file, meta = metadata)
 
   gf = initial_prevalence_filter(gf,
+                                 meta = metadata,
+                                 outcome = outcome,
                                  bug_name = bug_name,
                                  minmax_thresh = minmax_thresh,
                                  filter_stats_dir = filter_stats_dir,
