@@ -179,18 +179,16 @@ initial_prevalence_filter = function(gf,
   gf = gf[(varies_enough)][,.(gene, sample_id, abd)]
   n_end = dplyr::n_distinct(gf$gene)
 
-  if ((n_end != n_start) & verbose) {
-    message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
-    initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv.gz")
-    drop_df = data.table(bug = bug_name,
-                         n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
-    if (!file.exists(initial_prev_filter)) {
-      readr::write_tsv(drop_df,
-                       file = initial_prev_filter)
-    } else {
-      readr::write_tsv(drop_df,
-                       file = initial_prev_filter, append = TRUE)
-    }
+  if (verbose) message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
+  initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv.gz")
+  drop_df = data.table(bug = bug_name,
+                       n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
+  if (!file.exists(initial_prev_filter)) {
+    readr::write_tsv(drop_df,
+                     file = initial_prev_filter)
+  } else {
+    readr::write_tsv(drop_df,
+                     file = initial_prev_filter, append = TRUE)
   }
 
   gf
