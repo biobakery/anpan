@@ -130,12 +130,15 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     if (length(gene_levels) == 0) {
       threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
       gene_levels = res[1:n_top,]$gene
+      subtitle_str = paste0("Top ", n_top, " hits")
     } else {
       threshold_warning_string = NULL
+      subtitle_str = paste0(length(gene_levels), " genes with Q below ", q_threshold)
     }
   } else {
     gene_levels = res[1:n_top,]$gene
     threshold_warning_string = NULL
+    subtitle_str = paste0("Top ", n_top, " hits")
   }
 
   input_mat = model_input %>% dplyr::select('sample_id', all_of(gene_levels)) %>%
@@ -302,15 +305,17 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
       geom_point(color = "grey10") +
       geom_vline(xintercept = 0,
                  lty = 2,
-                 color = 'grey30') +
+                 color = 'grey70') +
       geom_text(aes(x = star_loc,
                     y = gene,
-                    label = p_group), hjust = 1, vjust = .8) +
+                    label = p_group), hjust = 0, vjust = .8) +
+      xlim(c(min(int_plot_df$min_val) - .3*est_range,
+             max(int_plot_df$max_val))) +
       theme(panel.background = element_rect(fill = "white",
                                             colour = NA),
             panel.border = element_rect(fill = NA,
                                         colour = "grey70", size = rel(1)),
-            panel.grid = element_line(colour = "grey87"),
+            panel.grid = element_line(colour = "grey92"),
             panel.grid.major.y = element_blank(),
             axis.text.y = element_blank(),
             axis.ticks.y = element_blank(),
@@ -336,7 +341,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                               design = design_str) +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
                                  theme = theme(legend.position = "left"),
-                                 caption = threshold_warning_string)
+                                 caption = threshold_warning_string,
+                                 subtitle = subtitle_str)
   } else {
     p = patchwork::wrap_plots(anno_plot, pres_plot,
                               ncol = 1,
@@ -344,7 +350,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                               guides = 'collect') +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
                                  theme = theme(legend.position = "left"),
-                                 caption = threshold_warning_string)
+                                 caption = threshold_warning_string,
+                                 subtitle = subtitle_str)
   }
 
   if (!is.null(plot_dir)) {
