@@ -242,7 +242,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
 
 
   if (!is.null(annotation_file)) {
-    plot_data[, g_lab := paste(gene, annotation, sep = ": ")]
+    plot_data$g_lab = paste(plot_data$gene, plot_data$annotation, sep = ": ")
     no_annotation = is.na(plot_data$annotation)
     plot_data$g_lab[no_annotation] = plot_data$gene[no_annotation]
 
