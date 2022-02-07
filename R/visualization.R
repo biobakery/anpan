@@ -89,8 +89,7 @@ make_kmeans_dotplot = function(samp_stats,
 #' @description This funciton makes a tile plot of the top results of a fit
 #'   alongside another tile plot showing the covariates included. Optional
 #'   annotations can be included.
-#' @param res a data frame of model results (from \code{anpan} or
-#'   \code{anpan_batch})
+#' @param res a data frame of model results (from \code{anpan})
 #' @param covariates character string of the covariates to show
 #' @param outcome character string of the outcome variable
 #' @param model_input data frame of the model input
@@ -244,7 +243,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir, bu
   if (!is.null(annotation_file)) {
     plot_data$g_lab = paste(plot_data$gene, plot_data$annotation, sep = ": ")
     no_annotation = is.na(plot_data$annotation)
-    plot_data$g_lab[no_annotation] = plot_data$gene[no_annotation]
+    plot_data$g_lab[no_annotation] = as.character(plot_data$gene[no_annotation])
 
     lab_df = plot_data[,.(gene, g_lab)] %>%
       unique
