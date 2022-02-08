@@ -237,7 +237,7 @@ anpan = function(bug_file,
     readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
                        file = warnings_file,
                        append = TRUE)
-    if (verbose) message(paste0("(3/", n_steps, ") Model fitting skipped"))
+    if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
     return(data.table::data.table())
   }
 
@@ -246,7 +246,7 @@ anpan = function(bug_file,
     readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
                        file = warnings_file,
                        append = TRUE)
-    if (verbose) message(paste0("(3/", n_steps, ") Model fitting skipped"))
+    if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
     return(data.table::data.table())
   }
 
