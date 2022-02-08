@@ -75,6 +75,7 @@ make_kmeans_dotplot = function(samp_stats,
     scale_x = scale_x_continuous()
   }
   p = samp_stats %>%
+    na.omit %>%
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
                                        levels = c("present", "absent"))) %>%
     ggplot(aes(n_nz, q50)) +
