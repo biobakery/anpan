@@ -136,6 +136,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     anno = NULL
   }
 
+  n_top = min(n_top, dplyr::n_distinct(res$gene))
+
   if (!is.null(q_threshold)) {
     gene_levels = res[q_global < q_threshold]$gene
 
