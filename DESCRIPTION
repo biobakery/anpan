@@ -28,7 +28,6 @@ Imports:
     broom,
     mixtools,
     readr,
-    loo
-RoxygenNote: 7.1.1
-Suggests: 
+    loo,
     fastglm
+RoxygenNote: 7.1.1
