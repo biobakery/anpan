@@ -3,8 +3,13 @@
 #' @param meta_file a path to the corresponding metadata file
 #' @param fgf a filtered gene family data frame
 #' @param bug_name name of the bug
+#' @param subset_line integer gives the number of points to take along the lines
 #' @details The required input is either \itemize{ \item{the gene family file
 #'   and the metadata file} \item{OR a pre-filtered gene family file}}
+#'   \code{subset_line} is used to make saving plots faster. Plotting thousands
+#'   of lines each with tens of thousands of points along them is too much
+#'   visual detail and makes saving the plot very slow. Set \code{subset_line}
+#'   to 0 to turn off subsetting.
 #' @inheritParams anpan
 #' @export
 make_line_plot = function(bug_file = NULL,
@@ -14,7 +19,8 @@ make_line_plot = function(bug_file = NULL,
                           fgf = NULL,
                           bug_name = NULL,
                           plot_ext = "pdf",
-                          plot_dir = NULL) {
+                          plot_dir = NULL,
+                          subset_line = 200) {
 
   precomputed = !is.null(fgf)
   to_compute = !is.null(bug_file) & !is.null(meta_file)
@@ -29,9 +35,15 @@ make_line_plot = function(bug_file = NULL,
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }
 
-  p = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] %>%
+  plot_df = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] %>%
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
-                                       levels = c("present", "absent"))) %>%
+                                       levels = c("present", "absent")))
+
+  if (subset_line != 0) {
+    plot_df = plot_df[,.SD[floor(seq(1, nrow(.SD), length.out = subset_line))], by = sample_id]
+  }
+
+  p = plot_df %>%
     ggplot(aes(i, labd)) +
     geom_line(aes(group = sample_id,
                   color = labelled_as),
