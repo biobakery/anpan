@@ -24,7 +24,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
                                        covariates = covariates,
                                        outcome = outcome,
                                        mod_family = mod_family,
-                                       .options = furrr_options(seed = 123))
+                                       .options = furrr::furrr_options(seed = 123))
   # TODO progress bar with progressr
   # What I have here doesn't work for some reason.
 
