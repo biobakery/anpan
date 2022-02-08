@@ -376,6 +376,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
   p
 }
 
+safely_make_results_plot = purrr::safely(make_results_plot)
+
 make_interval_plot = function(res,
                               covariates, outcome, model_input, plot_dir, bug_name,
                               annotation_file = NULL,

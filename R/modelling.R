@@ -90,7 +90,7 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
 
   glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
 
-  res = glm(glm_formula, # TODO adjustable covariates
+  res = glm(glm_formula,
             data = gene_dat,
             family = 'binomial') %>%
     broom::tidy() %>%
@@ -353,7 +353,7 @@ anpan_batch = function(bug_dir,
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
     purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
-                function(bug_name, s){make_results_plot(res = s,
+                function(bug_name, s){safely_make_results_plot(res = s,
                                                         bug_name = bug_name,
                                                         covariates = covariates,
                                                         outcome = outcome,
