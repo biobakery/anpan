@@ -166,13 +166,10 @@ initial_prevalence_filter = function(gf,
                                      verbose) {
 
   if (dplyr::n_distinct(meta[[outcome]]) == 2) {
-    select_cols = c(outcome, "sample_id")
-
-    gf = gf[meta[,..select_cols], on = "sample_id"]
 
     gf = gf[,.(sample_id, abd,
                varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
-            by = c("gene", outcome)][,.(sample_id, abd, varies_enough = all(varies_enough)), by = gene]
+            by = c("gene")]
   } else {
     gf = gf[,.(sample_id, abd,
                varies_enough = sum(abd != 0) < (.N - minmax_thresh) & sum(abd != 0) > minmax_thresh),
