@@ -9,18 +9,18 @@ make_results_plot(
   covariates,
   outcome,
   model_input,
-  plot_dir,
+  plot_dir = NULL,
   bug_name,
   annotation_file = NULL,
-  plot_ext = ".pdf",
+  cluster = "none",
   n_top = 50,
   q_threshold = NULL,
-  show_intervals = TRUE
+  show_intervals = TRUE,
+  plot_ext = "pdf"
 )
 }
 \arguments{
-\item{res}{a data frame of model results (from \code{anpan} or
-\code{anpan_batch})}
+\item{res}{a data frame of model results (from \code{anpan})}
 
 \item{covariates}{character string of the covariates to show}
 
@@ -35,11 +35,13 @@ file}
 
 \item{annotation_file}{optional path file giving annotations}
 
-\item{plot_ext}{extension to use for plots}
+\item{cluster}{axis to cluster. either "none", "samples", "genes", or "both"}
 
 \item{n_top}{number of top elements to show from the results}
 
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
+
+\item{plot_ext}{extension to use for plots}
 }
 \description{
 This funciton makes a tile plot of the top results of a fit
@@ -51,4 +53,7 @@ If included, \code{annotation_file} must be a tsv with two columns:
   "gene" and "annotation".
 
   \code{n_top} is ignored if \code{q_threshold} is specified.
+
+  When \code{cluster = "none"}, the samples are ordered by metadata and the
+  genes are ordered by statistical significance.
 }

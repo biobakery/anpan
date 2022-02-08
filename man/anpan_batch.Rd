@@ -30,7 +30,7 @@ anpan_batch(
 
 \item{out_dir}{path to the desired output directory}
 
-\item{model_type}{either "anpan" or "glm"}
+\item{model_type}{either "anpan", "glm", or "fastglm"}
 
 \item{covariates}{character vector of covariates to include in the model}
 

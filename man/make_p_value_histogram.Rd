@@ -7,7 +7,7 @@
 make_p_value_histogram(
   all_bug_terms,
   out_dir = NULL,
-  plot_ext = "png",
+  plot_ext = "pdf",
   n_bins = 50
 )
 }

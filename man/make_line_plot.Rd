@@ -11,7 +11,9 @@ make_line_plot(
   outcome,
   fgf = NULL,
   bug_name = NULL,
-  plot_dir = NULL
+  plot_ext = "pdf",
+  plot_dir = NULL,
+  subset_line = 200
 )
 }
 \arguments{
@@ -26,6 +28,8 @@ make_line_plot(
 \item{fgf}{a filtered gene family data frame}
 
 \item{bug_name}{name of the bug}
+
+\item{subset_line}{integer gives the number of points to take along the lines}
 }
 \description{
 Make a filter-labelled line plot
@@ -33,4 +37,8 @@ Make a filter-labelled line plot
 \details{
 The required input is either \itemize{ \item{the gene family file
   and the metadata file} \item{OR a pre-filtered gene family file}}
+  \code{subset_line} is used to make saving plots faster. Plotting thousands
+  of lines each with tens of thousands of points along them is too much
+  visual detail and makes saving the plot very slow. Set \code{subset_line}
+  to 0 to turn off subsetting.
 }
