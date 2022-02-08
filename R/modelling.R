@@ -62,7 +62,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
 }
 
 check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
-
+  # TODO deprecate this function.
   min_prev_by_outcome = gene_dat %>% dplyr::select(dplyr::all_of(c("present", outcome))) %>%
     table() %>%
     apply(2, function(.x) .x / sum(.x)) %>%
@@ -82,13 +82,13 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
                    mod_family,
                    prevalence_filter = .05) {
 
-  if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
-    return(data.table(term = character(),
-                      estimate = numeric(),
-                      std.error = numeric(),
-                      statistic = numeric(),
-                      p.value = numeric()))
-  }
+  # if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
+  #   return(data.table(term = character(),
+  #                     estimate = numeric(),
+  #                     std.error = numeric(),
+  #                     statistic = numeric(),
+  #                     p.value = numeric()))
+  # }
 
   glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
 
