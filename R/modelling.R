@@ -4,7 +4,8 @@ get_bug_name = function(bug_file,
   gsub(remove_pattern, "", basename(bug_file))
 }
 
-fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
+fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
+                    glm_fun) {
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO let the user specify a family that overrides this logic
@@ -19,7 +20,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   # p <- progressr::progressor(along = glm_fits$data_subset)
   # ^ That goes right here, then activate the p() calls commented out in fit_glm()
   glm_fits$glm_res = furrr::future_map(.x = glm_fits$data_subset,
-                                       .f = safely_fit_glm,
+                                       .f = glm_fun,
                                        covariates = covariates,
                                        outcome = outcome,
                                        mod_family = mod_family)
@@ -60,33 +61,9 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
   return(bug_terms)
 }
 
-check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
-  # TODO deprecate this function.
-  min_prev_by_outcome = gene_dat %>% dplyr::select(dplyr::all_of(c("present", outcome))) %>%
-    table() %>%
-    apply(2, function(.x) .x / sum(.x)) %>%
-    apply(2, min) # It has to be variable above the prevalence filter in BOTH groups
-
-  if (n_distinct(gene_dat[[outcome]]) != 2 |                             # If only one outcome shows up
-      n_distinct(gene_dat$present) == 1 |                         # or if the gene is omni-present or omni-absent
-      all(min_prev_by_outcome < prevalence_filter)) {             # or if it doesn't get through the prevalence filter
-    return(FALSE) # Then it's not okay
-  } else {
-    return(TRUE)
-  }
-}
-
 #' Fit a GLM to one gene
 fit_glm = function(gene_dat, covariates, outcome, out_dir,
                    mod_family) {
-
-  # if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
-  #   return(data.table(term = character(),
-  #                     estimate = numeric(),
-  #                     std.error = numeric(),
-  #                     statistic = numeric(),
-  #                     p.value = numeric()))
-  # }
 
   glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
 
@@ -98,7 +75,31 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
   return(res)
 }
 
+fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
+                       mod_family) {
+
+  y = gene_dat[[outcome]]
+
+  if (dplyr::n_distinct(y) == 2) y = 1*y
+
+  glm_formula = as.formula(paste0(" ~ ", paste(covariates, collapse = " + "), " + present"))
+  x = model.matrix(glm_formula,
+                   data = gene_dat)
+
+  res = fastglm(x = x, y = y,
+                family = mod_family) %>% summary %>%
+    .[['coefficients']] %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("term") %>%
+    data.table::as.data.table()
+
+  names(res) = c("term", "estimate", "std.error", "statistic", "p.value")
+
+  return(res)
+}
+
 safely_fit_glm = purrr::safely(fit_glm)
+safely_fit_fastglm = purrr::safely(fit_fastglm)
 
 fit_anpan = function(model_input,
                      out_dir,
@@ -154,7 +155,7 @@ fit_anpan = function(model_input,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
-#' @param model_type either "anpan" or "glm"
+#' @param model_type either "anpan", "glm", or "fastglm"
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
@@ -182,7 +183,7 @@ anpan = function(bug_file,
   # TODO separate the checks out to a distinct function.
   if (verbose) message(paste0("\n(1/", n_steps, ") Preparing the mise en place (checking inputs)..."))
 
-  if (!(model_type %in% c("anpan", "glm"))) stop('model_type must be either "anpan" or "glm"')
+  if (!(model_type %in% c("anpan", "glm", "fastglm"))) stop('model_type must be either "anpan", "glm", or "fastglm"')
 
   bug_name = get_bug_name(bug_file)
 
@@ -274,7 +275,13 @@ anpan = function(bug_file,
                glm   = fit_glms(model_input, out_dir,
                                 covariates = covariates,
                                 outcome = outcome,
-                                bug_name = bug_name))
+                                bug_name = bug_name,
+                                glm_fun = safely_fit_glm),
+               fastglm = fit_glms(model_input, out_dir,
+                                  covariates = covariates,
+                                  outcome = outcome,
+                                  bug_name = bug_name,
+                                  glm_fun = safely_fit_fastglm))
 
 
 # Summarizing -------------------------------------------------------------
@@ -340,7 +347,7 @@ anpan_batch = function(bug_dir,
     dplyr::relocate(bug_name, gene) %>%
     data.table::as.data.table()
 
-  if (model_type == "glm") {
+  if (model_type %in% c("glm", "fastglm")) {
     make_p_value_histogram(all_bug_terms,
                            out_dir = out_dir,
                            plot_ext = plot_ext)
