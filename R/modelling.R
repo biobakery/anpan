@@ -86,7 +86,7 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
   x = model.matrix(glm_formula,
                    data = gene_dat)
 
-  res = fastglm(x = x, y = y,
+  res = fastglm::fastglm(x = x, y = y,
                 family = mod_family) %>% summary %>%
     .[['coefficients']] %>%
     as.data.frame() %>%
@@ -273,11 +273,11 @@ anpan = function(bug_file,
                                  outcome = outcome,
                                  bug_name = bug_name,
                                  ...),
-               glm   = fit_glms(model_input, out_dir,
-                                covariates = covariates,
-                                outcome = outcome,
-                                bug_name = bug_name,
-                                glm_fun = safely_fit_glm),
+               glm   =   fit_glms(model_input, out_dir,
+                                  covariates = covariates,
+                                  outcome = outcome,
+                                  bug_name = bug_name,
+                                  glm_fun = safely_fit_glm),
                fastglm = fit_glms(model_input, out_dir,
                                   covariates = covariates,
                                   outcome = outcome,
