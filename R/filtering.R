@@ -202,6 +202,50 @@ initial_prevalence_filter = function(gf,
   gf
 }
 
+check_table = function(outcome_presence_table,
+                       minmax_thresh = 5) {
+
+  if (!(ncol(outcome_presence_table) == 2)) FALSE
+  mins = apply(outcome_presence_table, 2, min)
+  maxs = apply(outcome_presence_table, 2, max)
+  n = sum(outcome_presence_table)
+
+  ncol(outcome_presence_table) == 2 && all(mins > minmax_thresh) && all(maxs < (n - minmax_thresh))
+}
+
+final_prevalence_filter = function(filtered_gf,
+                                   outcome,
+                                   bn,
+                                   minmax_thresh = 5,
+                                   filter_stats_dir,
+                                   verbose) {
+
+  select_cols = c(outcome, "present", "gene")
+  to_check = filtered_gf[,..select_cols][,.(sd_table = list(table(.SD))), by = gene]
+
+  to_check$varies_enough = sapply(to_check$sd_table, check_table)
+
+  if (any(!to_check$varies_enough)) {
+    n_drop = nrow(to_check[!(varies_enough)])
+    if (verbose) message(paste0(n_drop, " genes dropped by final prevalence filter"))
+    final_filter_file = file.path(filter_stats_dir, "final_prevalence_filter.tsv.gz")
+    if (!file.exists(final_filter_file)) {
+      readr::write_tsv(data.table(bug_name = bn,
+                                  n_dropped = n_drop),
+                       file = final_filter_file)
+
+    } else {
+      readr::write_tsv(data.table(bug_name = bn,
+                                  n_dropped = n_drop),
+                       file = final_filter_file,
+                       append = TRUE)
+    }
+  }
+
+  res = filtered_gf[gene %in% to_check[(varies_enough)]$gene]
+  return(res)
+}
+
 #' @export
 read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
@@ -232,6 +276,9 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   gf = read_bug(bug_file, meta = metadata)
 
+
+  # first filter: the initial prevalence filter -----------------------------
+
   gf = initial_prevalence_filter(gf,
                                  meta = metadata,
                                  outcome = outcome,
@@ -252,7 +299,11 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
     samp_stats = NA
   }
 
-  # if (verbose) message("* Filtering samples based ")
+
+  # second filter: the sample filter ----------------------------------------
+  # This filter uses sample statistics to drop samples where the bug is entirely
+  # absent, not just lacking specific genes.
+
   filtered_gf = filter_gf(gf,
                           samp_stats = samp_stats,
                           filtering_method = filtering_method,
@@ -261,7 +312,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                           save_filter_stats = save_filter_stats,
                           filter_stats_dir = filter_stats_dir,
                           plot_ext = plot_ext,
-                          bug_name = bug_name) # Might need to reapply the minmax_thresh here
+                          bug_name = bug_name)
 
   if (filtering_method != "none") { # TODO separate these four blocks out to a distinct function
     sample_labels = unique(filtered_gf[,.(sample_id, bug_present = in_right)])
@@ -281,6 +332,17 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
     filtered_gf = filtered_gf[(in_right)]
     if (n_absent != 0 & verbose) message("* Samples with no ", bug_name, " discarded.")
   }
+
+  # third filter: final prevalence filter -----------------------------------
+
+  select_cols = c(outcome, "sample_id")
+  filtered_gf = final_prevalence_filter(metadata[, ..select_cols][filtered_gf, on = "sample_id"],
+                                        outcome = outcome,
+                                        minmax_thresh = minmax_thresh,
+                                        filter_stats_dir = filter_stats_dir,
+                                        bn = bug_name,
+                                        verbose = verbose) %>%
+    dplyr::select(-dplyr::all_of(outcome))
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
 
