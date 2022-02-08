@@ -4,7 +4,6 @@ get_bug_name = function(bug_file,
   gsub(remove_pattern, "", basename(bug_file))
 }
 
-
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name) {
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
@@ -79,8 +78,7 @@ check_prevalence_okay = function(gene_dat, outcome, prevalence_filter) {
 
 #' Fit a GLM to one gene
 fit_glm = function(gene_dat, covariates, outcome, out_dir,
-                   mod_family,
-                   prevalence_filter = .05) {
+                   mod_family) {
 
   # if (!check_prevalence_okay(gene_dat, outcome = outcome, prevalence_filter)) {
   #   return(data.table(term = character(),
