@@ -224,7 +224,7 @@ final_prevalence_filter = function(filtered_gf,
 
   if (any(!to_check$varies_enough)) {
     n_drop = nrow(to_check[!(varies_enough)])
-    if (verbose) message(paste0(" * Final prevalence filter dropped ", n_drop, " genes."))
+    if (verbose) message(paste0("* Final prevalence filter dropped ", n_drop, " genes."))
     final_filter_file = file.path(filter_stats_dir, "final_prevalence_filter.tsv.gz")
     if (!file.exists(final_filter_file)) {
       readr::write_tsv(data.table(bug_name = bn,
