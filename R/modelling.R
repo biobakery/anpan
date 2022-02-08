@@ -285,16 +285,9 @@ anpan = function(bug_file,
 # Write output ------------------------------------------------------------
 # Done inside fit_glms()
 
-  return(res)
-}
+  res$bug_name = bug_name
 
-add_bug_name = function(.x, .y, bug_files) {
-  if (nrow(.x) == 0) {
-    return(.x)
-  } else {
-    return(dplyr::mutate(.x,
-                         bug_name = get_bug_name(basename(bug_files)[.y])))
-  }
+  return(res)
 }
 
 #' Apply anpan to a many bugs
@@ -344,7 +337,6 @@ anpan_batch = function(bug_dir,
                              plot_ext = plot_ext,
                              verbose = verbose,
                              ...) %>%
-    purrr::imap(add_bug_name, bug_files = bug_files) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     dplyr::relocate(bug_name, gene) %>%
