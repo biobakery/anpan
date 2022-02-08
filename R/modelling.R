@@ -342,6 +342,15 @@ anpan_batch = function(bug_dir,
     dplyr::relocate(bug_name, gene) %>%
     data.table::as.data.table()
 
+  if (model_type == "glm") {
+    make_p_value_histogram(all_bug_terms,
+                           out_dir = out_dir,
+                           plot_ext = plot_ext)
+  }
+
+  readr::write_tsv(all_bug_terms,
+                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
+
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
   if (plot_results) {
@@ -357,15 +366,6 @@ anpan_batch = function(bug_dir,
                                                         n_top = n_top,
                                                         q_threshold = q_threshold)})
   }
-
-  if (model_type == "glm") {
-    make_p_value_histogram(all_bug_terms,
-                           out_dir = out_dir,
-                           plot_ext = plot_ext)
-  }
-
-  readr::write_tsv(all_bug_terms,
-                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
 
   all_bug_terms
 
