@@ -202,7 +202,8 @@ initial_prevalence_filter = function(gf,
 check_table = function(outcome_presence_table,
                        minmax_thresh = 5) {
 
-  if (!all(dim(outcome_presence_table) == c(2, 2))) FALSE
+  if (!all(dim(outcome_presence_table) == c(2, 2))) return(FALSE)
+
   mins = apply(outcome_presence_table, 2, min)
   maxs = apply(outcome_presence_table, 2, max)
   n = sum(outcome_presence_table)
