@@ -339,7 +339,7 @@ anpan_batch = function(bug_dir,
   # anpan is parallelized internally, so just map here.
 
   # TODO V put the progressr here, not in anpan
-  # p = progressr::progressor(along = bug_files)
+  p = progressr::progressor(along = bug_files)
   all_bug_terms = purrr::map(.x = bug_files,
                              .f = function(.x) {
                                anpan_res = anpan(.x,
@@ -355,7 +355,7 @@ anpan_batch = function(bug_dir,
                                                  plot_ext = plot_ext,
                                                  verbose = verbose,
                                                  ...)
-                               # p()
+                               p()
                                anpan_res
                              }) %>%
     dplyr::bind_rows() %>%
