@@ -28,9 +28,10 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   # TODO progress bar with progressr
   # What I have here doesn't work for some reason.
 
-
   failed = glm_fits[sapply(glm_fits$glm_res,
                            function(.x) !is.null(.x$error))]
+  #TODO ^ detect failures better. Sometimes glm or fastglm "fails" but just returns NAs instead of erroring.
+
   if (nrow(failed) > 0) {
     # TODO Write out the failures to a warning file with a message
     error_dir = file.path(out_dir, "errors")
@@ -77,7 +78,7 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
 }
 
 fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
-                       mod_family) {
+                       mod_family, fastglm_method = 0) {
 
   y = gene_dat[[outcome]]
 
@@ -88,7 +89,8 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
                    data = gene_dat)
 
   res = fastglm::fastglm(x = x, y = y,
-                family = mod_family) %>% summary %>%
+                         family = mod_family,
+                         method = fastglm_method) %>% summary %>%
     .[['coefficients']] %>%
     as.data.frame() %>%
     tibble::rownames_to_column("term") %>%
@@ -330,6 +332,8 @@ anpan_batch = function(bug_dir,
 
   bug_files = get_file_list(bug_dir)
   # anpan is parallelized internally, so just map here.
+
+  # TODO V put the progressr here, not in anpan
   all_bug_terms = purrr::map(.x = bug_files,
                              .f = anpan,
                              meta_file = meta_file,
