@@ -6,7 +6,7 @@ get_bug_name = function(bug_file,
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
                     glm_fun,
-                    fastglm_method = 0) {
+                    fastglm_method = 1) {
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO let the user specify a family that overrides this logic
@@ -83,7 +83,7 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
 }
 
 fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
-                       mod_family, fastglm_method = 0) {
+                       mod_family, fastglm_method = 1) {
 
   y = gene_dat[[outcome]]
 
