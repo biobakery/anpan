@@ -5,7 +5,8 @@ get_bug_name = function(bug_file,
 }
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
-                    glm_fun) {
+                    glm_fun,
+                    fastglm_method = 0) {
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO let the user specify a family that overrides this logic
@@ -24,6 +25,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
                                        covariates = covariates,
                                        outcome = outcome,
                                        mod_family = mod_family,
+                                       fastglm_method = fastglm_method,
                                        .options = furrr::furrr_options(seed = 123))
   # TODO progress bar with progressr
   # What I have here doesn't work for some reason.
@@ -65,7 +67,10 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
 
 #' Fit a GLM to one gene
 fit_glm = function(gene_dat, covariates, outcome, out_dir,
-                   mod_family) {
+                   mod_family,
+                   fastglm_method = NULL) {
+  # fastglm_method is NOT used in this function. It's an argument here to make
+  # calling a varying function easier inside fit_glms().
 
   glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
 
