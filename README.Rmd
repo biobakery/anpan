@@ -93,8 +93,9 @@ anpan_batch(bug_dir = "/path/to/gene_families/",
             out_dir = "/path/to/output",
             annotation_file = "/path/to/annotation.tsv", #optional, used for plots
             filtering_method = "kmeans",
-            model_type = "glm",
+            model_type = "fastglm",
             covariates = c("age", "gender"),
+            outcome = "crc",
             plot_ext = "pdf",
             save_filter_stats = TRUE)
 ```
