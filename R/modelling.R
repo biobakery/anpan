@@ -339,20 +339,25 @@ anpan_batch = function(bug_dir,
   # anpan is parallelized internally, so just map here.
 
   # TODO V put the progressr here, not in anpan
+  # p = progressr::progressor(along = bug_files)
   all_bug_terms = purrr::map(.x = bug_files,
-                             .f = anpan,
-                             meta_file = meta_file,
-                             out_dir = out_dir,
-                             model_type = model_type,
-                             filtering_method = filtering_method,
-                             discard_absent_samples = discard_absent_samples,
-                             covariates = covariates,
-                             outcome = outcome,
-                             save_filter_stats = save_filter_stats,
-                             annotation_file = annotation_file,
-                             plot_ext = plot_ext,
-                             verbose = verbose,
-                             ...) %>%
+                             .f = function(.x) {
+                               anpan_res = anpan(.x,
+                                                 meta_file = meta_file,
+                                                 out_dir = out_dir,
+                                                 model_type = model_type,
+                                                 filtering_method = filtering_method,
+                                                 discard_absent_samples = discard_absent_samples,
+                                                 covariates = covariates,
+                                                 outcome = outcome,
+                                                 save_filter_stats = save_filter_stats,
+                                                 annotation_file = annotation_file,
+                                                 plot_ext = plot_ext,
+                                                 verbose = verbose,
+                                                 ...)
+                               # p()
+                               anpan_res
+                             }) %>%
     dplyr::bind_rows() %>%
     dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     dplyr::relocate(bug_name, gene) %>%
