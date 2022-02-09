@@ -49,7 +49,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, function(.x) .x$result))],
                             cols = c(glm_res))
 
-  readr::write_tsv(all_terms,
+  write_tsv_no_progress(all_terms,
                    file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
   # TODO write this and the one two lines down to a "bug_results/" directory rather than the top level output directory
 
@@ -59,7 +59,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) %>%
     dplyr::select(-term)
 
-  readr::write_tsv(bug_terms,
+  write_tsv_no_progress(bug_terms,
                    file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv.gz")))
 
   return(bug_terms)
@@ -266,7 +266,7 @@ anpan = function(bug_file,
     wide_dat = dcast(model_input,
                      formula = spread_formula,
                      value.var = 'present')
-    readr::write_tsv(wide_dat,
+    write_tsv_no_progress(wide_dat,
                      file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
   }
 
@@ -369,7 +369,7 @@ anpan_batch = function(bug_dir,
                            plot_ext = plot_ext)
   }
 
-  readr::write_tsv(all_bug_terms,
+  write_tsv_no_progress(all_bug_terms,
                    file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
 
   filter_stats_dir = file.path(out_dir, "filter_stats")

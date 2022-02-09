@@ -189,10 +189,10 @@ initial_prevalence_filter = function(gf,
   drop_df = data.table(bug = bug_name,
                        n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
   if (!file.exists(initial_prev_filter)) {
-    readr::write_tsv(drop_df,
+    write_tsv_no_progress(drop_df,
                      file = initial_prev_filter)
   } else {
-    readr::write_tsv(drop_df,
+    write_tsv_no_progress(drop_df,
                      file = initial_prev_filter, append = TRUE)
   }
 
@@ -228,12 +228,12 @@ final_prevalence_filter = function(filtered_gf,
     if (verbose) message(paste0("* Final prevalence filter dropped ", n_drop, " genes."))
     final_filter_file = file.path(filter_stats_dir, "final_prevalence_filter.tsv.gz")
     if (!file.exists(final_filter_file)) {
-      readr::write_tsv(data.table(bug_name = bn,
+      write_tsv_no_progress(data.table(bug_name = bn,
                                   n_dropped = n_drop),
                        file = final_filter_file)
 
     } else {
-      readr::write_tsv(data.table(bug_name = bn,
+      write_tsv_no_progress(data.table(bug_name = bn,
                                   n_dropped = n_drop),
                        file = final_filter_file,
                        append = TRUE)
@@ -322,7 +322,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   }
 
   if (save_filter_stats && filtering_method != "none") {
-    readr::write_tsv(sample_labels,
+    write_tsv_no_progress(sample_labels,
                      file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
   }
 
