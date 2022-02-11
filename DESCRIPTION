@@ -29,5 +29,6 @@ Imports:
     mixtools,
     readr,
     loo,
-    fastglm
+    fastglm,
+    ggdendro
 RoxygenNote: 7.1.1

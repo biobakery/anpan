@@ -97,6 +97,14 @@ make_kmeans_dotplot = function(samp_stats,
   p
 }
 
+blank_tree = function(clust) {
+  ggdendro::ggdendrogram(clust, labels = FALSE, leaf_labels = FALSE) +
+    theme(axis.text.x = element_blank(),
+          axis.text.y = element_blank(),
+          plot.margin = unit(c(0,0,0,0), 'cm')) +
+    scale_x_continuous(expand = c(0,0))
+}
+
 #' Plot the data for top results
 #'
 #' @description This funciton makes a tile plot of the top results of a fit
@@ -114,6 +122,7 @@ make_kmeans_dotplot = function(samp_stats,
 #' @param n_top number of top elements to show from the results
 #' @param q_threshold FDR threshold to use for inclusion in the plot.
 #' @param cluster axis to cluster. either "none", "samples", "genes", or "both"
+#' @param show_trees logical to show the trees for the samples (if clustered)
 #' @details If included, \code{annotation_file} must be a tsv with two columns:
 #'   "gene" and "annotation".
 #'
@@ -125,10 +134,15 @@ make_kmeans_dotplot = function(samp_stats,
 make_results_plot = function(res, covariates, outcome, model_input, plot_dir = NULL, bug_name,
                              annotation_file = NULL,
                              cluster = 'none',
+                             show_trees = FALSE,
                              n_top = 50,
                              q_threshold = NULL,
                              show_intervals = TRUE,
                              plot_ext = "pdf") {
+
+  if (cluster %in% c("none", "genes")) {
+    show_trees = FALSE
+  }
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
@@ -178,6 +192,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
       ctls = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[1]])
       ctl_clust = hclust(dist(input_mat[rownames(input_mat) %in% ctls,],
                               method = "binary"))
+      ctl_tree = blank_tree(ctl_clust)
 
       cases = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[2]])
       case_clust = hclust(dist(input_mat[rownames(input_mat) %in% cases,],
@@ -185,6 +200,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
 
       s_levels = c(rownames(input_mat)[rownames(input_mat) %in% ctls][ctl_clust$order],
                    rownames(input_mat)[rownames(input_mat) %in% cases][case_clust$order])
+
+      case_tree = blank_tree(case_clust)
     } else {
       s_clust = hclust(dist(input_mat))
       s_levels = rownames(input_mat)[s_clust$order]
@@ -214,7 +231,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
 
-  n_healthy = sum(color_bars[[outcome]] == 0) # TODO adapt to continuous outcome
+  n_healthy = sum(color_bars[[outcome]] == 0) # TODO adapt to continuous outcome # would be better to make a separate function
+  n_case = sum(color_bars[[outcome]] == 1)
 
   if (length(covariates) > 2) {
     stop("data plots can't handle more than two covariates right now")
@@ -295,59 +313,67 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
           axis.ticks.x = element_blank(),
           panel.border = element_blank()) +
     coord_cartesian(expand = FALSE)
+  int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
+    dplyr::mutate(max_val = estimate + 1.96*std.error,
+                  min_val = estimate - 1.96*std.error,
+                  p_group = dplyr::case_when(p.value < .001 ~ "***",
+                                             p.value < .01  ~ "**",
+                                             p.value < .05  ~ "*",
+                                             p.value < .1   ~ ".",
+                                             p.value < 1    ~ " "))
 
-  if (show_intervals) {
-    int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
-      dplyr::mutate(max_val = estimate + 1.96*std.error,
-                    min_val = estimate - 1.96*std.error,
-                    p_group = dplyr::case_when(p.value < .001 ~ "***",
-                                               p.value < .01  ~ "**",
-                                               p.value < .05  ~ "*",
-                                               p.value < .1   ~ ".",
-                                               p.value < 1    ~ " "))
+  est_range = max(int_plot_df$max_val) - min(int_plot_df$min_val)
 
-    est_range = max(int_plot_df$max_val) - min(int_plot_df$min_val)
+  star_loc = min(int_plot_df$min_val) - .25*est_range
 
-    star_loc = min(int_plot_df$min_val) - .25*est_range
+  int_plot = int_plot_df %>%
+    ggplot(aes(estimate, gene)) +
+    geom_segment(aes(y = gene,
+                     yend = gene,
+                     x = min_val,
+                     xend = max_val),
+                 color = 'grey20') +
+    geom_point(color = "grey10") +
+    geom_vline(xintercept = 0,
+               lty = 2,
+               color = 'grey70') +
+    geom_text(aes(x = star_loc,
+                  y = gene,
+                  label = p_group), hjust = 0, vjust = .7) +
+    xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
+           max(0, max(int_plot_df$max_val)))) +
+    theme(panel.background = element_rect(fill = "white",
+                                          colour = NA),
+          panel.border = element_rect(fill = NA,
+                                      colour = "grey70", size = rel(1)),
+          panel.grid = element_line(colour = "grey92"),
+          panel.grid.major.y = element_blank(),
+          axis.text.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.title.y = element_blank())
 
-    int_plot = int_plot_df %>%
-      ggplot(aes(estimate, gene)) +
-      geom_segment(aes(y = gene,
-                       yend = gene,
-                       x = min_val,
-                       xend = max_val),
-                   color = 'grey20') +
-      geom_point(color = "grey10") +
-      geom_vline(xintercept = 0,
-                 lty = 2,
-                 color = 'grey70') +
-      geom_text(aes(x = star_loc,
-                    y = gene,
-                    label = p_group), hjust = 0, vjust = .7) +
-      xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
-             max(0, max(int_plot_df$max_val)))) +
-      theme(panel.background = element_rect(fill = "white",
-                                            colour = NA),
-            panel.border = element_rect(fill = NA,
-                                        colour = "grey70", size = rel(1)),
-            panel.grid = element_line(colour = "grey92"),
-            panel.grid.major.y = element_blank(),
-            axis.text.y = element_blank(),
-            axis.ticks.y = element_blank(),
-            axis.title.y = element_blank())
+  if (show_trees) {
+    n = n_healthy + n_case
+    ctl_width =  5 * n_healthy/n
+    case_width = 5 * n_case/n
+    tree_plot = patchwork::wrap_plots(ctl_tree, case_tree) +
+      patchwork::plot_layout(nrow = 1, widths = c(ctl_width, case_width))
+  }
+
+  if (show_intervals && !show_trees) {
 
     design_str = "
-    #AAAAA
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
-    CBBBBB
+    #AAAAAA
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
     " # lol
 
     p = patchwork::wrap_plots(anno_plot, pres_plot, int_plot,
@@ -358,6 +384,56 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                                  theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
+  } else if (show_intervals && show_trees) {
+
+    design_str = "
+    #DDDDDD
+    #AAAAAA
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    CBBBBBB
+    " # lol
+
+    p = patchwork::wrap_plots( anno_plot, pres_plot, int_plot, tree_plot,
+                               guides = 'collect',
+                               design = design_str) +
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+                                 theme = theme(legend.position = "left"),
+                                 caption = threshold_warning_string,
+                                 subtitle = subtitle_str)
+
+
+  } else if (!show_intervals && show_trees) {
+    design_str = "
+    CCCCCC
+    AAAAAA
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    BBBBBB
+    " # lol
+
+    p = patchwork::wrap_plots( anno_plot, pres_plot, tree_plot,
+                               guides = 'collect',
+                               design = design_str) +
+      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+                                 theme = theme(legend.position = "left"),
+                                 caption = threshold_warning_string,
+                                 subtitle = subtitle_str)
+
   } else {
     p = patchwork::wrap_plots(anno_plot, pres_plot,
                               ncol = 1,

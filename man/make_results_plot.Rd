@@ -13,6 +13,7 @@ make_results_plot(
   bug_name,
   annotation_file = NULL,
   cluster = "none",
+  show_trees = FALSE,
   n_top = 50,
   q_threshold = NULL,
   show_intervals = TRUE,
@@ -36,6 +37,8 @@ file}
 \item{annotation_file}{optional path file giving annotations}
 
 \item{cluster}{axis to cluster. either "none", "samples", "genes", or "both"}
+
+\item{show_trees}{logical to show the trees for the samples (if clustered)}
 
 \item{n_top}{number of top elements to show from the results}
 

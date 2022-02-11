@@ -4,7 +4,14 @@
 \alias{fit_glm}
 \title{Fit a GLM to one gene}
 \usage{
-fit_glm(gene_dat, covariates, outcome, out_dir, mod_family)
+fit_glm(
+  gene_dat,
+  covariates,
+  outcome,
+  out_dir,
+  mod_family,
+  fastglm_method = NULL
+)
 }
 \description{
 Fit a GLM to one gene
