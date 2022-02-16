@@ -17,6 +17,8 @@ make_results_plot(
   n_top = 50,
   q_threshold = NULL,
   show_intervals = TRUE,
+  width = NULL,
+  height = NULL,
   plot_ext = "pdf"
 )
 }
@@ -43,6 +45,10 @@ file}
 \item{n_top}{number of top elements to show from the results}
 
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
+
+\item{width}{width of saved plot in inches}
+
+\item{height}{height of saved plot in inches}
 
 \item{plot_ext}{extension to use for plots}
 }
