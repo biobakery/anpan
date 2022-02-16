@@ -304,7 +304,12 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     }
   }
 
-  ns = n_distinct(plot_data$sample_id)
+  ns = dplyr::n_distinct(plot_data$sample_id)
+  ng = length(gene_levels)
+
+  glab_frac = ifelse(ng > 50,
+                     50 / ng,
+                     1)
 
   pres_plot = plot_data %>%
     mutate(present = as.logical(present)) %>%
@@ -319,7 +324,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
          y = NULL) +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank(),
-          panel.border = element_blank()) +
+          panel.border = element_blank(),
+          axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
     coord_cartesian(expand = FALSE)
   int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
     dplyr::mutate(max_val = estimate + 1.96*std.error,
