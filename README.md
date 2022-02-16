@@ -119,3 +119,20 @@ anpan_pglmm(meta_file,
             verbose = TRUE,
             cores = 4)
 ```
+
+## FAQ
+
+> What’s with the name?
+
+The name “anpan” was chosen to fit into the
+[biobakery](https://huttenhower.sph.harvard.edu/tools/) bread theme and
+because it’s short and easy to pronounce and remember. Also, [real
+anpan](https://duckduckgo.com/?q=anpan&t=h_&iax=images&ia=images) are
+delicious.
+
+There’s no backronym, but if you think of a good one let me know.
+
+Capitalization of the name follows [the xkcd
+rule](https://xkcd.com/about/). All lowercase “anpan” is preferred, all
+uppercase “ANPAN” is acceptable in formal contexts or the start of a
+sentence, but mixed-case “Anpan” is frowned upon.
