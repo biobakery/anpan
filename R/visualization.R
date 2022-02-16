@@ -123,6 +123,8 @@ blank_tree = function(clust) {
 #' @param q_threshold FDR threshold to use for inclusion in the plot.
 #' @param cluster axis to cluster. either "none", "samples", "genes", or "both"
 #' @param show_trees logical to show the trees for the samples (if clustered)
+#' @param width width of saved plot in inches
+#' @param height height of saved plot in inches
 #' @details If included, \code{annotation_file} must be a tsv with two columns:
 #'   "gene" and "annotation".
 #'
@@ -138,6 +140,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                              n_top = 50,
                              q_threshold = NULL,
                              show_intervals = TRUE,
+                             width = NULL,
+                             height = NULL,
                              plot_ext = "pdf") {
 
   if (cluster %in% c("none", "genes")) {
@@ -287,13 +291,17 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     y_scale = scale_y_discrete(breaks = lab_df$gene,
                                labels = lab_df$g_lab,
                                position = 'right')
-    w = ifelse(max(nchar(lab_df$g_lab)) > 50,
-               12, 8)
+    if (is.null(width)) {
+      width = ifelse(max(nchar(lab_df$g_lab)) > 50,
+                     12, 8)
+    }
   } else {
     lab_df = plot_data[,.(gene)] %>% unique
     y_scale = scale_y_discrete(breaks = lab_df$gene,
                                position = 'right')
-    w = 8
+    if (is.null(width)) {
+      width = 8
+    }
   }
 
   ns = n_distinct(plot_data$sample_id)
@@ -446,9 +454,10 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
   }
 
   if (!is.null(plot_dir)) {
+    if (is.null(height)) height = 10
     ggsave(plot = p,
-           width = w,
-           height = 10,
+           width = width,
+           height = height,
            filename = file.path(plot_dir, paste0(bug_name, "_data.", plot_ext)))
   }
 
