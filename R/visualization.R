@@ -308,7 +308,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
   ng = length(gene_levels)
 
   glab_frac = ifelse(ng > 50,
-                     50^(1/3) / (ng^(1/3)),
+                     50^(1/2) / (ng^(1/2)),
                      1)
 
   pres_plot = plot_data %>%
