@@ -219,9 +219,15 @@ final_prevalence_filter = function(filtered_gf,
                                    verbose) {
 
   select_cols = c(outcome, "present", "gene")
-  to_check = filtered_gf[,..select_cols][,.(sd_table = list(table(.SD))), by = gene]
 
-  to_check$varies_enough = sapply(to_check$sd_table, check_table)
+  if (dplyr::n_distinct(filtered_gf[[outcome]]) <= 2) {
+    to_check = filtered_gf[,..select_cols][,.(sd_table = list(table(.SD))), by = gene]
+    to_check$varies_enough = sapply(to_check$sd_table, check_table)
+  } else {
+    to_check = filtered_gf[,..select_cols][,.(n_pres = sum(present),
+                                              n_abs = sum(!present),
+                                              .N), by = gene][, varies_enough := (n_pres > minmax_thresh) & (n_abs > minmax_thresh), by = gene][]
+  }
 
   if (any(!to_check$varies_enough)) {
     n_drop = nrow(to_check[!(varies_enough)])
