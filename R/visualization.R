@@ -108,6 +108,92 @@ blank_tree = function(clust) {
     scale_x_continuous(expand = c(0,0))
 }
 
+get_cov_color_map = function(unique_covs) {
+
+  disc_scales = list(scale_fill_brewer(palette = "Set1"),
+                     scale_fill_brewer(palette = "Set2"))
+
+  cont_scales = list(scale_fill_viridis_c(),
+                     scale_fill_viridis_c(option = "magma"))
+
+  col_scales = list(discrete = disc_scales,
+                    continuous = cont_scales)
+
+  covs = names(unique_covs)
+
+  cov_types = unique_covs %>%
+    imap_dfr(function(.x, .y){tibble(covariate = .y,
+                                     is_num = is.numeric(.x),
+                                     n_uniq = dplyr::n_distinct(.x))}) %>%
+    mutate(cov_type = c('discrete', 'continuous')[((n_uniq >= 5 & (is_num)) + 1)]) %>%
+    group_by(cov_type) %>%
+    mutate(cov_i = 1:n()) %>%
+    ungroup %>%
+    mutate(color_scales = map2(cov_type, cov_i,
+                               function(.x, .y){col_scales[[.x]][[.y]]}),
+           y = 2:(n()+1))
+
+  return(cov_types)
+}
+
+make_anno_plot = function(color_bars, model_input,
+                          covariates, outcome, binary_outcome) {
+
+  if (binary_outcome) {
+    n_healthy = sum(color_bars[[outcome]] == 0)
+    n_case = sum(color_bars[[outcome]] == 1)
+    outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
+    outcome_fill_scale = scale_fill_manual(values = outcome_fill_values)
+  } else{
+    outcome_fill_scale = scale_fill_viridis_c(option = "cividis")
+  }
+
+  coords = coord_cartesian(expand = FALSE)
+  labs_obj = labs(y = NULL,
+              x = NULL)
+  theme_obj = theme(axis.text.y = element_blank(),
+                    axis.ticks.y = element_blank(),
+                    axis.text.x = element_blank(),
+                    axis.ticks.x = element_blank(),
+                    panel.border = element_blank())
+
+  if (length(covariates) > 0) {
+    unique_covs = model_input %>%
+      dplyr::select(dplyr::all_of(covariates)) %>%
+      unique
+    covariate_color_map = get_cov_color_map(unique_covs)
+  }
+
+  base_plot = color_bars %>%
+    ggplot(aes(x = sample_id)) +
+    geom_tile(aes_string(y = 1, fill = outcome)) +
+    outcome_fill_scale +
+    coords + labs_obj + theme_obj
+
+  p = base_plot
+
+  if (length(covariates) > 0) {
+    p = p +
+
+      ggnewscale::new_scale("fill") +
+      geom_tile(aes_string(x = "sample_id", y = covariate_color_map$y[1],
+                           fill = covariate_color_map$covariate[1])) +
+      covariate_color_map$color_scales[[1]]
+  }
+
+  if (length(covariates) > 1) {
+    p = p +
+
+      ggnewscale::new_scale("fill") +
+      geom_tile(aes_string(x = "sample_id",
+                           y = covariate_color_map$y[2],
+                           fill = covariate_color_map$covariate[2])) +
+      covariate_color_map$color_scales[[2]]
+  }
+
+  return(p)
+}
+
 #' Plot the data for top results
 #'
 #' @description This funciton makes a tile plot of the top results of a fit
@@ -150,6 +236,8 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
   if (cluster %in% c("none", "genes")) {
     show_trees = FALSE
   }
+
+  binary_outcome = dplyr::n_distinct(model_input[[outcome]]) == 2
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
@@ -195,7 +283,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
       dplyr::select(dplyr::all_of(select_cols)) %>%
       unique
 
-    if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
+    if (binary_outcome) {
       ctls = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[1]])
       ctl_clust = hclust(dist(input_mat[rownames(input_mat) %in% ctls,],
                               method = "binary"))
@@ -210,8 +298,10 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
 
       case_tree = blank_tree(case_clust)
     } else {
-      s_clust = hclust(dist(input_mat))
+      s_clust = hclust(dist(input_mat,
+                            method = 'binary'))
       s_levels = rownames(input_mat)[s_clust$order]
+      s_tree = blank_tree(s_clust)
     }
 
     color_bars$sample_id = factor(color_bars$sample_id,
@@ -238,38 +328,17 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
 
-  n_healthy = sum(color_bars[[outcome]] == 0) # TODO adapt to continuous outcome # would be better to make a separate function
-  n_case = sum(color_bars[[outcome]] == 1)
+  if (binary_outcome) {
+    n_healthy = sum(color_bars[[outcome]] == 0)
+    n_case = sum(color_bars[[outcome]] == 1)
+  }
 
   if (length(covariates) > 2) {
     stop("data plots can't handle more than two covariates right now")
   }
 
-  # TODO adapt to continuous outcome
-  outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
-
-  anno_plot = color_bars %>%
-    ggplot(aes(x = sample_id)) +
-    geom_tile(aes_string(y = 1, fill = covariates[2])) +
-    scale_fill_manual(values = c("male" = "cornflowerblue",
-                                 "female" = "sienna1")) +
-
-    ggnewscale::new_scale("fill") +
-    geom_tile(aes_string(x = "sample_id", y = 2, fill = covariates[1])) +
-    scale_fill_viridis_c() +
-
-    ggnewscale::new_scale("fill") +
-    geom_tile(aes_string(y = 3, fill = outcome)) +
-    scale_fill_manual(values = outcome_fill_values) +
-
-    coord_cartesian(expand = FALSE) +
-    labs(y = NULL,
-         x = NULL) +
-    theme(axis.text.y = element_blank(),
-          axis.ticks.y = element_blank(),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          panel.border = element_blank())
+  anno_plot = make_anno_plot(color_bars, model_input,
+                             covariates, outcome, binary_outcome)
 
   if (!is.null(annotation_file)) {
     plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
@@ -281,7 +350,6 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                               levels = levels(color_bars$sample_id))
   plot_data$gene = factor(plot_data$gene,
                           levels = rev(gene_levels))
-
 
   if (!is.null(annotation_file)) {
     plot_data$g_lab = paste(plot_data$gene, plot_data$annotation, sep = ": ")
@@ -314,13 +382,19 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                      50^(1/2) / (ng^(1/2)),
                      1)
 
-  pres_plot = plot_data %>%
+  if (binary_outcome) {
+    black_vline = geom_vline(lwd = .5,
+               color = 'black',
+               xintercept = n_healthy + .5)
+  } else {
+    black_vline = NULL
+  }
+
+  heatmap_tile = plot_data %>%
     mutate(present = as.logical(present)) %>%
     ggplot(aes(y = gene, x = sample_id)) +
     geom_tile(aes(fill = present)) +
-    geom_vline(lwd = .5,
-               color = 'black',
-               xintercept = n_healthy + .5) +
+    black_vline +
     scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse")) +
     y_scale +
     labs(x = "samples",
@@ -330,6 +404,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
           panel.border = element_blank(),
           axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
     coord_cartesian(expand = FALSE)
+
   int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
     dplyr::mutate(max_val = estimate + 1.96*std.error,
                   min_val = estimate - 1.96*std.error,
@@ -369,12 +444,16 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
           axis.ticks.y = element_blank(),
           axis.title.y = element_blank())
 
-  if (show_trees) {
+  if (binary_outcome && show_trees) {
     n = n_healthy + n_case
     ctl_width =  5 * n_healthy/n
     case_width = 5 * n_case/n
     tree_plot = patchwork::wrap_plots(ctl_tree, case_tree) +
       patchwork::plot_layout(nrow = 1, widths = c(ctl_width, case_width))
+  } else if (!binary_outcome && show_trees) {
+    n = nrow(input_mat)
+    tree_plot = patchwork::wrap_plots(s_tree) +
+      patchwork::plot_layout(nrow = 1, widths = 5)
   }
 
   if (show_intervals && !show_trees) {
@@ -393,7 +472,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     CBBBBBB
     " # lol
 
-    p = patchwork::wrap_plots(anno_plot, pres_plot, int_plot,
+    p = patchwork::wrap_plots(anno_plot, heatmap_tile, int_plot,
                               ncol = 2,
                               guides = 'collect',
                               design = design_str) +
@@ -418,7 +497,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     CBBBBBB
     " # lol
 
-    p = patchwork::wrap_plots( anno_plot, pres_plot, int_plot, tree_plot,
+    p = patchwork::wrap_plots( anno_plot, heatmap_tile, int_plot, tree_plot,
                                guides = 'collect',
                                design = design_str) +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
@@ -443,7 +522,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     BBBBBB
     " # lol
 
-    p = patchwork::wrap_plots( anno_plot, pres_plot, tree_plot,
+    p = patchwork::wrap_plots( anno_plot, heatmap_tile, tree_plot,
                                guides = 'collect',
                                design = design_str) +
       patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
@@ -452,7 +531,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
                                  subtitle = subtitle_str)
 
   } else {
-    p = patchwork::wrap_plots(anno_plot, pres_plot,
+    p = patchwork::wrap_plots(anno_plot, heatmap_tile,
                               ncol = 1,
                               heights = c(1, 11),
                               guides = 'collect') +
