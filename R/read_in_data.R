@@ -1,5 +1,6 @@
 read_meta = function(meta_file,
-                     select_cols = c("sample_id", "age", "gender", "crc")) {
+                     select_cols = c("sample_id", "age", "gender", "crc"),
+                     omit_na = FALSE) {
 
   meta = fread(meta_file,
                showProgress = FALSE)
@@ -19,6 +20,13 @@ read_meta = function(meta_file,
   }
 
   metadata = meta %>% dplyr::select(dplyr::all_of(select_cols))
+
+  if (omit_na) {
+    metadata = na.omit(metadata)
+  } else if (any(!complete.cases(metadata))) {
+    stop("Incomplete cases detected in metadata. Set omit_na = TRUE to omit NAs.")
+  }
+
   metadata
 }
 

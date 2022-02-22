@@ -16,6 +16,7 @@ make_line_plot = function(bug_file = NULL,
                           meta_file = NULL,
                           covariates,
                           outcome,
+                          omit_na = FALSE,
                           fgf = NULL,
                           bug_name = NULL,
                           plot_ext = "pdf",
@@ -30,7 +31,9 @@ make_line_plot = function(bug_file = NULL,
     fgf = read_and_filter(bug_file,
                           covariates = covariates,
                           outcome = outcome,
-                          read_meta(meta_file), pivot_wide = FALSE)
+                          read_meta(meta_file,
+                                    select_cols = c("sample_id", outcome, covariates),
+                                    omit_na = omit_na), pivot_wide = FALSE)
 
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }

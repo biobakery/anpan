@@ -25,6 +25,7 @@ anpan_pglmm = function(meta_file,
                        out_dir = NULL,
                        trim_pattern = NULL,
                        covariates = NULL,
+                       omit_na = FALSE,
                        family = stats::gaussian(),
                        plot_cov_mat = TRUE,
                        save_object = FALSE,
@@ -35,7 +36,8 @@ anpan_pglmm = function(meta_file,
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
 
   meta = read_meta(meta_file,
-                   select_cols = c("sample_id", covariates, outcome))
+                   select_cols = c("sample_id", covariates, outcome),
+                   omit_na = omit_na)
 
   tree_name = basename(tree_file) %>%
     stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$"),

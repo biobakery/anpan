@@ -76,7 +76,7 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
 
   res = glm(glm_formula,
             data = gene_dat,
-            family = 'binomial') %>%
+            family = mod_family) %>%
     broom::tidy() %>%
     as.data.table()
   return(res)
@@ -167,6 +167,7 @@ fit_anpan = function(model_input,
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
+#' @param omit_na logical indicating whether to omit incomplete cases
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @param ... arguments to pass to brms::brm()
 #' @details The specified metadata file must contain columns matching "sample_id"
@@ -178,6 +179,7 @@ anpan = function(bug_file,
                  model_type = "anpan",
                  covariates = c("age", "gender"),
                  outcome = "crc",
+                 omit_na = FALSE,
                  filtering_method = "kmeans",
                  discard_absent_samples = TRUE,
                  annotation_file = NULL,
@@ -227,7 +229,8 @@ anpan = function(bug_file,
 
   if (verbose) message(paste0("(2/", n_steps, ") Reading and filtering ", bug_file))
   metadata = read_meta(meta_file,
-                       select_cols = c("sample_id", outcome, covariates))
+                       select_cols = c("sample_id", outcome, covariates),
+                       omit_na = omit_na)
 
   model_input = read_and_filter(bug_file, metadata = metadata,
                                 pivot_wide = model_type == "anpan",
@@ -324,6 +327,7 @@ anpan_batch = function(bug_dir,
                        model_type = "anpan",
                        covariates = c("age", "gender"),
                        outcome = "crc",
+                       omit_na = FALSE,
                        filtering_method = "kmeans",
                        discard_absent_samples = TRUE,
                        annotation_file = NULL,
