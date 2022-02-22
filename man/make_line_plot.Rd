@@ -9,6 +9,7 @@ make_line_plot(
   meta_file = NULL,
   covariates,
   outcome,
+  omit_na = FALSE,
   fgf = NULL,
   bug_name = NULL,
   plot_ext = "pdf",
@@ -24,6 +25,8 @@ make_line_plot(
 \item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{outcome}{the name of the outcome variable}
+
+\item{omit_na}{logical indicating whether to omit incomplete cases}
 
 \item{fgf}{a filtered gene family data frame}
 

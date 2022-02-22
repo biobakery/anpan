@@ -11,6 +11,7 @@ anpan_batch(
   model_type = "anpan",
   covariates = c("age", "gender"),
   outcome = "crc",
+  omit_na = FALSE,
   filtering_method = "kmeans",
   discard_absent_samples = TRUE,
   annotation_file = NULL,
@@ -35,6 +36,8 @@ anpan_batch(
 \item{covariates}{character vector of covariates to include in the model}
 
 \item{outcome}{character string of the outcome variable}
+
+\item{omit_na}{logical indicating whether to omit incomplete cases}
 
 \item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
 

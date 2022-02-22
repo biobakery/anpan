@@ -11,6 +11,7 @@ anpan_pglmm(
   out_dir = NULL,
   trim_pattern = NULL,
   covariates = NULL,
+  omit_na = FALSE,
   family = stats::gaussian(),
   plot_cov_mat = TRUE,
   save_object = FALSE,
@@ -31,6 +32,8 @@ anpan_pglmm(
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{omit_na}{logical indicating whether to omit incomplete cases}
 
 \item{family}{family object for the error distribution}
 
