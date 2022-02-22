@@ -151,6 +151,7 @@ filter_gf = function(gf,
                    bug_name = bug_name,
                    covariates = covariates,
                    outcome = outcome,
+                   omit_na = TRUE,
                    plot_dir = file.path(filter_stats_dir, "plots"),
                    plot_ext = plot_ext)
   }
