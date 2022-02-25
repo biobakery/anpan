@@ -8,7 +8,7 @@ anpan_batch(
   bug_dir,
   meta_file,
   out_dir,
-  model_type = "anpan",
+  model_type = "horseshoe",
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
@@ -31,7 +31,7 @@ anpan_batch(
 
 \item{out_dir}{path to the desired output directory}
 
-\item{model_type}{either "anpan", "glm", or "fastglm"}
+\item{model_type}{either "horseshoe", "glm", or "fastglm"}
 
 \item{covariates}{character vector of covariates to include in the model}
 

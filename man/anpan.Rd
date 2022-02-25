@@ -8,7 +8,7 @@ anpan(
   bug_file,
   meta_file,
   out_dir,
-  model_type = "anpan",
+  model_type = "horseshoe",
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
@@ -28,7 +28,7 @@ anpan(
 
 \item{out_dir}{path to the desired output directory}
 
-\item{model_type}{either "anpan", "glm", or "fastglm"}
+\item{model_type}{either "horseshoe", "glm", or "fastglm"}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
 
