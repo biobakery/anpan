@@ -109,7 +109,7 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
 safely_fit_glm = purrr::safely(fit_glm)
 safely_fit_fastglm = purrr::safely(fit_fastglm)
 
-fit_anpan = function(model_input,
+fit_horseshoe = function(model_input,
                      out_dir,
                      bug_name,
                      covariates,
@@ -163,7 +163,7 @@ fit_anpan = function(model_input,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
-#' @param model_type either "anpan", "glm", or "fastglm"
+#' @param model_type either "horseshoe", "glm", or "fastglm"
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
@@ -176,7 +176,7 @@ fit_anpan = function(model_input,
 anpan = function(bug_file,
                  meta_file,
                  out_dir,
-                 model_type = "anpan",
+                 model_type = "horseshoe",
                  covariates = c("age", "gender"),
                  outcome = "crc",
                  omit_na = FALSE,
@@ -193,7 +193,7 @@ anpan = function(bug_file,
   # TODO separate the checks out to a distinct function.
   if (verbose) message(paste0("\n(1/", n_steps, ") Preparing the mise en place (checking inputs)..."))
 
-  if (!(model_type %in% c("anpan", "glm", "fastglm"))) stop('model_type must be either "anpan", "glm", or "fastglm"')
+  if (!(model_type %in% c("horseshoe", "glm", "fastglm"))) stop('model_type must be either "horseshoe", "glm", or "fastglm"')
 
   bug_name = get_bug_name(bug_file)
 
@@ -233,7 +233,7 @@ anpan = function(bug_file,
                        omit_na = omit_na)
 
   model_input = read_and_filter(bug_file, metadata = metadata,
-                                pivot_wide = model_type == "anpan",
+                                pivot_wide = model_type == "horseshoe",
                                 covariates = covariates,
                                 outcome = outcome,
                                 filtering_method = filtering_method,
@@ -278,12 +278,12 @@ anpan = function(bug_file,
 
   if (verbose) message(paste0("(3/", n_steps, ") Fitting models to filtered data"))
   res = switch(model_type,
-               anpan = fit_anpan(model_input = model_input,
-                                 out_dir = out_dir,
-                                 covariates = covariates,
-                                 outcome = outcome,
-                                 bug_name = bug_name,
-                                 ...),
+               horseshoe = fit_horseshoe(model_input = model_input,
+                                         out_dir = out_dir,
+                                         covariates = covariates,
+                                         outcome = outcome,
+                                         bug_name = bug_name,
+                                         ...),
                glm   =   fit_glms(model_input, out_dir,
                                   covariates = covariates,
                                   outcome = outcome,
@@ -324,7 +324,7 @@ anpan = function(bug_file,
 anpan_batch = function(bug_dir,
                        meta_file,
                        out_dir,
-                       model_type = "anpan",
+                       model_type = "horseshoe",
                        covariates = c("age", "gender"),
                        outcome = "crc",
                        omit_na = FALSE,
