@@ -109,13 +109,34 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
 safely_fit_glm = purrr::safely(fit_glm)
 safely_fit_fastglm = purrr::safely(fit_fastglm)
 
+clean_ushoe_summary = function(ushoe_fit,
+                               cov_names,
+                               gene_names) {
+
+  res = ushoe_fit$summary() %>%
+    as.data.table()
+
+  res$variable["b_covariates_Intercept" == res$variable] = "intercept"
+  res$variable[grepl("b_covariate", res$variable)] = cov_names[-1]
+
+  res = res[!grepl("zb_genes|Intercept_covariates|hs_local", variable)]
+  res$index = as.numeric(gsub("[A-Za-z[:punct:]]+", "", res$variable))
+
+  res$gene = gene_names[res$index]
+
+  res = res %>%
+    dplyr::select(param = variable, gene, mean:ess_tail)
+
+  return(res)
+}
+
 fit_horseshoe = function(model_input,
                      out_dir,
                      bug_name,
                      covariates,
                      outcome,
-                     ...,
-                     save_summ = FALSE) {
+                     save_fit = TRUE,
+                     ...) {
 
   main_formula = as.formula(paste0(outcome, " ~ stdCovariates + genes"))
   std_formula = as.formula(paste0("stdCovariates ~ 1 + ", paste(covariates, collapse = " + ")))
@@ -139,21 +160,51 @@ fit_horseshoe = function(model_input,
     mod_family = stats::gaussian()
   }
 
-  model_fit = brms::brm(form,
-                        prior = p,
-                        data = model_input,
-                        family = mod_family,
-                        backend = 'cmdstanr',
-                        ...)
+  model_path = system.file("stan", "logistic_ushoe.stan",
+                           package = 'anpan',
+                           mustWork = TRUE)
 
-  summ = summarise_fit(model_fit)
+  ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
 
-  if (save_summ) {
-    save(summ,
-         file = file.path(out_dir, paste0(bug_name, ".RData"))) # TODO make the parts of this work
+  cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
+
+  X_genes = model_input %>%
+    dplyr::select(-dplyr::all_of(c('sample_id', outcome, covariates))) %>%
+    as.matrix()
+  X_genes = 0+X_genes # convert to 0/1
+  X_covariates = model.matrix(cov_formula, data = model_input)
+
+  data_list = list(N = nrow(model_input),
+                   Y = as.numeric(model_input[[outcome]]),
+                   K_covariates = 1 + length(covariates), # + 1 for intercept
+                   X_covariates = X_covariates,
+                   K_genes = ncol(model_input) - (2 + length(covariates)),  # sample_id + outcome + length(covariates)
+                   X_genes = X_genes,
+                   hs_df_genes = 1,
+                   hs_df_global_genes = 1,
+                   hs_df_slab_genes = 4,
+                   hs_scale_global_genes = .005 / sqrt(nrow(model_input)),
+                   hs_scale_slab_genes = 2,
+                   prior_only = 0)
+
+  ushoe_fit = ushoe_model$sample(data = data_list,
+                                 iter_sampling = 1000, # TODO make these options user-accessible
+                                 iter_warmup = 1000,
+                                 parallel_chains = getOption("mc.cores", 4),
+                                 adapt_delta = .9,
+                                 refresh = 20)
+
+  res = clean_ushoe_summary(ushoe_fit,
+                            colnames(X_covariates),
+                            colnames(X_genes))
+
+  if (save_fit) {
+    fit_dir = file.path(out_dir, "fits")
+    if (!dir.exists(fit_dir)) dir.create(fit_dir)
+    ushoe_fit$save_object(file = file.path(fit_dir, paste0(bug_name, "_fit.RDS")))
   }
 
-  model_fit
+  return(res)
 
 }
 
