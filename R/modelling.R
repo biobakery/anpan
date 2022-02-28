@@ -138,33 +138,21 @@ fit_horseshoe = function(model_input,
                      save_fit = TRUE,
                      ...) {
 
-  main_formula = as.formula(paste0(outcome, " ~ stdCovariates + genes"))
-  std_formula = as.formula(paste0("stdCovariates ~ 1 + ", paste(covariates, collapse = " + ")))
-
-
-  form = brms::bf(main_formula, nl = TRUE) +
-    brms::lf(std_formula, center = TRUE) +
-    brms::lf(as.formula(paste0("genes ~ 0 + ",
-                               paste(names(model_input)[!(names(model_input) %in% c(covariates, outcome, "sample_id"))],
-                                     collapse = " + "))), cmc = FALSE)
-
-  p = brms::set_prior("horseshoe(par_ratio = .005)",
-                      class = 'b', nlpar = "genes") +
-    brms::prior(normal(0,2),
-                class = "b", nlpar = 'stdCovariates')
-
   if (dplyr::n_distinct(model_input[[outcome]]) == 2){
     # TODO allow the user to specify a family that overrides this logic
     mod_family = brms::bernoulli()
+    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   } else {
     mod_family = stats::gaussian()
+    # TODO add another model with continuous outcomes
+    stop("continuous outcomes with horseshoe models isn't implemented yet!")
   }
 
   model_path = system.file("stan", "logistic_ushoe.stan",
                            package = 'anpan',
                            mustWork = TRUE)
 
-  ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
+
 
   cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
 
