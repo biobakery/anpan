@@ -1,6 +1,10 @@
 ---
-title: "anpan_tutorial"
-output: rmarkdown::html_vignette
+title: "anpan tutorial"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{anpan_tutorial}
   %\VignetteEngine{knitr::rmarkdown}
@@ -14,22 +18,22 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Intro
+## Intro
 
-# Load it
+## Load it
 
 ```{r setup}
 library(anpan)
 ```
 
-# Examine inputs
+## Examine inputs
 
-# PGLMMs
+## PGLMMs
 ```{r eval = FALSE}
 anpan_pglmm()
 ```
 
-# Element testing
+## Element testing
 ```{r eval = FALSE}
 anpan_batch()
 ```

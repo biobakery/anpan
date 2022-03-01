@@ -136,9 +136,10 @@ fit_horseshoe = function(model_input,
                      covariates,
                      outcome,
                      save_fit = TRUE,
+                     skip_large = TRUE,
                      ...) {
 
-  if (dplyr::n_distinct(model_input[[outcome]]) == 2){
+  if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO allow the user to specify a family that overrides this logic
     mod_family = brms::bernoulli()
     ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
@@ -146,6 +147,14 @@ fit_horseshoe = function(model_input,
     mod_family = stats::gaussian()
     # TODO add another model with continuous outcomes
     stop("continuous outcomes with horseshoe models isn't implemented yet!")
+  }
+
+  if (skip_large && ncol(model_input > (5002 + length(covariates)))) {
+    warnings_file = file.path(out_dir, "warnings.txt")
+    readr::write_lines(paste0(bug_name, " was skipped because there are over five thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
+                       file = warnings_file,
+                       append = TRUE)
+    return(NULL)
   }
 
   model_path = system.file("stan", "logistic_ushoe.stan",
@@ -203,6 +212,7 @@ fit_horseshoe = function(model_input,
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
 #' @param model_type either "horseshoe", "glm", or "fastglm"
+#' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe"
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
@@ -220,6 +230,7 @@ anpan = function(bug_file,
                  outcome = "crc",
                  omit_na = FALSE,
                  filtering_method = "kmeans",
+                 skip_large = TRUE,
                  discard_absent_samples = TRUE,
                  annotation_file = NULL,
                  plot_ext = "png",
@@ -322,6 +333,7 @@ anpan = function(bug_file,
                                          covariates = covariates,
                                          outcome = outcome,
                                          bug_name = bug_name,
+                                         skip_large = skip_large,
                                          ...),
                glm   =   fit_glms(model_input, out_dir,
                                   covariates = covariates,
@@ -369,6 +381,7 @@ anpan_batch = function(bug_dir,
                        omit_na = FALSE,
                        filtering_method = "kmeans",
                        discard_absent_samples = TRUE,
+                       skip_large = TRUE,
                        annotation_file = NULL,
                        save_filter_stats = TRUE,
                        verbose = TRUE,
@@ -389,6 +402,7 @@ anpan_batch = function(bug_dir,
                                                  meta_file = meta_file,
                                                  out_dir = out_dir,
                                                  model_type = model_type,
+                                                 skip_large = skip_large,
                                                  filtering_method = filtering_method,
                                                  discard_absent_samples = discard_absent_samples,
                                                  covariates = covariates,

@@ -14,6 +14,7 @@ anpan_batch(
   omit_na = FALSE,
   filtering_method = "kmeans",
   discard_absent_samples = TRUE,
+  skip_large = TRUE,
   annotation_file = NULL,
   save_filter_stats = TRUE,
   verbose = TRUE,
@@ -40,6 +41,8 @@ anpan_batch(
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
 \item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
+
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe"}
 
 \item{annotation_file}{optional path file giving annotations}
 
