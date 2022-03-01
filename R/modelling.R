@@ -184,7 +184,7 @@ fit_horseshoe = function(model_input,
 
   ushoe_fit = ushoe_model$sample(data = data_list,
                                  iter_sampling = 1000, # TODO make these options user-accessible
-                                 iter_warmup = 1000,
+                                 iter_warmup = 500,
                                  parallel_chains = 4,
                                  adapt_delta = .9,
                                  refresh = 0)
