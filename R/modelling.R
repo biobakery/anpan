@@ -185,9 +185,9 @@ fit_horseshoe = function(model_input,
   ushoe_fit = ushoe_model$sample(data = data_list,
                                  iter_sampling = 1000, # TODO make these options user-accessible
                                  iter_warmup = 1000,
-                                 parallel_chains = getOption("mc.cores", 4),
+                                 parallel_chains = 4,
                                  adapt_delta = .9,
-                                 refresh = 20)
+                                 refresh = 0)
 
   res = clean_ushoe_summary(ushoe_fit,
                             colnames(X_covariates),
@@ -427,10 +427,9 @@ anpan_batch = function(bug_dir,
                        ...) {
 
   bug_files = get_file_list(bug_dir)
-  # anpan is parallelized internally, so just map here.
 
-  # TODO V put the progressr here, not in anpan
   p = progressr::progressor(along = bug_files)
+
   all_bug_terms = purrr::map(.x = bug_files,
                              .f = function(.x) {
                                anpan_res = anpan(.x,
