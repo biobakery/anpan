@@ -284,8 +284,10 @@ anpan = function(bug_file,
 # Filtering ---------------------------------------------------------------
 
   if (!is.null(prefiltered_dir)) {
+
     if (verbose) message(paste0("(2/", n_steps, ") Reading ", bug_file, " from the provided directory of pre-filtered data."))
-    pre_filtered_bug = list.files(prefiltered_dir, full.names = TRUE, pattern = bug_name)
+
+    prefiltered_bug = list.files(prefiltered_dir, full.names = TRUE, pattern = bug_name)
 
     if (length(prefiltered_bug) == 0) {
       readr::write_lines(paste0(bug_file, " was skipped because no matching file was found in the pre-filtered data."),
@@ -294,6 +296,7 @@ anpan = function(bug_file,
       if (verbose) message(paste0("(3/", n_steps, ") No matching file found in in pre-filtered data directory - Model fitting skipped"))
       return(data.table::data.table())
     }
+
     model_input = fread(pre_filtered_bug)
 
     if (model_type %in% c("glm", "fastglm")) {
