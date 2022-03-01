@@ -152,7 +152,7 @@ fit_horseshoe = function(model_input,
     stop("continuous outcomes with horseshoe models isn't implemented yet!")
   }
 
-  if (skip_large && ncol(model_input > (5002 + length(covariates)))) {
+  if (skip_large && ncol(model_input) > (5002 + length(covariates))) {
     warnings_file = file.path(out_dir, "warnings.txt")
     readr::write_lines(paste0(bug_name, " was skipped because there are over five thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
                        file = warnings_file,
@@ -426,11 +426,12 @@ anpan_batch = function(bug_dir,
                                anpan_res
                              }) %>%
     dplyr::bind_rows() %>%
-    dplyr::mutate(q_global = p.adjust(p.value, method = "fdr")) %>%
     dplyr::relocate(bug_name, gene) %>%
     data.table::as.data.table()
 
   if (model_type %in% c("glm", "fastglm")) {
+    all_bug_terms$q_global = p.adjust(all_bug_terms$p.value, method = "fdr")
+
     make_p_value_histogram(all_bug_terms,
                            out_dir = out_dir,
                            plot_ext = plot_ext)
