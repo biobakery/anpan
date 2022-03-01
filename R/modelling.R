@@ -314,13 +314,19 @@ anpan = function(bug_file,
 
   if (save_filter_stats) {
     if (verbose) message("* Saving filtered data in wide format. ")
-    spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
-                           sep = "") %>%
-      as.formula()
 
-    wide_dat = dcast(model_input,
-                     formula = spread_formula,
-                     value.var = 'present')
+    if (pivot_wide) {
+      wide_dat = model_input
+    } else {
+      spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
+                             sep = "") %>%
+        as.formula()
+
+      wide_dat = dcast(model_input,
+                       formula = spread_formula,
+                       value.var = 'present')
+    }
+
     write_tsv_no_progress(wide_dat,
                      file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
   }
