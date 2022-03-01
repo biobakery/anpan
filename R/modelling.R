@@ -209,6 +209,7 @@ fit_horseshoe = function(model_input,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
+#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
 #' @param model_type either "horseshoe", "glm", or "fastglm"
 #' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".
 #' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".
@@ -224,6 +225,7 @@ fit_horseshoe = function(model_input,
 anpan = function(bug_file,
                  meta_file,
                  out_dir,
+                 prefiltered_dir = NULL,
                  model_type = "horseshoe",
                  covariates = c("age", "gender"),
                  outcome = "crc",
@@ -275,58 +277,81 @@ anpan = function(bug_file,
     file.create(warnings_file)
   }
 
-# Filtering ---------------------------------------------------------------
-
-  if (verbose) message(paste0("(2/", n_steps, ") Reading and filtering ", bug_file))
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
 
-  model_input = read_and_filter(bug_file, metadata = metadata,
-                                pivot_wide = model_type == "horseshoe",
-                                covariates = covariates,
-                                outcome = outcome,
-                                filtering_method = filtering_method,
-                                discard_absent_samples = discard_absent_samples,
-                                save_filter_stats = save_filter_stats,
-                                filter_stats_dir = filter_stats_dir,
-                                plot_ext = plot_ext,
-                                verbose = verbose)
+# Filtering ---------------------------------------------------------------
 
-  if (is.null(model_input)){
-    readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
-                       file = warnings_file,
-                       append = TRUE)
-    if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
-    return(data.table::data.table())
-  }
+  if (!is.null(prefiltered_dir)) {
+    if (verbose) message(paste0("(2/", n_steps, ") Reading ", bug_file, " from the provided directory of pre-filtered data."))
+    pre_filtered_bug = list.files(prefiltered_dir, full.names = TRUE, pattern = bug_name)
 
-  if (nrow(model_input) == 0) {
-    # ^ if nothing passed the prevalence or kmeans filters:
-    readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
-                       file = warnings_file,
-                       append = TRUE)
-    if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
-    return(data.table::data.table())
-  }
+    if (length(prefiltered_bug) == 0) {
+      readr::write_lines(paste0(bug_file, " was skipped because no matching file was found in the pre-filtered data."),
+                         file = warnings_file,
+                         append = TRUE)
+      if (verbose) message(paste0("(3/", n_steps, ") No matching file found in in pre-filtered data directory - Model fitting skipped"))
+      return(data.table::data.table())
+    }
+    model_input = fread(pre_filtered_bug)
 
-  if (save_filter_stats) {
-    if (verbose) message("* Saving filtered data in wide format. ")
-    pivot_wide = model_type == "horseshoe"
-    if (pivot_wide) {
-      wide_dat = model_input
-    } else {
-      spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
-                             sep = "") %>%
-        as.formula()
-
-      wide_dat = dcast(model_input,
-                       formula = spread_formula,
-                       value.var = 'present')
+    if (model_type %in% c("glm", "fastglm")) {
+      model_input = data.table::melt(model_input,
+                                     id.vars = c(covariates, outcome, "sample_id"),
+                                     variable.name = "gene",
+                                     value.name = "present")
     }
 
-    write_tsv_no_progress(wide_dat,
-                     file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
+  } else {
+    if (verbose) message(paste0("(2/", n_steps, ") Reading and filtering ", bug_file))
+
+    model_input = read_and_filter(bug_file, metadata = metadata,
+                                  pivot_wide = model_type == "horseshoe",
+                                  covariates = covariates,
+                                  outcome = outcome,
+                                  filtering_method = filtering_method,
+                                  discard_absent_samples = discard_absent_samples,
+                                  save_filter_stats = save_filter_stats,
+                                  filter_stats_dir = filter_stats_dir,
+                                  plot_ext = plot_ext,
+                                  verbose = verbose)
+
+    if (is.null(model_input)) {
+      readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
+                         file = warnings_file,
+                         append = TRUE)
+      if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
+      return(data.table::data.table())
+    }
+
+    if (nrow(model_input) == 0) {
+      # ^ if nothing passed the prevalence or kmeans filters:
+      readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
+                         file = warnings_file,
+                         append = TRUE)
+      if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
+      return(data.table::data.table())
+    }
+
+    if (save_filter_stats) {
+      if (verbose) message("* Saving filtered data in wide format. ")
+      pivot_wide = model_type == "horseshoe"
+      if (pivot_wide) {
+        wide_dat = model_input
+      } else {
+        spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
+                               sep = "") %>%
+          as.formula()
+
+        wide_dat = dcast(model_input,
+                         formula = spread_formula,
+                         value.var = 'present')
+      }
+
+      write_tsv_no_progress(wide_dat,
+                            file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
+    }
   }
 
 
@@ -374,6 +399,7 @@ anpan = function(bug_file,
 #' @param bug_dir a directory of gene family files
 #' @param plot_results logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
+#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param ... arguments to pass to brms::brm()
 #' @inheritParams make_results_plot
@@ -382,6 +408,7 @@ anpan = function(bug_file,
 anpan_batch = function(bug_dir,
                        meta_file,
                        out_dir,
+                       prefiltered_dir = NULL,
                        model_type = "horseshoe",
                        covariates = c("age", "gender"),
                        outcome = "crc",
@@ -409,6 +436,7 @@ anpan_batch = function(bug_dir,
                                anpan_res = anpan(.x,
                                                  meta_file = meta_file,
                                                  out_dir = out_dir,
+                                                 prefiltered_dir = prefiltered_dir,
                                                  model_type = model_type,
                                                  skip_large = skip_large,
                                                  save_fit = save_fit,

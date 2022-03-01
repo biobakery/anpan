@@ -8,6 +8,7 @@ anpan_batch(
   bug_dir,
   meta_file,
   out_dir,
+  prefiltered_dir = NULL,
   model_type = "horseshoe",
   covariates = c("age", "gender"),
   outcome = "crc",
@@ -32,6 +33,8 @@ anpan_batch(
 \item{meta_file}{path to a metadata tsv}
 
 \item{out_dir}{path to the desired output directory}
+
+\item{prefiltered_dir}{an optional directory to pre-filtered data from an earlier run to skip the filtering step}
 
 \item{model_type}{either "horseshoe", "glm", or "fastglm"}
 
