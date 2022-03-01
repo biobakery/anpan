@@ -212,7 +212,8 @@ fit_horseshoe = function(model_input,
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
 #' @param model_type either "horseshoe", "glm", or "fastglm"
-#' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe"
+#' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".
+#' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param outcome the name of the outcome variable
@@ -231,6 +232,7 @@ anpan = function(bug_file,
                  omit_na = FALSE,
                  filtering_method = "kmeans",
                  skip_large = TRUE,
+                 save_fit = TRUE,
                  discard_absent_samples = TRUE,
                  annotation_file = NULL,
                  plot_ext = "png",
@@ -334,6 +336,7 @@ anpan = function(bug_file,
                                          outcome = outcome,
                                          bug_name = bug_name,
                                          skip_large = skip_large,
+                                         save_fit = save_fit,
                                          ...),
                glm   =   fit_glms(model_input, out_dir,
                                   covariates = covariates,
@@ -382,6 +385,7 @@ anpan_batch = function(bug_dir,
                        filtering_method = "kmeans",
                        discard_absent_samples = TRUE,
                        skip_large = TRUE,
+                       save_fit = TRUE,
                        annotation_file = NULL,
                        save_filter_stats = TRUE,
                        verbose = TRUE,
@@ -403,6 +407,7 @@ anpan_batch = function(bug_dir,
                                                  out_dir = out_dir,
                                                  model_type = model_type,
                                                  skip_large = skip_large,
+                                                 save_fit = save_fit,
                                                  filtering_method = filtering_method,
                                                  discard_absent_samples = discard_absent_samples,
                                                  covariates = covariates,

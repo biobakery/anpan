@@ -15,6 +15,7 @@ anpan_batch(
   filtering_method = "kmeans",
   discard_absent_samples = TRUE,
   skip_large = TRUE,
+  save_fit = TRUE,
   annotation_file = NULL,
   save_filter_stats = TRUE,
   verbose = TRUE,
@@ -42,7 +43,9 @@ anpan_batch(
 
 \item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe"}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".}
+
+\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".}
 
 \item{annotation_file}{optional path file giving annotations}
 

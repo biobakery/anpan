@@ -14,6 +14,7 @@ anpan(
   omit_na = FALSE,
   filtering_method = "kmeans",
   skip_large = TRUE,
+  save_fit = TRUE,
   discard_absent_samples = TRUE,
   annotation_file = NULL,
   plot_ext = "png",
@@ -37,7 +38,9 @@ anpan(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe"}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".}
+
+\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".}
 
 \item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
 
