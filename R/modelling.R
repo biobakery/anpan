@@ -297,7 +297,7 @@ anpan = function(bug_file,
       return(data.table::data.table())
     }
 
-    model_input = fread(pre_filtered_bug)
+    model_input = fread(prefiltered_bug)
 
     if (model_type %in% c("glm", "fastglm")) {
       model_input = data.table::melt(model_input,
