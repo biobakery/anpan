@@ -1,5 +1,5 @@
 get_bug_name = function(bug_file,
-                        remove_pattern = ".genefamilies.tsv") {
+                        remove_pattern = ".genefamilies.tsv|.genefamilies.tsv.gz") {
   # TODO make this function smarter.
   gsub(remove_pattern, "", basename(bug_file))
 }
