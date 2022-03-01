@@ -314,7 +314,7 @@ anpan = function(bug_file,
 
   if (save_filter_stats) {
     if (verbose) message("* Saving filtered data in wide format. ")
-
+    pivot_wide = model_type == "horseshoe"
     if (pivot_wide) {
       wide_dat = model_input
     } else {
