@@ -141,6 +141,9 @@ fit_horseshoe = function(model_input,
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO allow the user to specify a family that overrides this logic
+    model_path = system.file("stan", "logistic_ushoe.stan",
+                             package = 'anpan',
+                             mustWork = TRUE)
     mod_family = brms::bernoulli()
     ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   } else {
@@ -156,11 +159,6 @@ fit_horseshoe = function(model_input,
                        append = TRUE)
     return(NULL)
   }
-
-  model_path = system.file("stan", "logistic_ushoe.stan",
-                           package = 'anpan',
-                           mustWork = TRUE)
-
 
 
   cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
