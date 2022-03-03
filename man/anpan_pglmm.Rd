@@ -13,7 +13,7 @@ anpan_pglmm(
   covariates = NULL,
   omit_na = FALSE,
   family = stats::gaussian(),
-  plot_cov_mat = TRUE,
+  plot_cor_mat = TRUE,
   save_object = FALSE,
   verbose = TRUE,
   test_signal = TRUE,
