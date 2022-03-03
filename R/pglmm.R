@@ -35,20 +35,38 @@ anpan_pglmm = function(meta_file,
 
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
 
-  meta = read_meta(meta_file,
-                   select_cols = c("sample_id", covariates, outcome),
-                   omit_na = omit_na)
-
   tree_name = basename(tree_file) %>%
     stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$|\\.tree$"),
                              replacement = "")
+
+  meta = read_meta(meta_file,
+                   select_cols = c("sample_id", covariates, outcome),
+                   omit_na = omit_na)
 
   bug_tree = ape::read.tree(tree_file)
 
   overlapping_samples = intersect(bug_tree$tip.label,
                                   meta$sample_id)
+
+  if (!all(bug_tree$tip.label %in% overlapping_samples)) {
+    n_tree_olap = sum(bug_tree$tip.label %in% overlapping_samples)
+
+    if (verbose) message(paste0("Dropping ",
+                                sum(!(bug_tree$tip.label %in% overlapping_samples)),
+                                " tips from the tree not present in the metadata."))
+    bug_tree = ape::drop.tip(bug_tree,
+                             tip = bug_tree$tip.label[!(bug_tree$tip.label %in% overlapping_samples)])
+  }
+
+
   model_input = meta %>%
     dplyr::filter(sample_id %in% overlapping_samples)
+
+  if (nrow(model_input) < nrow(meta) & verbose) {
+    message(paste0("Dropping ",
+                   nrow(meta) - nrow(model_input),
+                   ' samples from the metadata not present in the tree.' ))
+  }
 
   if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
 
@@ -70,10 +88,6 @@ anpan_pglmm = function(meta_file,
       ggsave(p,
              filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")))
     }
-  }
-
-  if (nrow(model_input) < nrow(meta) & verbose) {
-    message(paste0("Using ", nrow(model_input), ' samples present in the tree out of ', nrow(meta), " present in the metadata." ))
   }
 
   if (!is.null(covariates)) {
