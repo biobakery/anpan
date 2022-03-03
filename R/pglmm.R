@@ -45,7 +45,8 @@ anpan_pglmm = function(meta_file,
 
   bug_tree = ape::read.tree(tree_file)
 
-  bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
+  if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
+
   cov_mat = ape::vcv.phylo(bug_tree)
 
   d = sqrt(diag(cov_mat)) # Not sure if needed
