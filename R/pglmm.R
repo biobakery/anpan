@@ -86,7 +86,8 @@ anpan_pglmm = function(meta_file,
     print(p)
     if (!is.null(out_dir)) {
       ggsave(p,
-             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")))
+             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")),
+             width = 6, height = 5)
     }
   }
 
