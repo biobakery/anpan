@@ -437,7 +437,7 @@ anpan_batch = function(bug_dir,
                                perl = TRUE),
                           "\n")
 
-  if (verbose) message(paste0("Now running:\n\n", fn_call_string))
+  if (verbose & !interactive()) message(paste0("Now running:\n\n", fn_call_string))
 
   if (!dir.exists(out_dir)) {
     if (verbose) message("* Creating output directory.")
