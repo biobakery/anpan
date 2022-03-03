@@ -54,11 +54,17 @@ anpan_pglmm = function(meta_file,
   dimnames(cor_mat) = dimnames(cov_mat)
 
   if (plot_cov_mat) {
+    bug_name = get_bug_name(tree_file,
+                            remove_pattern = ".tre$|.tree$")
     p = make_cov_mat_plot(cov_mat,
-                          bug_name = basename(tree_file))
+                          bug_name)
     if (verbose) message("Plotting covariance matrix...")
-    # TODO save the plot if out_dir is specified
+
     print(p)
+    if (!is.null(out_dir)) {
+      ggsave(p,
+             filename = file.path(out_dir, paste0(bug_name, "_cov_mat.png")))
+    }
   }
 
   model_input = meta %>%
