@@ -40,10 +40,15 @@ anpan_pglmm = function(meta_file,
                    omit_na = omit_na)
 
   tree_name = basename(tree_file) %>%
-    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$"),
+    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$|\\.tree$"),
                              replacement = "")
 
   bug_tree = ape::read.tree(tree_file)
+
+  overlapping_samples = intersect(bug_tree$tip.label,
+                                  meta$sample_id)
+  model_input = meta %>%
+    dplyr::filter(sample_id %in% overlapping_samples)
 
   if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
 
@@ -66,9 +71,6 @@ anpan_pglmm = function(meta_file,
              filename = file.path(out_dir, paste0(bug_name, "_cov_mat.png")))
     }
   }
-
-  model_input = meta %>%
-    dplyr::filter(sample_id %in% bug_tree$tip.label)
 
   if (nrow(model_input) < nrow(meta) & verbose) {
     message(paste0("Using ", nrow(model_input), ' samples present in the tree out of ', nrow(meta), " present in the metadata." ))
