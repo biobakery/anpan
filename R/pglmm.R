@@ -65,7 +65,7 @@ anpan_pglmm = function(meta_file,
     dplyr::filter(sample_id %in% bug_tree$tip.label)
 
   if (nrow(model_input) < nrow(meta) & verbose) {
-    message(paste0(nrow(model_input), ' samples out of ', nrow(meta), " present in the metadata included in the analysis." ))
+    message(paste0("Using ", nrow(model_input), ' samples present in the tree out of ', nrow(meta), " present in the metadata." ))
   }
 
   if (!is.null(covariates)) {
