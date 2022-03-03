@@ -667,11 +667,11 @@ make_cor_mat_plot = function(cor_mat,
                        levels = unique(rn))) %>%
     tidyr::pivot_longer(-rn,
                  names_to = 'V2',
-                 values_to = 'cov') %>%
+                 values_to = 'cor') %>%
     dplyr::mutate(V2 = factor(V2,
                        levels = rev(levels(rn)))) %>%
     ggplot(aes(rn, V2)) +
-    geom_tile(aes(fill = cov)) +
+    geom_tile(aes(fill = cor)) +
     labs(x = "sample1",
          y = "sample2",
          title = title_str) +
