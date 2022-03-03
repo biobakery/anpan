@@ -27,7 +27,7 @@ anpan_pglmm = function(meta_file,
                        covariates = NULL,
                        omit_na = FALSE,
                        family = stats::gaussian(),
-                       plot_cov_mat = TRUE,
+                       plot_cor_mat = TRUE,
                        save_object = FALSE,
                        verbose = TRUE,
                        test_signal = TRUE,
@@ -58,17 +58,17 @@ anpan_pglmm = function(meta_file,
   cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
   dimnames(cor_mat) = dimnames(cov_mat)
 
-  if (plot_cov_mat) {
+  if (plot_cor_mat) {
     bug_name = get_bug_name(tree_file,
                             remove_pattern = ".tre$|.tree$")
-    p = make_cov_mat_plot(cov_mat,
+    p = make_cor_mat_plot(cor_mat,
                           bug_name)
-    if (verbose) message("Plotting covariance matrix...")
+    if (verbose) message("Plotting correlation matrix...")
 
     print(p)
     if (!is.null(out_dir)) {
       ggsave(p,
-             filename = file.path(out_dir, paste0(bug_name, "_cov_mat.png")))
+             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")))
     }
   }
 
@@ -82,7 +82,7 @@ anpan_pglmm = function(meta_file,
     cov_str = NULL
   }
 
-  model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cov_mat))"))
+  model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cor_mat))"))
   if (is.null(cov_str)){
     base_formula = as.formula(paste0(outcome, " ~ 1"))
   } else {
@@ -106,7 +106,7 @@ anpan_pglmm = function(meta_file,
   pglmm_fit = brms::brm(formula = model_formula,
                         data = model_input,
                         family = family,
-                        data2 = list(cov_mat = cov_mat),
+                        data2 = list(cor_mat = cor_mat),
                         prior = prior_vec,
                         backend = "cmdstanr",
                         ...)
