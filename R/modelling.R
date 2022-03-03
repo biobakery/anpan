@@ -429,6 +429,24 @@ anpan_batch = function(bug_dir,
                        n_top = 50,
                        ...) {
 
+  call = match.call()
+
+  fn_call_string = paste0(gsub(', (?!")',
+                               ",\n            ",
+                               as.character(enquote(call))[2],
+                               perl = TRUE),
+                          "\n")
+
+  if (verbose) message(paste0("Now running:\n\n", fn_call_string))
+
+  if (!dir.exists(out_dir)) {
+    if (verbose) message("* Creating output directory.")
+    dir.create(out_dir)
+  }
+
+  readr::write_lines(fn_call_string,
+                     file = file.path(out_dir, "anpan_batch_call.txt"))
+
   bug_files = get_file_list(bug_dir)
 
   p = progressr::progressor(along = bug_files)
