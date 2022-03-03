@@ -650,16 +650,16 @@ make_composite_plot = function(bug_file,
 }
 
 #' @export
-make_cov_mat_plot = function(cov_mat,
+make_cor_mat_plot = function(cor_mat,
                              bug_name = NULL) {
 
   if (!is.null(bug_name)) {
-    title_str = paste0(bug_name, " tree\nas a covariance matrix")
+    title_str = paste0(bug_name, " tree\nas a correlation matrix")
   } else {
     title_str = NULL
   }
 
-  cov_mat %>%
+  cor_mat %>%
     as.data.frame %>%
     tibble::rownames_to_column('rn') %>%
     tibble::as_tibble() %>%
