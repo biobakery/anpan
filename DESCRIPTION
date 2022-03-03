@@ -30,7 +30,8 @@ Imports:
     readr,
     loo,
     fastglm,
-    ggdendro
+    ggdendro,
+    stringr
 RoxygenNote: 7.1.1
 Suggests: 
     rmarkdown,
