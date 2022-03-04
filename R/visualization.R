@@ -680,3 +680,41 @@ make_cor_mat_plot = function(cor_mat,
           axis.ticks = element_blank()) +
     coord_equal()
 }
+
+make_tree_cov_plot = function(tree_file,
+                              meta_file,
+                              covariates = c("age", "gender"),
+                              outcome = 'crc',
+                              omit_na = FALSE,
+                              verbose = TRUE) {
+
+  if (length(covariates) > 2) {
+    stop("more than two covariates is currently not supported")
+  }
+
+  olap_list = olap_tree_and_meta(tree_file,
+                                 meta_file,
+                                 covariates,
+                                 outcome,
+                                 omit_na,
+                                 verbose)
+
+  bug_tree = olap_list[[1]]
+  model_input = olap_list[[2]]
+
+  dend_df = ggdendro::dendro_data(bug_tree %>% as.dendrogram())
+
+  seg_df = dend_df$segments %>%
+    as_tibble
+
+  tip_df = dend_df$labels %>%
+    as_tibble()
+
+  seg_df %>%
+    filter(x == xend & (x %% 1) == 0) %>%
+    group_by(x) %>%
+    filter(yend == min(yend)) %>%
+    ungroup
+
+
+}

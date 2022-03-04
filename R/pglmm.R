@@ -1,3 +1,52 @@
+olap_tree_and_meta = function(tree_file,
+                              meta_file,
+                              covariates,
+                              outcome,
+                              omit_na = FALSE,
+                              trim_pattern,
+                              verbose = TRUE) {
+
+  tree_name = basename(tree_file) %>%
+    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$|\\.tree$"),
+                             replacement = "")
+
+  meta = read_meta(meta_file,
+                   select_cols = c("sample_id", covariates, outcome),
+                   omit_na = omit_na)
+
+  bug_tree = ape::read.tree(tree_file)
+  if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
+
+  overlapping_samples = intersect(bug_tree$tip.label,
+                                  meta$sample_id)
+
+  if (!all(bug_tree$tip.label %in% overlapping_samples)) {
+    n_tree_olap = sum(bug_tree$tip.label %in% overlapping_samples)
+
+    if (verbose) message(paste0("Dropping ",
+                                sum(!(bug_tree$tip.label %in% overlapping_samples)),
+                                " tips from the tree not present in the metadata."))
+    bug_tree = ape::drop.tip(bug_tree,
+                             tip = bug_tree$tip.label[!(bug_tree$tip.label %in% overlapping_samples)])
+  }
+
+  model_input = meta %>%
+    dplyr::filter(sample_id %in% overlapping_samples)
+
+  if (nrow(model_input) < nrow(meta) & verbose) {
+    message(paste0("Dropping ",
+                   nrow(meta) - nrow(model_input),
+                   ' samples from the metadata (out of ',
+                   nrow(meta),
+                   ' in total) not present in the tree.' ))
+  }
+
+  res = list(bug_tree,
+             model_input)
+
+  return(res)
+}
+
 #' @title Run a phylogenetic generalized linear mixed model
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
@@ -35,40 +84,18 @@ anpan_pglmm = function(meta_file,
 
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
 
-  tree_name = basename(tree_file) %>%
-    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$|\\.tree$"),
-                             replacement = "")
+  olap_list = olap_tree_and_meta(tree_file,
+                                 meta_file,
+                                 covariates,
+                                 outcome,
+                                 omit_na,
+                                 trim_pattern,
+                                 verbose)
 
-  meta = read_meta(meta_file,
-                   select_cols = c("sample_id", covariates, outcome),
-                   omit_na = omit_na)
-
-  bug_tree = ape::read.tree(tree_file)
-
-  overlapping_samples = intersect(bug_tree$tip.label,
-                                  meta$sample_id)
-
-  if (!all(bug_tree$tip.label %in% overlapping_samples)) {
-    n_tree_olap = sum(bug_tree$tip.label %in% overlapping_samples)
-
-    if (verbose) message(paste0("Dropping ",
-                                sum(!(bug_tree$tip.label %in% overlapping_samples)),
-                                " tips from the tree not present in the metadata."))
-    bug_tree = ape::drop.tip(bug_tree,
-                             tip = bug_tree$tip.label[!(bug_tree$tip.label %in% overlapping_samples)])
-  }
+  bug_tree = olap_list[[1]]
+  model_input = olap_list[[2]]
 
 
-  model_input = meta %>%
-    dplyr::filter(sample_id %in% overlapping_samples)
-
-  if (nrow(model_input) < nrow(meta) & verbose) {
-    message(paste0("Dropping ",
-                   nrow(meta) - nrow(model_input),
-                   ' samples from the metadata not present in the tree.' ))
-  }
-
-  if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
 
   cov_mat = ape::vcv.phylo(bug_tree)
 
