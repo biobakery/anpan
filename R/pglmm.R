@@ -84,6 +84,11 @@ anpan_pglmm = function(meta_file,
 
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
 
+  if (save_object && !dir.exists(out_dir)) {
+    message("Creating specified output directory...")
+    dir.create(out_dir)
+  }
+
   olap_list = olap_tree_and_meta(tree_file,
                                  meta_file,
                                  covariates,
