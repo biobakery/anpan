@@ -17,7 +17,6 @@ anpan(
   skip_large = TRUE,
   save_fit = TRUE,
   discard_absent_samples = TRUE,
-  annotation_file = NULL,
   plot_ext = "png",
   save_filter_stats = TRUE,
   verbose = TRUE,
