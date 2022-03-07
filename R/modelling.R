@@ -484,8 +484,16 @@ anpan_batch = function(bug_dir,
                            plot_ext = plot_ext)
   }
 
+  if (!is.null(annotation_file)) {
+    anno = fread(annotation_file)
+
+    all_bug_terms = anno[all_bug_terms, on = 'gene'] %>%
+      dplyr::relocate(bug_name, gene) %>%
+      dplyr::relocate(annotation, .after = dplyr::last_col())
+  }
+
   write_tsv_no_progress(all_bug_terms,
-                   file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
+                        file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
