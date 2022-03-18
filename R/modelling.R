@@ -152,7 +152,7 @@ fit_horseshoe = function(model_input,
     stop("continuous outcomes with horseshoe models isn't implemented yet!")
   }
 
-  if (skip_large && ncol(model_input) > (5002 + length(covariates))) {
+  if (skip_large && ncol(model_input) > (10002 + length(covariates))) {
     warnings_file = file.path(out_dir, "warnings.txt")
     readr::write_lines(paste0(bug_name, " was skipped because there are over five thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
                        file = warnings_file,
