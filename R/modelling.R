@@ -178,7 +178,7 @@ fit_horseshoe = function(model_input,
                    hs_df_genes = 1,
                    hs_df_global_genes = 1,
                    hs_df_slab_genes = 4,
-                   hs_scale_global_genes = .005 / sqrt(nrow(model_input)),
+                   hs_scale_global_genes = .01 / sqrt(nrow(model_input)),
                    hs_scale_slab_genes = 2,
                    prior_only = 0)
 
