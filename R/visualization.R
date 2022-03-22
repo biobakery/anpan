@@ -51,9 +51,10 @@ make_line_plot = function(bug_file = NULL,
     geom_line(aes(group = sample_id,
                   color = labelled_as),
               alpha = .30) +
-    labs(x = NULL,
+    labs(x = "rank",
          y = 'log abundance',
-         title = bug_name) +
+         title = bug_name,
+         color = NULL) +
     scale_color_brewer(palette = "Set1") +
     theme_light()
 
@@ -88,7 +89,8 @@ make_kmeans_dotplot = function(samp_stats,
     scale_x +
     labs(title = paste0(bug_name, " - labelled by kmeans"),
          x = "Number of non-zero observations",
-         y = 'Median log abundance') +
+         y = 'Median log abundance',
+         color = NULL) +
     theme_light()
 
   if (!is.null(plot_dir)) {
