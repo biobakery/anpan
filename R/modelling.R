@@ -154,7 +154,7 @@ fit_horseshoe = function(model_input,
 
   if (skip_large && ncol(model_input) > (10002 + length(covariates))) {
     warnings_file = file.path(out_dir, "warnings.txt")
-    readr::write_lines(paste0(bug_name, " was skipped because there are over five thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
+    readr::write_lines(paste0(bug_name, " was skipped because there are over ten thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
                        file = warnings_file,
                        append = TRUE)
     return(NULL)
