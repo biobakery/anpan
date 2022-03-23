@@ -351,6 +351,10 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   select_cols = c("gene", "present", "sample_id", covariates, outcome)
 
+  if (nrow(filtered_gf) == 0){
+    return(NULL)
+  }
+
   if (!is.null(metadata)) {
     joined = filtered_gf[metadata, on = 'sample_id', nomatch = 0] %>%
       dplyr::select(dplyr::all_of(select_cols))
