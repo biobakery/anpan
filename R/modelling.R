@@ -131,13 +131,13 @@ clean_ushoe_summary = function(ushoe_fit,
 }
 
 fit_horseshoe = function(model_input,
-                     out_dir,
-                     bug_name,
-                     covariates,
-                     outcome,
-                     save_fit = TRUE,
-                     skip_large = TRUE,
-                     ...) {
+                         out_dir,
+                         bug_name,
+                         covariates,
+                         outcome,
+                         save_fit = TRUE,
+                         skip_large = TRUE,
+                         ...) {
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     # TODO allow the user to specify a family that overrides this logic
@@ -147,9 +147,11 @@ fit_horseshoe = function(model_input,
     mod_family = brms::bernoulli()
     ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   } else {
+    model_path = system.file("stan", "gaussian_ushoe.stan",
+                             package = 'anpan',
+                             mustWork = TRUE)
     mod_family = stats::gaussian()
-    # TODO add another model with continuous outcomes
-    stop("continuous outcomes with horseshoe models isn't implemented yet!")
+    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   }
 
   if (skip_large && ncol(model_input) > (10002 + length(covariates))) {
@@ -159,7 +161,6 @@ fit_horseshoe = function(model_input,
                        append = TRUE)
     return(NULL)
   }
-
 
   cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
 
