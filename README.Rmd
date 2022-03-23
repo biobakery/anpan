@@ -81,7 +81,7 @@ library(tidyverse)
 library(data.table)
 
 library(furrr) 
-plan(multisession, workers = 2) # Run with two background processes on the local machine
+plan(multisession, workers = 2) # Run with two parallel R sessions on the local machine
 
 library(progressr)
 handlers(global=TRUE) # show progress bars for long computations
@@ -129,6 +129,6 @@ The name "anpan" was chosen to fit into the [biobakery](https://huttenhower.sph.
 
 There's no backronym, but if you think of a good one let me know.
 
-Capitalization of the name follows [the xkcd rule](https://xkcd.com/about/). All lowercase "anpan" is preferred, all uppercase "ANPAN" is acceptable in formal contexts or the start of a sentence, but mixed-case "Anpan" is frowned upon.
+Capitalization of the name follows [the xkcd rule](https://xkcd.com/about/). All lowercase "anpan" is preferred and all uppercase "ANPAN" is acceptable in formal contexts or the start of a sentence, but mixed-case "Anpan" should be avoided.
 
 
