@@ -100,8 +100,6 @@ anpan_pglmm = function(meta_file,
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
 
-
-
   cov_mat = ape::vcv.phylo(bug_tree)
 
   d = sqrt(diag(cov_mat)) # Not sure if needed
@@ -141,10 +139,12 @@ anpan_pglmm = function(meta_file,
   if (family$family == "gaussian") {
     n_mean = mean(model_input[[outcome]])
     n_sd = 3*sd(model_input[[outcome]])
+
+    # Scale priors to the scale of the outcome
     prior_vec = c(
       brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
-      brms::prior(student_t(3, 0, 20), "sd"),
-      brms::prior(student_t(3, 0, 20), "sigma")
+      brms::prior_string(paste0("student_t(3, 0, ", n_sd, " * 2/3)"), "sd"),
+      brms::prior_string(paste0("student_t(3, 0, ", n_sd, " * 2/3)"), "sigma"))
     )
   } else if (family$family == "bernoulli") {
     prior_vec = NULL
