@@ -1,10 +1,9 @@
 data {
   int<lower=1> N;  // total number of observations
   vector[N] Y;  // response variable
-  int<lower=1> K;  // number of population-level effects
-  matrix[N, K] X;  // population-level design matrix
-  // int<lower=1> J_1[N];  // grouping indicator per observation
-  matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
+  int<lower=1> K;  // number of covariates
+  matrix[N, K] X;  // population-level design matrix (covariates only)
+  matrix[N, N] Lcov;  // cholesky factor of known correlation matrix
   real int_mean;
   real<lower=0> resid_scale;
 }
@@ -18,20 +17,19 @@ transformed data {
   }
 }
 parameters {
-  vector[Kc] b;  // population-level effects
+  vector[Kc] b;  // covariate effects
   real Intercept;  // temporary intercept for centered predictors
-  real<lower=0> sigma;  // dispersion parameter
-  real<lower=0> sigma_phylo;  // group-level standard deviations
+  real<lower=0> sigma;  // residual noise
+  real<lower=0> sigma_phylo;  // phylogenetic noise
   vector[N] z_1;
 }
 transformed parameters {
-  vector[N] phylo_effect;  // actual group-level effects
+  vector[N] phylo_effect;  // scaled phylogenetic effects
   phylo_effect = (sigma_phylo * (Lcov * z_1));
 }
 model {
-  // likelihood including constants
+  // likelihood
   vector[N] mu = Intercept + phylo_effect;
-
   target += normal_id_glm_lpdf(Y | Xc, mu, b, sigma);
 
   // priors including constants
