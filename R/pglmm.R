@@ -122,18 +122,18 @@ anpan_pglmm = function(meta_file,
   }
 
   if (!is.null(covariates)) {
-    cov_str = paste0(paste(covariates, collapse = " + "), " + ")
+    cov_str = paste(covariates, collapse = " + ")
+    rhs = paste(cov_str, "(1|gr(sample_id, cov = cor_mat))",
+          sep = " + ")
+    base_formula = as.formula(paste0(outcome, " ~ ", cov_str))
   } else {
     cov_str = NULL
-  }
-
-  model_formula = as.formula(paste0(outcome, " ~ ", cov_str, "(1|gr(sample_id, cov = cor_mat))"))
-  if (is.null(cov_str)){
+    rhs = "(1|gr(sample_id, cov = cor_mat))"
     base_formula = as.formula(paste0(outcome, " ~ 1"))
-  } else {
-    base_formula = as.formula(paste0(outcome, " ~ ", cov_str))
   }
 
+  model_formula = as.formula(paste0(outcome, " ~ ",
+                                    rhs))
 
   # TODO figure out how to set priors as a function of family and # and structure of covariates
   if (family$family == "gaussian") {
