@@ -21,11 +21,11 @@ parameters {
   real Intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma;  // residual noise
   real<lower=0> sigma_phylo;  // phylogenetic noise
-  vector[N] z_1;
+  vector[N] std_phylo_effects;
 }
 transformed parameters {
   vector[N] phylo_effect;  // scaled phylogenetic effects
-  phylo_effect = (sigma_phylo * (Lcov * z_1));
+  phylo_effect = (sigma_phylo * (Lcov * std_phylo_effects));
 }
 model {
   // likelihood
@@ -38,7 +38,7 @@ model {
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
   target += student_t_lpdf(sigma_phylo | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
-  target += std_normal_lpdf(z_1);
+  target += std_normal_lpdf(std_phylo_effects);
 }
 generated quantities {
   // actual population-level intercept
