@@ -1,6 +1,6 @@
 data {
   int<lower=1> N;  // total number of observations
-  int Y[N];  // response variable
+  array[N] int Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
