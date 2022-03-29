@@ -50,22 +50,23 @@ olap_tree_and_meta = function(tree_file,
 #' @title Run a phylogenetic generalized linear mixed model
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
-#' @param family family object for the error distribution
+#' @param family string giving the name of the distribution of the outcome variable (usually "gaussian" or "binomial")
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
-#' @param ... other arguments to pass to brms::brm
+#' @param reg_noise logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
+#' @param ... other arguments to pass to cmdstanr::sample
 #' @param test_signal compute the phylogenetic signal
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary. The dots can be used
-#'   to pass cores=4 to brms to make the chains run in parallel.
+#'   to pass parallel_chains=4 to make the chains run in parallel.
 #'
 #'   The prior for the intercept is a normal distribution centered on the mean
 #'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
 #'
-#'   The default error distribution for the outcome is \code{stats::gaussian()}.
+#'   The default error distribution for the outcome is "gaussian".
 #'   You could change this to a phylogenetic logistic regression by changing
-#'   \code{family} to \code{brms::bernoulli()} for example.
+#'   \code{family} to "binomial" for example.
 #' @inheritParams anpan
 #' @export
 anpan_pglmm = function(meta_file,
@@ -75,11 +76,12 @@ anpan_pglmm = function(meta_file,
                        trim_pattern = NULL,
                        covariates = NULL,
                        omit_na = FALSE,
-                       family = stats::gaussian(),
+                       family = "gaussian",
                        plot_cor_mat = TRUE,
                        save_object = FALSE,
                        verbose = TRUE,
                        test_signal = TRUE,
+                       reg_noise = TRUE,
                        ...) {
 
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
@@ -87,6 +89,10 @@ anpan_pglmm = function(meta_file,
   if (save_object && !dir.exists(out_dir)) {
     message("Creating specified output directory...")
     dir.create(out_dir)
+  }
+
+  if (reg_noise && family != "gaussian") {
+    stop("You can't regularize the noise ratio with non-gaussian outcomes.")
   }
 
   olap_list = olap_tree_and_meta(tree_file,
@@ -123,74 +129,80 @@ anpan_pglmm = function(meta_file,
 
   if (!is.null(covariates)) {
     cov_str = paste(covariates, collapse = " + ")
-    rhs = paste(cov_str, "(1|gr(sample_id, cov = cor_mat))",
-          sep = " + ")
     base_formula = as.formula(paste0(outcome, " ~ ", cov_str))
   } else {
     cov_str = NULL
-    rhs = "(1|gr(sample_id, cov = cor_mat))"
     base_formula = as.formula(paste0(outcome, " ~ 1"))
   }
 
-  model_formula = as.formula(paste0(outcome, " ~ ",
-                                    rhs))
-
   # TODO figure out how to set priors as a function of family and # and structure of covariates
-  if (family$family == "gaussian") {
-    n_mean = mean(model_input[[outcome]])
-    n_sd = 3*sd(model_input[[outcome]])
+  if (family == "gaussian") {
+    outcome_mean = mean(model_input[[outcome]])
+    outcome_sd = sd(model_input[[outcome]])
 
-    # Scale priors to the scale of the outcome
-    prior_vec = c(
-      brms::prior_string(paste0("normal(",n_mean, ",", n_sd, ")"), "Intercept"),
-      brms::prior_string(paste0("student_t(3, 0, ", n_sd, " * 2/3)"), "sd"),
-      brms::prior_string(paste0("student_t(3, 0, ", n_sd, " * 2/3)"), "sigma"))
-    )
-  } else if (family$family == "bernoulli") {
-    prior_vec = NULL
+    base_path = system.file("stan", "cont_no_phylo_term.stan",
+                            package = 'anpan',
+                            mustWork = TRUE)
+
+    if (reg_noise == FALSE) {
+      model_path = system.file("stan", "cont_pglmm.stan",
+                               package = 'anpan',
+                               mustWork = TRUE)
+    } else {
+      model_path = system.file("stan", "cont_pglmm_noise_reg.stan",
+                               package = 'anpan',
+                               mustWork = TRUE)
+    }
+  } else if (family == "binomial") {
+    model_path = system.file("stan", "bin_pglmm.stan",
+                             package = 'anpan',
+                             mustWork = TRUE)
+    base_path = system.file("stan", "bin_no_phylo_term.stan",
+                             package = 'anpan',
+                             mustWork = TRUE)
   }
 
-  pglmm_fit = brms::brm(formula = model_formula,
-                        data = model_input,
-                        family = family,
-                        data2 = list(cor_mat = cor_mat),
-                        prior = prior_vec,
-                        backend = "cmdstanr",
-                        ...)
+  pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
+                                        quiet = TRUE)
+  base_model = cmdstanr::cmdstan_model(stan_file = base_path,
+                                       quiet = TRUE)
 
-  base_fit = brms::brm(formula = base_formula,
-                       data = model_input,
-                       family = family,
-                       prior = prior_vec[-2],
-                       backend = "cmdstanr",
-                       ...)
+  Lcov = t(chol(cor_mat))
 
+  model_input$sample_id = factor(model_input$sample_id,
+                                 levels = rownames(Lcov))
+  model_input = model_input %>%
+    arrange(sample_id)
+
+  if (family == "gaussian") {
+    data_list = list(N = nrow(model_input),
+                     Y = model_input[[outcome]],
+                     K = length(covariates) + 1,
+                     X = model.matrix(base_formula, data = model_input),
+                     Lcov = Lcov,
+                     int_mean = outcome_mean,
+                     resid_scale = outcome_sd)
+  } else {
+    data_list = list(N = nrow(model_input),
+                     Y = model_input[[outcome]],
+                     K = length(covariates) + 1,
+                     X = model.matrix(base_formula, data = model_input),
+                     Lcov = Lcov)
+  }
+
+  pglmm_fit = pglmm_model$sample(data = data_list, ...)
+  base_fit = base_model$sample(data = data_list, ...)
+
+  # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
+  # appropriate (and move it to the top...)
 
   if (test_signal) {
-    hyp_str = "sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2) = 0"
-    # hyp = brms::hypothesis(pglmm_fit, hyp_str, class = NULL)
-    #
-    # outcome_signal = pglmm_fit$fit %>%
-    #   as.data.frame() %>%
-    #   tibble::as_tibble() %>%
-    #   dplyr::mutate(i = 1:n()) %>%
-    #   dplyr::mutate(phy_signal = sd_sample_id__Intercept^2 / (sd_sample_id__Intercept^2 + sigma^2)) %>%
-    #   dplyr::select(phy_signal)
-    #
-    # hp = outcome_signal %>%
-    #   ggplot(aes(phy_signal)) +
-    #   geom_density() +
-    #   labs(title = 'Phylogenetic signal posterior') +
-    #   theme_light()
-    #
-    # print(hp)
-
-    pglmm_loo = loo::loo(pglmm_fit)
-    base_loo = loo::loo(base_fit)
+    pglmm_loo = pglmm_fit$loo()
+    base_loo = base_fit$loo()
 
     message("loo comparison: ")
-    comparison = loo::loo_compare(pglmm_loo,
-                             base_loo)
+    comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
+                                       base_fit = base_loo))
     print(comparison)
 
     if (rownames(comparison)[1] == 'pglmm_fit') {
@@ -215,12 +227,9 @@ anpan_pglmm = function(meta_file,
   }
 
   if (save_object) {
-    save(pglmm_fit,
-         file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RData")))
-    save(pglmm_fit,
-         file = file.path(out_dir, paste0(tree_name, "_base_fit.RData")))
     # V This is what to use once the pglmm_fit is done with cmdstanr
-    # pglmm_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
+    pglmm_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
+    base_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_base_fit.RDS")))
   }
 
   list(pglmm_fit = pglmm_fit,
@@ -228,3 +237,5 @@ anpan_pglmm = function(meta_file,
        loo = list(pglmm_loo = pglmm_loo, base_loo = base_loo, comparison = comparison))
 
 }
+
+# TODO anpan_pglmm_batch()
