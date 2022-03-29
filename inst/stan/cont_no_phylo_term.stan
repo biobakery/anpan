@@ -18,7 +18,7 @@ transformed data {
 parameters {
   vector[Kc] b;  // population-level effects
   real Intercept;  // temporary intercept for centered predictors
-  real<lower=0> sigma;  // dispersion parameter
+  real<lower=0> sigma_resid;  // dispersion parameter
 }
 model {
   // likelihood including constants
