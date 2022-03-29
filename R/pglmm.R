@@ -25,7 +25,9 @@ olap_tree_and_meta = function(tree_file,
 
     if (verbose) message(paste0("Dropping ",
                                 sum(!(bug_tree$tip.label %in% overlapping_samples)),
-                                " tips from the tree not present in the metadata."))
+                                " tips from the tree (out of ",
+                                length(bug_tree$tip.label),
+                                ") not present in the metadata."))
     bug_tree = ape::drop.tip(bug_tree,
                              tip = bug_tree$tip.label[!(bug_tree$tip.label %in% overlapping_samples)])
   }
@@ -58,7 +60,8 @@ olap_tree_and_meta = function(tree_file,
 #' @param reg_noise logical indicating whether to regularize the ratio of
 #'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
 #' @param ... other arguments to pass to [cmdstanr::sample()]
-#' @param test_signal compute the phylogenetic signal
+#' @param loo_test compare the phylogenetic model against a base model (without
+#'   the phylogenetic term) using [loo::loo_compare()]
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary.
@@ -86,11 +89,11 @@ anpan_pglmm = function(meta_file,
                        plot_cor_mat = TRUE,
                        save_object = FALSE,
                        verbose = TRUE,
-                       test_signal = TRUE,
+                       loo_test = TRUE,
                        reg_noise = TRUE,
                        ...) {
 
-  n_steps = ifelse(test_signal,
+  n_steps = ifelse(loo_test,
                    3, 2)
 
   if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
@@ -146,7 +149,7 @@ anpan_pglmm = function(meta_file,
     base_formula = as.formula(paste0(outcome, " ~ 1"))
   }
 
-  if (missing(chains)) {
+  if (!exists("chains")) {
     chains = 4
   }
 
@@ -179,12 +182,10 @@ anpan_pglmm = function(meta_file,
   } else if (family == "binomial") {
 
     init_list = replicate(chains,
-                          list(sigma_resid = 1),
+                          list(sigma_phylo = 1),
                           simplify = FALSE)
 
-    base_init = replicate(chains, # Just so that it's there
-                          list(),
-                          simplify = FALSE)
+    base_init = NULL
 
     model_path = system.file("stan", "bin_pglmm.stan",
                              package = 'anpan',
@@ -197,7 +198,7 @@ anpan_pglmm = function(meta_file,
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
                                         quiet = TRUE)
 
-  if (test_signal) {
+  if (loo_test) {
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
                                          quiet = TRUE)
   }
@@ -234,7 +235,7 @@ anpan_pglmm = function(meta_file,
                                  init = init_list,
                                  ...)
 
-  if (test_signal) {
+  if (loo_test) {
     base_fit = base_model$sample(data = data_list,
                                  chains = chains,
                                  init = base_init,
@@ -244,7 +245,7 @@ anpan_pglmm = function(meta_file,
   # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
   # appropriate (and move it to the top...)
 
-  if (test_signal) {
+  if (loo_test) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
     pglmm_loo = pglmm_fit$loo()
     base_loo = base_fit$loo()
