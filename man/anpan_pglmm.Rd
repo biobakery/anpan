@@ -16,7 +16,7 @@ anpan_pglmm(
   plot_cor_mat = TRUE,
   save_object = FALSE,
   verbose = TRUE,
-  test_signal = TRUE,
+  loo_comparison = TRUE,
   reg_noise = TRUE,
   ...
 )
@@ -41,7 +41,9 @@ variable (usually "gaussian" or "binomial")}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
-\item{test_signal}{compute the phylogenetic signal}
+\item{loo_comparison}{logical indicating whether to compare the phylogenetic model
+against a base model (without the phylogenetic term) using
+\code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of
 sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}

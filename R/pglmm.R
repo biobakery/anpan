@@ -60,8 +60,9 @@ olap_tree_and_meta = function(tree_file,
 #' @param reg_noise logical indicating whether to regularize the ratio of
 #'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
 #' @param ... other arguments to pass to [cmdstanr::sample()]
-#' @param loo_test compare the phylogenetic model against a base model (without
-#'   the phylogenetic term) using [loo::loo_compare()]
+#' @param loo_comparison logical indicating whether to compare the phylogenetic model
+#'   against a base model (without the phylogenetic term) using
+#'   [loo::loo_compare()]
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary.
@@ -89,11 +90,11 @@ anpan_pglmm = function(meta_file,
                        plot_cor_mat = TRUE,
                        save_object = FALSE,
                        verbose = TRUE,
-                       loo_test = TRUE,
+                       loo_comparison = TRUE,
                        reg_noise = TRUE,
                        ...) {
 
-  n_steps = ifelse(loo_test,
+  n_steps = ifelse(loo_comparison,
                    3, 2)
 
   if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
@@ -198,7 +199,7 @@ anpan_pglmm = function(meta_file,
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
                                         quiet = TRUE)
 
-  if (loo_test) {
+  if (loo_comparison) {
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
                                          quiet = TRUE)
   }
@@ -235,7 +236,7 @@ anpan_pglmm = function(meta_file,
                                  init = init_list,
                                  ...)
 
-  if (loo_test) {
+  if (loo_comparison) {
     base_fit = base_model$sample(data = data_list,
                                  chains = chains,
                                  init = base_init,
@@ -245,7 +246,7 @@ anpan_pglmm = function(meta_file,
   # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
   # appropriate (and move it to the top...)
 
-  if (loo_test) {
+  if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
     pglmm_loo = pglmm_fit$loo()
     base_loo = base_fit$loo()
