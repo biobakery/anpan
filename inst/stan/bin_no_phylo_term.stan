@@ -16,12 +16,11 @@ transformed data {
 }
 parameters {
   vector[Kc] b;  // population-level effects
-  real Intercept;  // temporary intercept for centered predictors
+  real Intercept;
 }
 model {
   // likelihood
-  vector[N] mu = Intercept;
-  target += bernoulli_logit_glm_lpmf(Y | Xc, mu, b);
+  target += bernoulli_logit_glm_lpmf(Y | Xc, Intercept, b);
 
   // priors including constants
   target += student_t_lpdf(Intercept | 3, 0, 2.5);
@@ -29,4 +28,8 @@ model {
 generated quantities {
   // actual population-level intercept
   real b_Intercept = Intercept - dot_product(means_X, b);
+  vector[N] log_lik;
+  for (i in 1:N){
+    log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), Intercept, b);
+  }
 }
