@@ -48,26 +48,32 @@ olap_tree_and_meta = function(tree_file,
 }
 
 #' @title Run a phylogenetic generalized linear mixed model
+#' @md
 #' @param tree_file path to a .tre file
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
-#' @param family string giving the name of the distribution of the outcome variable (usually "gaussian" or "binomial")
+#' @param family string giving the name of the distribution of the outcome
+#'   variable (usually "gaussian" or "binomial")
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
-#' @param reg_noise logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
-#' @param ... other arguments to pass to cmdstanr::sample
+#' @param reg_noise logical indicating whether to regularize the ratio of
+#'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
+#' @param ... other arguments to pass to [cmdstanr::sample()]
 #' @param test_signal compute the phylogenetic signal
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
-#'   consistent pattern from the tip labels if necessary. The dots can be used
-#'   to pass parallel_chains=4 to make the chains run in parallel.
+#'   consistent pattern from the tip labels if necessary.
+#'
+#'   The dots can be used to pass e.g. parallel_chains=4 to make the chains run
+#'   in parallel.
 #'
 #'   The prior for the intercept is a normal distribution centered on the mean
 #'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
 #'
-#'   The default error distribution for the outcome is "gaussian".
-#'   You could change this to a phylogenetic logistic regression by changing
-#'   \code{family} to "binomial" for example.
+#'   The default error distribution for the outcome is "gaussian". You could
+#'   change this to a phylogenetic logistic regression by changing \code{family}
+#'   to "binomial" for example.
 #' @inheritParams anpan
+#' @seealso [loo::loo()], [cmdstanr::sample()]
 #' @export
 anpan_pglmm = function(meta_file,
                        tree_file,
@@ -83,6 +89,11 @@ anpan_pglmm = function(meta_file,
                        test_signal = TRUE,
                        reg_noise = TRUE,
                        ...) {
+
+  n_steps = ifelse(test_signal,
+                   3, 2)
+
+  if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
 
   if (save_object && is.null(out_dir)) stop("To save the fit you must specify an output directory")
 
@@ -135,6 +146,10 @@ anpan_pglmm = function(meta_file,
     base_formula = as.formula(paste0(outcome, " ~ 1"))
   }
 
+  if (missing(chains)) {
+    chains = 4
+  }
+
   # TODO figure out how to set priors as a function of family and # and structure of covariates
   if (family == "gaussian") {
     outcome_mean = mean(model_input[[outcome]])
@@ -143,6 +158,14 @@ anpan_pglmm = function(meta_file,
     base_path = system.file("stan", "cont_no_phylo_term.stan",
                             package = 'anpan',
                             mustWork = TRUE)
+
+    init_list = replicate(chains,
+                          list(sigma_resid = 1, sigma_phylo = 1),
+                          simplify = FALSE)
+
+    base_init = replicate(chains,
+                          list(sigma_resid = 1),
+                          simplify = FALSE)
 
     if (reg_noise == FALSE) {
       model_path = system.file("stan", "cont_pglmm.stan",
@@ -154,6 +177,15 @@ anpan_pglmm = function(meta_file,
                                mustWork = TRUE)
     }
   } else if (family == "binomial") {
+
+    init_list = replicate(chains,
+                          list(sigma_resid = 1),
+                          simplify = FALSE)
+
+    base_init = replicate(chains, # Just so that it's there
+                          list(),
+                          simplify = FALSE)
+
     model_path = system.file("stan", "bin_pglmm.stan",
                              package = 'anpan',
                              mustWork = TRUE)
@@ -164,8 +196,11 @@ anpan_pglmm = function(meta_file,
 
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
                                         quiet = TRUE)
-  base_model = cmdstanr::cmdstan_model(stan_file = base_path,
-                                       quiet = TRUE)
+
+  if (test_signal) {
+    base_model = cmdstanr::cmdstan_model(stan_file = base_path,
+                                         quiet = TRUE)
+  }
 
   Lcov = t(chol(cor_mat))
 
@@ -190,13 +225,27 @@ anpan_pglmm = function(meta_file,
                      Lcov = Lcov)
   }
 
-  pglmm_fit = pglmm_model$sample(data = data_list, ...)
-  base_fit = base_model$sample(data = data_list, ...)
+  if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))
+
+
+
+  pglmm_fit = pglmm_model$sample(data = data_list,
+                                 chains = chains,
+                                 init = init_list,
+                                 ...)
+
+  if (test_signal) {
+    base_fit = base_model$sample(data = data_list,
+                                 chains = chains,
+                                 init = base_init,
+                                 ...)
+  }
 
   # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
   # appropriate (and move it to the top...)
 
   if (test_signal) {
+    if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
     pglmm_loo = pglmm_fit$loo()
     base_loo = base_fit$loo()
 
@@ -222,8 +271,10 @@ anpan_pglmm = function(meta_file,
   } else {
     # outcome_signal = NULL
     # hyp = NULL
+    base_fit = NULL
     pglmm_loo = NULL
     base_loo = NULL
+    comparison = NULL
   }
 
   if (save_object) {
