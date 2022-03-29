@@ -6,21 +6,32 @@ olap_tree_and_meta = function(tree_file,
                               trim_pattern,
                               verbose = TRUE) {
 
-  tree_name = basename(tree_file) %>%
-    stringr::str_replace_all(pattern = c("RAxML_bestTree\\.|\\.StrainPhlAn3|\\.tre$|\\.tree$"),
-                             replacement = "")
+  if (class(tree_file) == "phylo") {
+    bug_tree = tree_file
+  } else{
+    bug_tree = ape::read.tree(tree_file)
+  }
 
-  meta = read_meta(meta_file,
-                   select_cols = c("sample_id", covariates, outcome),
-                   omit_na = omit_na)
+  if (is.data.frame(meta_file)) {
 
-  bug_tree = ape::read.tree(tree_file)
+    meta = meta_file %>%
+      dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
+
+    if (omit_na) meta = na.omit(meta)
+
+  } else {
+    meta = read_meta(meta_file,
+                     select_cols = c("sample_id", covariates, outcome),
+                     omit_na = omit_na)
+  }
+
   if (!is.null(trim_pattern)) bug_tree$tip.label = gsub(trim_pattern, "", bug_tree$tip.label)
 
   overlapping_samples = intersect(bug_tree$tip.label,
                                   meta$sample_id)
 
   if (!all(bug_tree$tip.label %in% overlapping_samples)) {
+
     n_tree_olap = sum(bug_tree$tip.label %in% overlapping_samples)
 
     if (verbose) message(paste0("Dropping ",
@@ -28,8 +39,10 @@ olap_tree_and_meta = function(tree_file,
                                 " tips from the tree (out of ",
                                 length(bug_tree$tip.label),
                                 ") not present in the metadata."))
+
     bug_tree = ape::drop.tip(bug_tree,
                              tip = bug_tree$tip.label[!(bug_tree$tip.label %in% overlapping_samples)])
+
   }
 
   model_input = meta %>%
@@ -51,7 +64,10 @@ olap_tree_and_meta = function(tree_file,
 
 #' @title Run a phylogenetic generalized linear mixed model
 #' @md
-#' @param tree_file path to a .tre file
+#' @param tree_file either a path to a tree file readable by [ape::read.tree()]
+#'   or an object of class "phylo" that is already read into R
+#' @param meta_file either a data frame of metadata or a path to file containing
+#'   the metadata
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param family string giving the name of the distribution of the outcome
 #'   variable (usually "gaussian" or "binomial")
@@ -60,8 +76,8 @@ olap_tree_and_meta = function(tree_file,
 #' @param reg_noise logical indicating whether to regularize the ratio of
 #'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
 #' @param ... other arguments to pass to [cmdstanr::sample()]
-#' @param loo_comparison logical indicating whether to compare the phylogenetic model
-#'   against a base model (without the phylogenetic term) using
+#' @param loo_comparison logical indicating whether to compare the phylogenetic
+#'   model against a base model (without the phylogenetic term) using
 #'   [loo::loo_compare()]
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
@@ -128,14 +144,22 @@ anpan_pglmm = function(meta_file,
   dimnames(cor_mat) = dimnames(cov_mat)
 
   if (plot_cor_mat) {
-    bug_name = get_bug_name(tree_file,
-                            remove_pattern = ".tre$|.tree$")
+
+    if (!(class(tree_file) == "phylo")) {
+      bug_name = get_bug_name(tree_file,
+                              remove_pattern = ".tre$|.tree$")
+    } else {
+      bug_name = NULL # no way to get the bug name in this case
+    }
+
     p = make_cor_mat_plot(cor_mat,
                           bug_name)
     if (verbose) message("Plotting correlation matrix...")
 
     print(p)
     if (!is.null(out_dir)) {
+      if (is.null(bug_name)) bug_name = basename(tempfile())
+
       ggsave(p,
              filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")),
              width = 6, height = 5)
