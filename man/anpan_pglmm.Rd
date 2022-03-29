@@ -36,29 +36,36 @@ anpan_pglmm(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{family}{string giving the name of the distribution of the outcome variable (usually "gaussian" or "binomial")}
+\item{family}{string giving the name of the distribution of the outcome
+variable (usually "gaussian" or "binomial")}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
 \item{test_signal}{compute the phylogenetic signal}
 
-\item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}
+\item{reg_noise}{logical indicating whether to regularize the ratio of
+sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}
 
-\item{...}{other arguments to pass to cmdstanr::sample}
+\item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
 \description{
 Run a phylogenetic generalized linear mixed model
 }
 \details{
 the tip labels of the tree must be the sample ids from the metadata.
-  You can use the \code{trim_pattern} argument to automatically trim off any
-  consistent pattern from the tip labels if necessary. The dots can be used
-  to pass parallel_chains=4 to make the chains run in parallel.
+You can use the \code{trim_pattern} argument to automatically trim off any
+consistent pattern from the tip labels if necessary.
 
-  The prior for the intercept is a normal distribution centered on the mean
-  of the outcome variable with a standard deviation of 3*sd(outcome variable)
+The dots can be used to pass e.g. parallel_chains=4 to make the chains run
+in parallel.
 
-  The default error distribution for the outcome is "gaussian".
-  You could change this to a phylogenetic logistic regression by changing
-  \code{family} to "binomial" for example.
+The prior for the intercept is a normal distribution centered on the mean
+of the outcome variable with a standard deviation of 3*sd(outcome variable)
+
+The default error distribution for the outcome is "gaussian". You could
+change this to a phylogenetic logistic regression by changing \code{family}
+to "binomial" for example.
+}
+\seealso{
+\code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
 }
