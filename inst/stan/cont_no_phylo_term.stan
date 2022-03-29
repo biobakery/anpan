@@ -22,7 +22,7 @@ parameters {
 }
 model {
   // likelihood including constants
-  target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma);
+  target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma_resid);
 
   // priors including constants
   target += normal_lpdf(Intercept | int_mean, resid_scale);
@@ -32,6 +32,6 @@ generated quantities {
   real b_Intercept = Intercept - dot_product(means_X, b);
   vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept, b, sigma);
+    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept, b, sigma_resid);
   }
 }
