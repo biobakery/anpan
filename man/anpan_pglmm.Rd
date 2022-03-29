@@ -12,11 +12,12 @@ anpan_pglmm(
   trim_pattern = NULL,
   covariates = NULL,
   omit_na = FALSE,
-  family = stats::gaussian(),
+  family = "gaussian",
   plot_cor_mat = TRUE,
   save_object = FALSE,
   verbose = TRUE,
   test_signal = TRUE,
+  reg_noise = TRUE,
   ...
 )
 }
@@ -35,13 +36,15 @@ anpan_pglmm(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{family}{family object for the error distribution}
+\item{family}{string giving the name of the distribution of the outcome variable (usually "gaussian" or "binomial")}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
 \item{test_signal}{compute the phylogenetic signal}
 
-\item{...}{other arguments to pass to brms::brm}
+\item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}
+
+\item{...}{other arguments to pass to cmdstanr::sample}
 }
 \description{
 Run a phylogenetic generalized linear mixed model
@@ -50,12 +53,12 @@ Run a phylogenetic generalized linear mixed model
 the tip labels of the tree must be the sample ids from the metadata.
   You can use the \code{trim_pattern} argument to automatically trim off any
   consistent pattern from the tip labels if necessary. The dots can be used
-  to pass cores=4 to brms to make the chains run in parallel.
+  to pass parallel_chains=4 to make the chains run in parallel.
 
   The prior for the intercept is a normal distribution centered on the mean
   of the outcome variable with a standard deviation of 3*sd(outcome variable)
 
-  The default error distribution for the outcome is \code{stats::gaussian()}.
+  The default error distribution for the outcome is "gaussian".
   You could change this to a phylogenetic logistic regression by changing
-  \code{family} to \code{brms::bernoulli()} for example.
+  \code{family} to "binomial" for example.
 }
