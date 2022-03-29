@@ -656,7 +656,7 @@ make_cor_mat_plot = function(cor_mat,
                              bug_name = NULL) {
 
   if (!is.null(bug_name)) {
-    title_str = paste0(bug_name, " tree\nas a correlation matrix")
+    title_str = paste0(bug_name, " tree\ncorrelation matrix")
   } else {
     title_str = NULL
   }
