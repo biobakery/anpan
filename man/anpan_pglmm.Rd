@@ -22,9 +22,11 @@ anpan_pglmm(
 )
 }
 \arguments{
-\item{meta_file}{path to a metadata tsv}
+\item{meta_file}{either a data frame of metadata or a path to file containing
+the metadata}
 
-\item{tree_file}{path to a .tre file}
+\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}}
+or an object of class "phylo" that is already read into R}
 
 \item{outcome}{the name of the outcome variable}
 
@@ -41,8 +43,8 @@ variable (usually "gaussian" or "binomial")}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
-\item{loo_comparison}{logical indicating whether to compare the phylogenetic model
-against a base model (without the phylogenetic term) using
+\item{loo_comparison}{logical indicating whether to compare the phylogenetic
+model against a base model (without the phylogenetic term) using
 \code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of
