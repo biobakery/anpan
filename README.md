@@ -11,9 +11,9 @@ analysis. This includes testing automated filtering of metagenomic
 functional profiles, genetic elements for association with outcomes, and
 phylogenetic association testing.
 
-## Requirements
+## Dependencies
 
-anpan requires the following R packages, most of which which can be
+anpan depends on the following R packages, most of which which can be
 installed from CRAN (the exception being cmdstanr):
 
     install.packages(c("ape", 
@@ -41,7 +41,7 @@ installed `cmdstanr`, you will need to use it to install CmdStan:
 
 ## Installation
 
-You can install anpan from github with:
+Once you have the dependencies, you can install anpan from github with:
 
 ``` r
 devtools::install("biobakery/anpan")
@@ -115,6 +115,6 @@ delicious.
 There’s no backronym, but if you think of a good one let me know.
 
 Capitalization of the name follows [the xkcd
-rule](https://xkcd.com/about/). All lowercase “anpan” is preferred and
+rule](https://xkcd.com/about/). All lowercase “anpan” is preferred, and
 all uppercase “ANPAN” is acceptable in formal contexts or the start of a
 sentence, but mixed-case “Anpan” should be avoided.
