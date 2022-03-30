@@ -62,7 +62,7 @@ anpan_batch(
 
 \item{n_top}{number of top elements to show from the results}
 
-\item{...}{arguments to pass to brms::brm()}
+\item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }
 \description{
 This function calls anpan() on each gene family file in the

@@ -48,7 +48,7 @@ anpan(
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
-\item{...}{arguments to pass to brms::brm()}
+\item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }
 \description{
 Run the anpan model on a single bug

@@ -144,13 +144,11 @@ fit_horseshoe = function(model_input,
     model_path = system.file("stan", "logistic_ushoe.stan",
                              package = 'anpan',
                              mustWork = TRUE)
-    mod_family = brms::bernoulli()
     ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   } else {
     model_path = system.file("stan", "gaussian_ushoe.stan",
                              package = 'anpan',
                              mustWork = TRUE)
-    mod_family = stats::gaussian()
     ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   }
 
@@ -219,7 +217,7 @@ fit_horseshoe = function(model_input,
 #' @param outcome the name of the outcome variable
 #' @param omit_na logical indicating whether to omit incomplete cases
 #' @param save_filter_stats logical indicating whether to save filter statistics
-#' @param ... arguments to pass to brms::brm()
+#' @param ... arguments to pass to [cmdstanr::sample()] if applicable
 #' @details The specified metadata file must contain columns matching "sample_id"
 #'   and the specified covariates and outcome variables.
 #' @export
@@ -404,7 +402,7 @@ anpan = function(bug_file,
 #' @param covariates character vector of covariates to include in the model
 #' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
-#' @param ... arguments to pass to brms::brm()
+#' @param ... arguments to pass to [cmdstanr::sample()] if applicable
 #' @inheritParams make_results_plot
 #' @inheritParams anpan
 #' @export
@@ -514,16 +512,4 @@ anpan_batch = function(bug_dir,
 
   all_bug_terms
 
-}
-
-#' @export
-summarise_anpan = function(model_fit) {
-  post_sum = brms::posterior_summary(model_fit)
-
-  post_df = post_sum %>%
-    as.data.frame %>%
-    tibble::rownames_to_column('param') %>%
-    as.data.table()
-
-  post_df
 }
