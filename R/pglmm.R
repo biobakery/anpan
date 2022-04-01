@@ -92,6 +92,9 @@ olap_tree_and_meta = function(tree_file,
 #'   The default error distribution for the outcome is "gaussian". You could
 #'   change this to a phylogenetic logistic regression by changing \code{family}
 #'   to "binomial" for example.
+#'
+#'   It's normal to see some warnings during warmup, particularly about "Scale
+#'   vector is inf".
 #' @inheritParams anpan
 #' @seealso [loo::loo()], [cmdstanr::sample()]
 #' @export

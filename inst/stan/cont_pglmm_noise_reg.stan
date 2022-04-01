@@ -33,7 +33,7 @@ model {
   vector[N] mu = Intercept + phylo_effect;
 
   target += normal_id_glm_lpdf(Y | Xc, mu, b, sigma_resid);
-  target += gamma_lpdf(sigma_phylo / sigma_resid | 1.33, 2);
+  target += gamma_lpdf(sigma_phylo / sigma_resid | 1, 2);
 
   // priors including constants
   target += normal_lpdf(Intercept | int_mean, resid_scale);
