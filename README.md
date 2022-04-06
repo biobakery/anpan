@@ -17,17 +17,23 @@ anpan depends on the following R packages, most of which which can be
 installed from CRAN (the exception being cmdstanr):
 
     install.packages(c("ape", 
+                       "broom",
                        "data.table", 
                        "dplyr", 
-                       "purrr", 
-                       "tibble", 
-                       "tidyr", 
+                       "fastglm",
                        "furrr", 
+                       "ggdendro",
                        "ggnewscale",
+                       "ggplot2",
+                       "loo",
                        "patchwork", 
                        "progressr",
-                       "rstanarm",
-                       "fastglm")) # add Ncpus = 4 to go faster
+                       "purrr", 
+                       "R.utils",
+                       "readr",
+                       "stringr",
+                       "tibble", 
+                       "tidyr")) # add Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
