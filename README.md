@@ -13,8 +13,8 @@ phylogenetic association testing.
 
 ## Dependencies
 
-anpan depends on the following R packages, most of which which can be
-installed from CRAN (the exception being cmdstanr):
+anpan depends on the following R packages, most of which are available
+through CRAN (the exception being cmdstanr):
 
     install.packages(c("ape", 
                        "broom",

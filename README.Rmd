@@ -22,7 +22,7 @@ The goal of anpan is to consolidate statistical methods for strain analysis. Thi
 
 ## Dependencies
 
-anpan depends on the following R packages, most of which which can be installed from CRAN  (the exception being cmdstanr):
+anpan depends on the following R packages, most of which are available through CRAN (the exception being cmdstanr):
 
 ```
 install.packages(c("ape", 
