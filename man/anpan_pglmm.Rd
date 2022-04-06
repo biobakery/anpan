@@ -69,6 +69,9 @@ of the outcome variable with a standard deviation of 3*sd(outcome variable)
 The default error distribution for the outcome is "gaussian". You could
 change this to a phylogenetic logistic regression by changing \code{family}
 to "binomial" for example.
+
+It's normal to see some warnings during warmup, particularly about "Scale
+vector is inf".
 }
 \seealso{
 \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
