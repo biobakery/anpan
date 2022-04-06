@@ -77,7 +77,7 @@ fit_glm = function(gene_dat, covariates, outcome, out_dir,
   res = glm(glm_formula,
             data = gene_dat,
             family = mod_family) %>%
-    broom::tidy() %>%
+    broom::tidy() %>% # Only place I use broom, maybe do it manually
     as.data.table()
   return(res)
 }
