@@ -7,8 +7,8 @@
 <!-- badges: end -->
 
 The goal of anpan is to consolidate statistical methods for strain
-analysis. This includes testing automated filtering of metagenomic
-functional profiles, genetic elements for association with outcomes, and
+analysis. This includes automated filtering of metagenomic functional
+profiles, testing genetic elements for association with outcomes, and
 phylogenetic association testing.
 
 ## Dependencies
