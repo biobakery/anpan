@@ -38,8 +38,10 @@ model {
 generated quantities {
   // actual population-level intercept
   real b_Intercept = Intercept - dot_product(means_X, b);
+  array[N] int yrep;
   vector[N] log_lik;
   for (i in 1:N){
     log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), Intercept + phylo_effect[i], b);
+    yrep[i] = bernoulli_logit_rng(Intercept + phylo_effect[i] + Xc[i]*b);
   }
 }
