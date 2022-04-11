@@ -20,6 +20,7 @@ anpan_pglmm(
   verbose = TRUE,
   loo_comparison = TRUE,
   reg_noise = TRUE,
+  plot_ext = "pdf",
   ...
 )
 }

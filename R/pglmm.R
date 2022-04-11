@@ -116,6 +116,7 @@ anpan_pglmm = function(meta_file,
                        verbose = TRUE,
                        loo_comparison = TRUE,
                        reg_noise = TRUE,
+                       plot_ext = "pdf",
                        ...) {
 
   n_steps = ifelse(loo_comparison,
@@ -180,7 +181,9 @@ anpan_pglmm = function(meta_file,
                   outcome = 'crc',
                   omit_na = omit_na,
                   verbose = FALSE,
-                  bug_name = bug_name)
+                  bug_name = bug_name,
+                  out_dir = out_dir,
+                  plot_ext = plot_ext)
   }
 
   if (!is.null(covariates)) {

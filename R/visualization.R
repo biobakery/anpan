@@ -627,6 +627,12 @@ plot_cor_mat = function(cor_mat,
     coord_equal()
 }
 
+#' Plot a tree file showing the outcome variable
+#' @description Plot a tree file, and show the outcome variable as a colored dot
+#'   on the end of each tip.
+#' @details Showing the covariates as color bar annotations isn't supported yet.
+#' @inheritParams anpan_pglmm
+#' @export
 plot_tree = function(tree_file,
                      meta_file,
                      covariates = c("age", "gender"),
@@ -634,7 +640,8 @@ plot_tree = function(tree_file,
                      out_dir = NULL,
                      omit_na = FALSE,
                      verbose = TRUE,
-                     bug_name = NULL) {
+                     bug_name = NULL,
+                     plot_ext = "pdf") {
 
   if (length(covariates) > 2) {
     stop("more than two covariates is currently not supported")
@@ -672,8 +679,8 @@ plot_tree = function(tree_file,
     group_by(x) %>%
     filter(yend == min(yend)) %>%
     ungroup %>%
-    left_join(tip_df, by = "x") %>%
-    left_join(model_input, by = c("label" = "sample_id"))
+    left_join(tip_df, by = "x") %>% # join on tip labels
+    left_join(model_input, by = c("label" = "sample_id")) # join on metadata
 
   p = ggplot(seg_df, aes(x = x, y = yend)) +
     geom_segment(aes(x = x, xend = xend,
@@ -687,7 +694,7 @@ plot_tree = function(tree_file,
           axis.title.x = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                     size = 5),
+                                     size = 3.5),
           panel.background = element_blank(),
           panel.grid = element_blank())
 
@@ -695,7 +702,8 @@ plot_tree = function(tree_file,
 
     if (is.null(bug_name)) bug_name = basename(tempfile())
 
-    ggsave(p, filename = file.path(out_dir, ))
+    ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_tree.", plot_ext)),
+           width = 12, height = 6)
   }
 
   return(p)
