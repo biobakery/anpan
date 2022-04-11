@@ -75,6 +75,9 @@ olap_tree_and_meta = function(tree_file,
 #' @param out_dir if saving, directory where to save
 #' @param reg_noise logical indicating whether to regularize the ratio of
 #'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
+#' @param plot_ext extension to use when saving plots
+#' @param show_plot_cor_mat show a plot of the correlation matrix derived from the tree
+#' @param show_plot_tree show a plot of the tree overlaid with the outcome
 #' @param ... other arguments to pass to [cmdstanr::sample()]
 #' @param loo_comparison logical indicating whether to compare the phylogenetic
 #'   model against a base model (without the phylogenetic term) using

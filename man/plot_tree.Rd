@@ -30,6 +30,8 @@ the metadata}
 \item{out_dir}{if saving, directory where to save}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
+
+\item{plot_ext}{extension to use when saving plots}
 }
 \description{
 Plot a tree file, and show the outcome variable as a colored dot

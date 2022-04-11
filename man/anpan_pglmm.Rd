@@ -44,6 +44,10 @@ or an object of class "phylo" that is already read into R}
 \item{family}{string giving the name of the distribution of the outcome
 variable (usually "gaussian" or "binomial")}
 
+\item{show_plot_cor_mat}{show a plot of the correlation matrix derived from the tree}
+
+\item{show_plot_tree}{show a plot of the tree overlaid with the outcome}
+
 \item{save_object}{logical indicating whether to save the model fit object}
 
 \item{loo_comparison}{logical indicating whether to compare the phylogenetic
@@ -52,6 +56,8 @@ model against a base model (without the phylogenetic term) using
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of
 sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}
+
+\item{plot_ext}{extension to use when saving plots}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
