@@ -106,11 +106,11 @@ filter_with_kmeans = function(gf,
   samp_stats$clust = NULL
 
   if (save_filter_stats) {
-    make_kmeans_dotplot(samp_stats = samp_stats,
-                        plot_dir = file.path(filter_stats_dir, "plots"),
-                        bug_name,
-                        was_logged = log_it,
-                        plot_ext = plot_ext)
+    plot_kmeans_dots(samp_stats = samp_stats,
+                     plot_dir = file.path(filter_stats_dir, "plots"),
+                     bug_name,
+                     was_logged = log_it,
+                     plot_ext = plot_ext)
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
@@ -147,13 +147,13 @@ filter_gf = function(gf,
   }
 
   if (save_filter_stats & filtering_method != "none") {
-    make_line_plot(fgf = filtered_gf,
-                   bug_name = bug_name,
-                   covariates = covariates,
-                   outcome = outcome,
-                   omit_na = TRUE,
-                   plot_dir = file.path(filter_stats_dir, "plots"),
-                   plot_ext = plot_ext)
+    plot_lines(fgf = filtered_gf,
+               bug_name = bug_name,
+               covariates = covariates,
+               outcome = outcome,
+               omit_na = TRUE,
+               plot_dir = file.path(filter_stats_dir, "plots"),
+               plot_ext = plot_ext)
   }
 
   return(filtered_gf)

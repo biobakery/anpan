@@ -20,7 +20,7 @@ anpan_batch(
   annotation_file = NULL,
   save_filter_stats = TRUE,
   verbose = TRUE,
-  plot_results = TRUE,
+  plot_result = TRUE,
   plot_ext = "png",
   q_threshold = NULL,
   n_top = 50,
@@ -54,7 +54,7 @@ anpan_batch(
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
-\item{plot_results}{logical indicating whether or not to plot the results}
+\item{plot_result}{logical indicating whether or not to plot the results}
 
 \item{plot_ext}{extension to use for plots}
 

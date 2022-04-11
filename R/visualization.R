@@ -12,7 +12,7 @@
 #'   to 0 to turn off subsetting.
 #' @inheritParams anpan
 #' @export
-make_line_plot = function(bug_file = NULL,
+plot_lines = function(bug_file = NULL,
                           meta_file = NULL,
                           covariates,
                           outcome,
@@ -67,7 +67,7 @@ make_line_plot = function(bug_file = NULL,
   p
 }
 
-make_kmeans_dotplot = function(samp_stats,
+plot_kmeans_dots = function(samp_stats,
                                plot_dir = NULL,
                                bug_name = NULL,
                                was_logged = FALSE,
@@ -138,7 +138,7 @@ get_cov_color_map = function(unique_covs) {
   return(cov_types)
 }
 
-make_anno_plot = function(color_bars, model_input,
+plot_color_bars = function(color_bars, model_input,
                           covariates, outcome, binary_outcome) {
 
   if (binary_outcome) {
@@ -224,7 +224,7 @@ make_anno_plot = function(color_bars, model_input,
 #'   When \code{cluster = "none"}, the samples are ordered by metadata and the
 #'   genes are ordered by statistical significance.
 #' @export
-make_results_plot = function(res, covariates, outcome, model_input, plot_dir = NULL, bug_name,
+plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, bug_name,
                              annotation_file = NULL,
                              cluster = 'none',
                              show_trees = FALSE,
@@ -339,7 +339,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
     stop("data plots can't handle more than two covariates right now")
   }
 
-  anno_plot = make_anno_plot(color_bars, model_input,
+  anno_plot = plot_color_bars(color_bars, model_input,
                              covariates, outcome, binary_outcome)
 
   if (!is.null(annotation_file)) {
@@ -554,32 +554,7 @@ make_results_plot = function(res, covariates, outcome, model_input, plot_dir = N
   p
 }
 
-safely_make_results_plot = purrr::safely(make_results_plot)
-
-make_interval_plot = function(res,
-                              covariates, outcome, model_input, plot_dir, bug_name,
-                              annotation_file = NULL,
-                              plot_ext = "pdf",
-                              n_top = 50,
-                              q_threshold = NULL) {
-  if (!is.null(annotation_file)) {
-    # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
-    anno = fread(annotation_file) # must have two columns: gene and annotation
-  }
-
-  if (!is.null(q_threshold)) {
-    plot_data = res[q_global < q_threshold]
-    gene_levels = plot_data$gene
-  } else {
-    plot_data = res[1:n_top,]
-    gene_levels = plot_data$gene
-  }
-  plot_data$gene = factor(plot_data$gene,
-                          levels = rev(gene_levels))
-
-
-
-}
+safely_plot_results = purrr::safely(plot_results)
 
 #' Make a p-value histogram
 #'
@@ -597,7 +572,7 @@ make_interval_plot = function(res,
 #'   \href{http://varianceexplained.org/statistics/interpreting-pvalue-histogram/}{this
 #'   blog post by David Robinson} has a lot of helpful information.
 #' @export
-make_p_value_histogram = function(all_bug_terms,
+plot_p_value_histogram = function(all_bug_terms,
                                   out_dir = NULL,
                                   plot_ext = "pdf",
                                   n_bins = 50) {
@@ -620,39 +595,8 @@ make_p_value_histogram = function(all_bug_terms,
   p
 }
 
-make_composite_plot = function(bug_file,
-                               model_results,
-                               covariates,
-                               outcome,
-                               return_components = FALSE) {
-
-  lp = make_line_plot(bug_file,
-                      covariates = covariates,
-                      outcome = outcome) #
-
-  dp = make_data_plot(bug_file,
-                      covariates = covariates,
-                      outcome = outcome,
-                      model_results, annotation_file)
-  ip = make_interval_plot(model_results)
-
-  layout_str = "
-  AACD
-  BBCD
-  "
-
-  p = lp + hp + dp + ip + plot_layout(design = layout_str)
-  print(p)
-  if (return_components) {
-    return(list(lp,hp,dp,ip))
-  } else {
-    return(p)
-  }
-
-}
-
 #' @export
-make_cor_mat_plot = function(cor_mat,
+plot_cor_mat = function(cor_mat,
                              bug_name = NULL) {
 
   if (!is.null(bug_name)) {
@@ -681,42 +625,4 @@ make_cor_mat_plot = function(cor_mat,
     theme(axis.text = element_blank(),
           axis.ticks = element_blank()) +
     coord_equal()
-}
-
-make_tree_cov_plot = function(tree_file,
-                              meta_file,
-                              covariates = c("age", "gender"),
-                              outcome = 'crc',
-                              omit_na = FALSE,
-                              verbose = TRUE) {
-
-  if (length(covariates) > 2) {
-    stop("more than two covariates is currently not supported")
-  }
-
-  olap_list = olap_tree_and_meta(tree_file,
-                                 meta_file,
-                                 covariates,
-                                 outcome,
-                                 omit_na,
-                                 verbose)
-
-  bug_tree = olap_list[[1]]
-  model_input = olap_list[[2]]
-
-  dend_df = ggdendro::dendro_data(bug_tree %>% as.dendrogram())
-
-  seg_df = dend_df$segments %>%
-    as_tibble
-
-  tip_df = dend_df$labels %>%
-    as_tibble()
-
-  seg_df %>%
-    filter(x == xend & (x %% 1) == 0) %>%
-    group_by(x) %>%
-    filter(yend == min(yend)) %>%
-    ungroup
-
-
 }

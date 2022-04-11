@@ -155,7 +155,7 @@ anpan_pglmm = function(meta_file,
       bug_name = NULL # no way to get the bug name in this case
     }
 
-    p = make_cor_mat_plot(cor_mat,
+    p = plot_cor_mat(cor_mat,
                           bug_name)
     if (verbose) message("Plotting correlation matrix...")
 

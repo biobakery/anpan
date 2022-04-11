@@ -398,12 +398,12 @@ anpan = function(bug_file,
 #'   each.
 #'
 #' @param bug_dir a directory of gene family files
-#' @param plot_results logical indicating whether or not to plot the results
+#' @param plot_result logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
 #' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
-#' @inheritParams make_results_plot
+#' @inheritParams plot_results
 #' @inheritParams anpan
 #' @export
 anpan_batch = function(bug_dir,
@@ -421,7 +421,7 @@ anpan_batch = function(bug_dir,
                        annotation_file = NULL,
                        save_filter_stats = TRUE,
                        verbose = TRUE,
-                       plot_results = TRUE,
+                       plot_result = TRUE,
                        plot_ext = "png",
                        q_threshold = NULL,
                        n_top = 50,
@@ -478,7 +478,7 @@ anpan_batch = function(bug_dir,
   if (model_type %in% c("glm", "fastglm")) {
     all_bug_terms$q_global = p.adjust(all_bug_terms$p.value, method = "fdr")
 
-    make_p_value_histogram(all_bug_terms,
+    plot_p_value_histogram(all_bug_terms,
                            out_dir = out_dir,
                            plot_ext = plot_ext)
   }
@@ -496,9 +496,9 @@ anpan_batch = function(bug_dir,
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
-  if (plot_results) {
+  if (plot_result) {
     purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
-                function(bug_name, s){safely_make_results_plot(res = s,
+                function(bug_name, s){safely_plot_results(res = s,
                                                         bug_name = bug_name,
                                                         covariates = covariates,
                                                         outcome = outcome,
