@@ -631,17 +631,18 @@ plot_cor_mat = function(cor_mat,
 #' @description Plot a tree file, and show the outcome variable as a colored dot
 #'   on the end of each tip.
 #' @details Showing the covariates as color bar annotations isn't supported yet.
+#' @param return_tree_df if true, return a list containing 1) the plot, 2) the
+#'   segment data frame, and 3) the labelled terminal segment data frame.
+#'   Otherwise, just return the plot.
 #' @inheritParams anpan_pglmm
 #' @export
 plot_tree = function(tree_file,
                      meta_file,
                      covariates = c("age", "gender"),
                      outcome = 'crc',
-                     out_dir = NULL,
                      omit_na = FALSE,
                      verbose = TRUE,
-                     bug_name = NULL,
-                     plot_ext = "pdf") {
+                     return_tree_df = FALSE) {
 
   if (length(covariates) > 2) {
     stop("more than two covariates is currently not supported")
@@ -660,12 +661,12 @@ plot_tree = function(tree_file,
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     outcome_color_values = c('#abd9e9', '#d73027')
     names(outcome_color_values) = sort(unique(model_input[[outcome]]))
-    outcome_color_scale = scale_color_manual(values = outcome_fill_values)
+    outcome_color_scale = scale_color_manual(values = outcome_color_values)
   } else {
     outcome_color_scale = scale_color_viridis_c()
   }
 
-  dend_df = ggdendro::dendro_data(bug_tree %>% as.dendrogram())
+  dend_df = ggdendro::dendro_data(bug_tree %>% phylogram::as.dendrogram())
 
   seg_df = dend_df$segments %>%
     as_tibble
@@ -698,13 +699,87 @@ plot_tree = function(tree_file,
           panel.background = element_blank(),
           panel.grid = element_blank())
 
-  if (!is.null(out_dir)){
+  if (return_tree_df) {
+    return(list(tree_plot = p,
+                seg_df = seg_df,
+                terminal_seg_df = terminal_seg_df))
+  } else {
+    return(p)
+  }
+}
 
-    if (is.null(bug_name)) bug_name = basename(tempfile())
+#' Plot a tree and the PGLMM posterior predictive
+plot_tree_with_post_pred = function(tree_file,
+                                    meta_file,
+                                    covariates = c("age", "gender"),
+                                    outcome = 'crc',
+                                    omit_na = FALSE,
+                                    verbose = TRUE,
+                                    fit = NULL,
+                                    labels) {
 
-    ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_tree.", plot_ext)),
-           width = 12, height = 6)
+  if (is.null(fit)) {
+    stop("You must provide a pglmm fit to plot the posterior predictive")
   }
 
-  return(p)
+  tree_plot = plot_tree(tree_file,
+                        meta_file,
+                        covariates = covariates,
+                        outcome = outcome,
+                        omit_na = omit_na,
+                        verbose = TRUE,
+                        return_tree_df = TRUE)
+
+  if (!all(labels == tree_plot$terminal_seg_df$label)) {
+    stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
+  }
+
+  yrep_draws = fit %>%
+    tidybayes::tidy_draws() %>%
+    dplyr::select(matches("yrep"))
+
+  if (dplyr::n_distinct(tree_plot$terminal_seg_df[[outcome]]) == 2) {
+    yrep_df = yrep_draws %>%
+      dplyr::summarise_all(mean) %>%
+      tidyr::pivot_longer(dplyr::everything(), 'param', values_to = "prop_1") %>%
+      dplyr::mutate(prop_0 = 1 - prop_1,
+                    one = 1.1, # lol
+                    zero = -0.1) %>%
+      bind_cols(tree_plot$terminal_seg_df)
+
+    yrep_df$outcome = as.numeric(yrep_df[[outcome]])
+
+    yrep_df = yrep_df %>%
+      dplyr::select(param, mean_yrep = prop_1, y = outcome) %>%
+      tidyr::pivot_longer(-param,
+                          names_to = "y_type",
+                          values_to = "value")
+
+    yrep_plot = ggplot(yrep_df,
+                       aes(x = param)) +
+      geom_point(aes(y = value,
+                     alpha = y_type)) +
+      scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
+      scale_alpha_discrete(range = c(.25, 1)) +
+      theme(axis.title = element_blank(),
+            axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
+                                       size = 3.5))
+
+  } else {
+    # TODO handle continuous outcome
+    yrep_df = yrep_draws %>%
+      posterior::summarise_draws(posterior::default_summary_measures(),
+                                 q = ~quantile(.x, probs = c(.025, .25, .75, .975)))
+  }
+
+  tree_no_labels = tree_plot$tree_plot +
+    theme(axis.text.x = element_blank(),
+          axis.ticks.x = element_blank()) +
+    coord_cartesian(expand = FALSE)
+
+  tree_with_post_pred = tree_no_labels / yrep_plot + plot_layout(heights = c(3,1),
+                                                                 guides = "collect")
+  return(tree_with_post_pred)
+
+
 }

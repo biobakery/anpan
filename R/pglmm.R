@@ -76,8 +76,11 @@ olap_tree_and_meta = function(tree_file,
 #' @param reg_noise logical indicating whether to regularize the ratio of
 #'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
 #' @param plot_ext extension to use when saving plots
-#' @param show_plot_cor_mat show a plot of the correlation matrix derived from the tree
+#' @param show_plot_cor_mat show a plot of the correlation matrix derived from
+#'   the tree
 #' @param show_plot_tree show a plot of the tree overlaid with the outcome
+#' @param show_yrep logical indicating whether to show the posterior predictive
+#'   distribution for each observation if plotting the tree
 #' @param ... other arguments to pass to [cmdstanr::sample()]
 #' @param loo_comparison logical indicating whether to compare the phylogenetic
 #'   model against a base model (without the phylogenetic term) using
@@ -120,6 +123,7 @@ anpan_pglmm = function(meta_file,
                        loo_comparison = TRUE,
                        reg_noise = TRUE,
                        plot_ext = "pdf",
+                       show_yrep = TRUE,
                        ...) {
 
   n_steps = ifelse(loo_comparison,
@@ -135,7 +139,7 @@ anpan_pglmm = function(meta_file,
   }
 
   if (reg_noise && family != "gaussian") {
-    stop("You can't regularize the noise ratio with non-gaussian outcomes.")
+    stop("You can't regularize the noise ratio with non-gaussian outcomes. Set reg_noise = FALSE to use a model without regularized noise.")
   }
 
   olap_list = olap_tree_and_meta(tree_file,
@@ -167,7 +171,7 @@ anpan_pglmm = function(meta_file,
                           bug_name)
     if (verbose) message("Plotting correlation matrix...")
 
-    print(p)
+    if (verbose) print(p)
     if (!is.null(out_dir)) {
       if (is.null(bug_name)) bug_name = basename(tempfile())
 
@@ -175,18 +179,6 @@ anpan_pglmm = function(meta_file,
              filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")),
              width = 6, height = 5)
     }
-  }
-
-  if (show_plot_tree) {
-    p = plot_tree(tree_file,
-                  meta_file,
-                  covariates = c("age", "gender"),
-                  outcome = 'crc',
-                  omit_na = omit_na,
-                  verbose = FALSE,
-                  bug_name = bug_name,
-                  out_dir = out_dir,
-                  plot_ext = plot_ext)
   }
 
   if (!is.null(covariates)) {
@@ -282,6 +274,8 @@ anpan_pglmm = function(meta_file,
                                  chains = chains,
                                  init = init_list,
                                  ...)
+  # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
+  # appropriate (and move it to the top...)
 
   if (loo_comparison) {
     base_fit = base_model$sample(data = data_list,
@@ -290,8 +284,41 @@ anpan_pglmm = function(meta_file,
                                  ...)
   }
 
-  # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
-  # appropriate (and move it to the top...)
+  if (show_plot_tree) {
+    if (!show_yrep) {
+      p = plot_tree(tree_file,
+                    meta_file,
+                    covariates = covariates,
+                    outcome = outcome,
+                    omit_na = omit_na,
+                    verbose = FALSE,
+                    bug_name = bug_name,
+                    out_dir = out_dir,
+                    plot_ext = plot_ext)
+    } else {
+      p = plot_tree_with_post_pred(tree_file,
+                                   meta_file,
+                                   covariates = covariates,
+                                   outcome = outcome,
+                                   omit_na = omit_na,
+                                   verbose = FALSE,
+                                   bug_name = bug_name,
+                                   out_dir = out_dir,
+                                   plot_ext = plot_ext,
+                                   fit = pglmm_fit,
+                                   labels = levels(model_input$sample_id))
+    }
+
+    if (!is.null(out_dir)){
+
+      if (is.null(bug_name)) bug_name = basename(tempfile())
+
+      ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_tree.", plot_ext)),
+             width = 12, height = 8)
+    }
+
+    if (verbose) print(p)
+  }
 
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
