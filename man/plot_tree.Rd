@@ -9,11 +9,9 @@ plot_tree(
   meta_file,
   covariates = c("age", "gender"),
   outcome = "crc",
-  out_dir = NULL,
   omit_na = FALSE,
   verbose = TRUE,
-  bug_name = NULL,
-  plot_ext = "pdf"
+  return_tree_df = FALSE
 )
 }
 \arguments{
@@ -27,11 +25,11 @@ the metadata}
 
 \item{outcome}{the name of the outcome variable}
 
-\item{out_dir}{if saving, directory where to save}
-
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{plot_ext}{extension to use when saving plots}
+\item{return_tree_df}{if true, return a list containing 1) the plot, 2) the
+segment data frame, and 3) the labelled terminal segment data frame.
+Otherwise, just return the plot.}
 }
 \description{
 Plot a tree file, and show the outcome variable as a colored dot

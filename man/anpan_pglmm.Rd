@@ -21,6 +21,7 @@ anpan_pglmm(
   loo_comparison = TRUE,
   reg_noise = TRUE,
   plot_ext = "pdf",
+  show_yrep = TRUE,
   ...
 )
 }
@@ -44,7 +45,8 @@ or an object of class "phylo" that is already read into R}
 \item{family}{string giving the name of the distribution of the outcome
 variable (usually "gaussian" or "binomial")}
 
-\item{show_plot_cor_mat}{show a plot of the correlation matrix derived from the tree}
+\item{show_plot_cor_mat}{show a plot of the correlation matrix derived from
+the tree}
 
 \item{show_plot_tree}{show a plot of the tree overlaid with the outcome}
 
@@ -58,6 +60,9 @@ model against a base model (without the phylogenetic term) using
 sigma_phylo to sigma_resid with a Gamma(1.33,2) prior}
 
 \item{plot_ext}{extension to use when saving plots}
+
+\item{show_yrep}{logical indicating whether to show the posterior predictive
+distribution for each observation if plotting the tree}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
