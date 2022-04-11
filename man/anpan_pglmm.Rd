@@ -11,9 +11,11 @@ anpan_pglmm(
   out_dir = NULL,
   trim_pattern = NULL,
   covariates = NULL,
+  bug_name = NULL,
   omit_na = FALSE,
   family = "gaussian",
-  plot_cor_mat = TRUE,
+  show_plot_cor_mat = TRUE,
+  show_plot_tree = TRUE,
   save_object = FALSE,
   verbose = TRUE,
   loo_comparison = TRUE,
@@ -72,6 +74,9 @@ to "binomial" for example.
 
 It's normal to see some warnings during warmup, particularly about "Scale
 vector is inf".
+
+This function tries to get the \code{bug_name} argument from the tree file,
+but if it's not provided you may need to set it yourself.
 }
 \seealso{
 \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}

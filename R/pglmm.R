@@ -95,6 +95,9 @@ olap_tree_and_meta = function(tree_file,
 #'
 #'   It's normal to see some warnings during warmup, particularly about "Scale
 #'   vector is inf".
+#'
+#'   This function tries to get the \code{bug_name} argument from the tree file,
+#'   but if it's not provided you may need to set it yourself.
 #' @inheritParams anpan
 #' @seealso [loo::loo()], [cmdstanr::sample()]
 #' @export
@@ -104,9 +107,11 @@ anpan_pglmm = function(meta_file,
                        out_dir = NULL,
                        trim_pattern = NULL,
                        covariates = NULL,
+                       bug_name = NULL,
                        omit_na = FALSE,
                        family = "gaussian",
-                       plot_cor_mat = TRUE,
+                       show_plot_cor_mat = TRUE,
+                       show_plot_tree = TRUE,
                        save_object = FALSE,
                        verbose = TRUE,
                        loo_comparison = TRUE,
@@ -146,15 +151,14 @@ anpan_pglmm = function(meta_file,
   cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
   dimnames(cor_mat) = dimnames(cov_mat)
 
-  if (plot_cor_mat) {
+  if (!(class(tree_file) == "phylo") && is.null(bug_name)) {
+    bug_name = get_bug_name(tree_file,
+                            remove_pattern = ".tre$|.tree$")
+  } else {
+    bug_name = NULL # no way to get the bug name in this case
+  }
 
-    if (!(class(tree_file) == "phylo")) {
-      bug_name = get_bug_name(tree_file,
-                              remove_pattern = ".tre$|.tree$")
-    } else {
-      bug_name = NULL # no way to get the bug name in this case
-    }
-
+  if (show_plot_cor_mat) {
     p = plot_cor_mat(cor_mat,
                           bug_name)
     if (verbose) message("Plotting correlation matrix...")
@@ -167,6 +171,16 @@ anpan_pglmm = function(meta_file,
              filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")),
              width = 6, height = 5)
     }
+  }
+
+  if (show_plot_tree) {
+    p = plot_tree(tree_file,
+                  meta_file,
+                  covariates = c("age", "gender"),
+                  outcome = 'crc',
+                  omit_na = omit_na,
+                  verbose = FALSE,
+                  bug_name = bug_name)
   }
 
   if (!is.null(covariates)) {

@@ -626,3 +626,77 @@ plot_cor_mat = function(cor_mat,
           axis.ticks = element_blank()) +
     coord_equal()
 }
+
+plot_tree = function(tree_file,
+                     meta_file,
+                     covariates = c("age", "gender"),
+                     outcome = 'crc',
+                     out_dir = NULL,
+                     omit_na = FALSE,
+                     verbose = TRUE,
+                     bug_name = NULL) {
+
+  if (length(covariates) > 2) {
+    stop("more than two covariates is currently not supported")
+  }
+
+  olap_list = olap_tree_and_meta(tree_file,
+                                 meta_file,
+                                 covariates,
+                                 outcome,
+                                 omit_na,
+                                 verbose)
+
+  bug_tree = olap_list[[1]]
+  model_input = olap_list[[2]]
+
+  if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
+    outcome_color_values = c('#abd9e9', '#d73027')
+    names(outcome_color_values) = sort(unique(model_input[[outcome]]))
+    outcome_color_scale = scale_color_manual(values = outcome_fill_values)
+  } else {
+    outcome_color_scale = scale_color_viridis_c()
+  }
+
+  dend_df = ggdendro::dendro_data(bug_tree %>% as.dendrogram())
+
+  seg_df = dend_df$segments %>%
+    as_tibble
+
+  tip_df = dend_df$labels %>%
+    as_tibble() %>%
+    dplyr::select("x", "label")
+
+  terminal_seg_df = seg_df %>%
+    filter(x == xend & (x %% 1) == 0) %>%
+    group_by(x) %>%
+    filter(yend == min(yend)) %>%
+    ungroup %>%
+    left_join(tip_df, by = "x") %>%
+    left_join(model_input, by = c("label" = "sample_id"))
+
+  p = ggplot(seg_df, aes(x = x, y = yend)) +
+    geom_segment(aes(x = x, xend = xend,
+                     y = y, yend = yend)) +
+    geom_point(data = terminal_seg_df,
+               aes_string(color = outcome)) +
+    outcome_color_scale +
+    scale_x_continuous(breaks = 1:nrow(terminal_seg_df),
+                       labels = terminal_seg_df$label) +
+    theme(axis.title.y = element_blank(),
+          axis.title.x = element_blank(),
+          axis.ticks.x = element_blank(),
+          axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
+                                     size = 5),
+          panel.background = element_blank(),
+          panel.grid = element_blank())
+
+  if (!is.null(out_dir)){
+
+    if (is.null(bug_name)) bug_name = basename(tempfile())
+
+    ggsave(p, filename = file.path(out_dir, ))
+  }
+
+  return(p)
+}
