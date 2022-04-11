@@ -142,7 +142,7 @@ anpan_pglmm = function(meta_file,
 
   cov_mat = ape::vcv.phylo(bug_tree)
 
-  d = sqrt(diag(cov_mat)) # Not sure if needed
+  d = sqrt(diag(cov_mat))
   cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
   dimnames(cor_mat) = dimnames(cov_mat)
 
