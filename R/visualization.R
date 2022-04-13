@@ -146,6 +146,7 @@ plot_color_bars = function(color_bars, model_input,
     n_case = sum(color_bars[[outcome]] == 1)
     outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
     outcome_fill_scale = scale_fill_manual(values = outcome_fill_values)
+    # TODO add color scales too to avoid grey outlines around tiles
   } else{
     outcome_fill_scale = scale_fill_viridis_c(option = "cividis")
   }
@@ -747,7 +748,9 @@ plot_tree_with_post_pred = function(tree_file,
       dplyr::mutate(prop_0 = 1 - prop_1,
                     one = 1.1, # lol
                     zero = -0.1) %>%
-      bind_cols(tree_plot$terminal_seg_df)
+      bind_cols(tree_plot$terminal_seg_df) %>%
+      mutate(param = factor(param,
+                            levels = param))
 
     yrep_df$outcome = as.numeric(yrep_df[[outcome]])
 
@@ -760,7 +763,7 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_plot = ggplot(yrep_df,
                        aes(x = param)) +
       geom_point(aes(y = value,
-                     alpha = y_type)) +
+                     alpha = y_type)) + # might be better to change these to little bars
       scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
       scale_alpha_discrete(range = c(.25, 1)) +
       theme(axis.title = element_blank(),
@@ -771,7 +774,28 @@ plot_tree_with_post_pred = function(tree_file,
     # TODO handle continuous outcome
     yrep_df = yrep_draws %>%
       posterior::summarise_draws(posterior::default_summary_measures(),
-                                 q = ~quantile(.x, probs = c(.025, .25, .75, .975)))
+                                 q = ~quantile(.x, probs = c(.025, .25, .75, .975))) %>%
+      bind_cols(tree_plot$terminal_seg_df) %>%
+      mutate(variable = factor(variable,
+                               levels = variable))
+
+    yrep_plot = ggplot(yrep_df, aes(x = variable)) +
+      geom_boxplot(aes(ymin = `2.5%`,
+                       lower = `25%`,
+                       middle = median,
+                       upper = `75%`,
+                       ymax = `97.5%`),
+                   stat = 'identity') +
+      geom_point(aes(y = bmi,
+                     color = bmi)) +
+      scale_color_viridis_c() +
+      scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
+      theme(axis.title = element_blank(),
+            axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
+                                       size = 3.5),
+            panel.grid = element_blank(),
+            panel.background = element_blank())
+
   }
 
   tree_no_labels = tree_plot$tree_plot +
