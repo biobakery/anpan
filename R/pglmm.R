@@ -291,10 +291,7 @@ anpan_pglmm = function(meta_file,
                     covariates = covariates,
                     outcome = outcome,
                     omit_na = omit_na,
-                    verbose = FALSE,
-                    bug_name = bug_name,
-                    out_dir = out_dir,
-                    plot_ext = plot_ext)
+                    verbose = FALSE)
     } else {
       p = plot_tree_with_post_pred(tree_file,
                                    meta_file,
