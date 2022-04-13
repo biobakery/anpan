@@ -176,7 +176,7 @@ anpan_pglmm = function(meta_file,
       if (is.null(bug_name)) bug_name = basename(tempfile())
 
       ggsave(p,
-             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.png")),
+             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.", plot_ext)),
              width = 6, height = 5)
     }
   }
