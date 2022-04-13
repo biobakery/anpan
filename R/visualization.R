@@ -617,11 +617,13 @@ plot_cor_mat = function(cor_mat,
     dplyr::mutate(V2 = factor(V2,
                        levels = rev(levels(rn)))) %>%
     ggplot(aes(rn, V2)) +
-    geom_tile(aes(fill = cor)) +
+    geom_tile(aes(fill = cor,
+                  color = cor)) +
     labs(x = "sample1",
          y = "sample2",
          title = title_str) +
     scale_fill_viridis_c() +
+    scale_color_viridis_c() +
     theme(axis.text = element_blank(),
           axis.ticks = element_blank()) +
     coord_equal()
