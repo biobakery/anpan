@@ -43,8 +43,10 @@ model {
 generated quantities {
   // actual population-level intercept
   real b_Intercept = Intercept - dot_product(means_X, b);
+  array[N] real yrep;
   vector[N] log_lik;
   for (i in 1:N){
     log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept + phylo_effect[i], b, sigma_resid);
+    yrep[i] = normal_rng(Intercept + phylo_effect[i] + Xc[i]*b, sigma_resid);
   }
 }
