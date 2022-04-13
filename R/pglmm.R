@@ -268,8 +268,6 @@ anpan_pglmm = function(meta_file,
 
   if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))
 
-
-
   pglmm_fit = pglmm_model$sample(data = data_list,
                                  chains = chains,
                                  init = init_list,
@@ -299,9 +297,6 @@ anpan_pglmm = function(meta_file,
                                    outcome = outcome,
                                    omit_na = omit_na,
                                    verbose = FALSE,
-                                   bug_name = bug_name,
-                                   out_dir = out_dir,
-                                   plot_ext = plot_ext,
                                    fit = pglmm_fit,
                                    labels = levels(model_input$sample_id))
     }
