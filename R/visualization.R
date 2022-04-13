@@ -698,7 +698,7 @@ plot_tree = function(tree_file,
           axis.title.x = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                     size = 3.5),
+                                     size = 3),
           panel.background = element_blank(),
           panel.grid = element_blank())
 
@@ -712,6 +712,10 @@ plot_tree = function(tree_file,
 }
 
 #' Plot a tree and the PGLMM posterior predictive
+#' @param fit a pglmm fit from \code{anpan_pglmm()}
+#' @param labels the ordered tip labels from the tree
+#' @inheritParams plot_tree
+#' @export
 plot_tree_with_post_pred = function(tree_file,
                                     meta_file,
                                     covariates = c("age", "gender"),
@@ -774,25 +778,29 @@ plot_tree_with_post_pred = function(tree_file,
     # TODO handle continuous outcome
     yrep_df = yrep_draws %>%
       posterior::summarise_draws(posterior::default_summary_measures(),
-                                 q = ~quantile(.x, probs = c(.025, .25, .75, .975))) %>%
+                                 q = ~quantile(.x, probs = c(.25, .75))) %>%
       bind_cols(tree_plot$terminal_seg_df) %>%
       mutate(variable = factor(variable,
                                levels = variable))
 
     yrep_plot = ggplot(yrep_df, aes(x = variable)) +
-      geom_boxplot(aes(ymin = `2.5%`,
+      geom_boxplot(aes(ymin = q5,
                        lower = `25%`,
                        middle = median,
                        upper = `75%`,
-                       ymax = `97.5%`),
+                       ymax = q95),
                    stat = 'identity') +
+      geom_hline(lty = 2,
+                 color = 'grey80',
+                 yintercept = mean(yrep_df[[outcome]])) +
       geom_point(aes(y = bmi,
                      color = bmi)) +
       scale_color_viridis_c() +
       scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
-      theme(axis.title = element_blank(),
+      labs(y = paste0(outcome, "\n posterior predictive")) +
+      theme(axis.title.x = element_blank(),
             axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                       size = 3.5),
+                                       size = 3),
             panel.grid = element_blank(),
             panel.background = element_blank())
 

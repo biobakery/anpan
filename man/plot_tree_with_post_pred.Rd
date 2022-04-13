@@ -15,6 +15,23 @@ plot_tree_with_post_pred(
   labels
 )
 }
+\arguments{
+\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}}
+or an object of class "phylo" that is already read into R}
+
+\item{meta_file}{either a data frame of metadata or a path to file containing
+the metadata}
+
+\item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{outcome}{the name of the outcome variable}
+
+\item{omit_na}{logical indicating whether to omit incomplete cases}
+
+\item{fit}{a pglmm fit from \code{anpan_pglmm()}}
+
+\item{labels}{the ordered tip labels from the tree}
+}
 \description{
 Plot a tree and the PGLMM posterior predictive
 }
