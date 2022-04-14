@@ -772,7 +772,9 @@ plot_tree_with_post_pred = function(tree_file,
       scale_alpha_discrete(range = c(.25, 1)) +
       theme(axis.title = element_blank(),
             axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                       size = 3.5))
+                                       size = 3.5),
+            panel.grid = element_blank(),
+            panel.background = element_blank())
 
   } else {
     # TODO handle continuous outcome

@@ -301,7 +301,7 @@ anpan_pglmm = function(meta_file,
                                    labels = levels(model_input$sample_id))
     }
 
-    if (!is.null(out_dir)){
+    if (!is.null(out_dir)) {
 
       if (is.null(bug_name)) bug_name = basename(tempfile())
 
