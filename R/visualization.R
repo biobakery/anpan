@@ -734,7 +734,7 @@ plot_tree_with_post_pred = function(tree_file,
                         covariates = covariates,
                         outcome = outcome,
                         omit_na = omit_na,
-                        verbose = TRUE,
+                        verbose = verbose,
                         return_tree_df = TRUE)
 
   if (!all(labels == tree_plot$terminal_seg_df$label)) {
