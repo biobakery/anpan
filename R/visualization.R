@@ -741,8 +741,8 @@ plot_tree_with_post_pred = function(tree_file,
     stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
   }
 
-  yrep_draws = fit %>%
-    tidybayes::tidy_draws() %>%
+  yrep_draws = fit$draws(format = "draws_df") %>%
+    tibble::as_tibble() %>%
     dplyr::select(matches("yrep"))
 
   if (dplyr::n_distinct(tree_plot$terminal_seg_df[[outcome]]) == 2) {
