@@ -795,8 +795,8 @@ plot_tree_with_post_pred = function(tree_file,
       geom_hline(lty = 2,
                  color = 'grey80',
                  yintercept = mean(yrep_df[[outcome]])) +
-      geom_point(aes(y = bmi,
-                     color = bmi)) +
+      geom_point(aes_string(y = outcome,
+                            color = outcome)) +
       scale_color_viridis_c() +
       scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
       labs(y = paste0(outcome, "\n posterior predictive")) +
