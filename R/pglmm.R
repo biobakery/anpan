@@ -74,7 +74,7 @@ olap_tree_and_meta = function(tree_file,
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
 #' @param reg_noise logical indicating whether to regularize the ratio of
-#'   sigma_phylo to sigma_resid with a Gamma(1.33,2) prior
+#'   sigma_phylo to sigma_resid with a Gamma(1,2) prior
 #' @param plot_ext extension to use when saving plots
 #' @param show_plot_cor_mat show a plot of the correlation matrix derived from
 #'   the tree
@@ -357,4 +357,128 @@ anpan_pglmm = function(meta_file,
 
 }
 
-# TODO anpan_pglmm_batch()
+safely_anpan_pglmm = purrr::safely(anpan_pglmm)
+
+#' Run PGLMMs on a batch of tree files
+#' @description This function fits phylogenetic generalized linear mixed models
+#'   on a batch of tree files, using the same outcome and covariate arguments.
+#' @param tree_dir string giving the path to a directory of tree files
+#' @details \code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
+#' @inheritParams anpan_pglmm
+anpan_pglmm_batch = function(meta_file,
+                             tree_dir,
+                             outcome,
+                             out_dir = NULL,
+                             trim_pattern = NULL,
+                             covariates = NULL,
+                             bug_name = NULL,
+                             omit_na = FALSE,
+                             family = "gaussian",
+                             show_plot_cor_mat = TRUE,
+                             show_plot_tree = TRUE,
+                             save_object = FALSE,
+                             verbose = TRUE,
+                             loo_comparison = TRUE,
+                             reg_noise = TRUE,
+                             plot_ext = "pdf",
+                             show_yrep = TRUE,
+                             ...) {
+
+  if (exists("parallel_chains")) stop("Don't set parallel_chains, use future::plan() to parallelize instead.")
+
+  call = match.call()
+
+  fn_call_string = paste0(gsub(', (?!")',
+                               ",\n            ",
+                               as.character(enquote(call))[2],
+                               perl = TRUE),
+                          "\n")
+
+  if (verbose & !interactive()) message(paste0("Now running:\n\n", fn_call_string))
+
+  if (!dir.exists(out_dir)) {
+    if (verbose) message("* Creating output directory.")
+    dir.create(out_dir)
+  }
+
+  readr::write_lines(fn_call_string,
+                     file = file.path(out_dir, "anpan_pglmm_batch_call.txt"))
+
+  tree_files = list.files(tree_dir,
+                          full.names = TRUE)
+
+  # Get the model paths
+  if (family == "gaussian") {
+    base_path = system.file("stan", "cont_no_phylo_term.stan",
+                            package = 'anpan',
+                            mustWork = TRUE)
+    if (reg_noise == FALSE) {
+      model_path = system.file("stan", "cont_pglmm.stan",
+                               package = 'anpan',
+                               mustWork = TRUE)
+    } else {
+      model_path = system.file("stan", "cont_pglmm_noise_reg.stan",
+                               package = 'anpan',
+                               mustWork = TRUE)
+    }
+  } else if (family == "binomial") {
+    model_path = system.file("stan", "bin_pglmm.stan",
+                             package = 'anpan',
+                             mustWork = TRUE)
+    base_path = system.file("stan", "bin_no_phylo_term.stan",
+                            package = 'anpan',
+                            mustWork = TRUE)
+  }
+
+  # Compile them once here so that they don't get compiled inside future_map()
+  pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
+                                        quiet = TRUE)
+
+  if (loo_comparison) {
+    base_model = cmdstanr::cmdstan_model(stan_file = base_path,
+                                         quiet = TRUE)
+  }
+
+  p = progressr::progressor(along = tree_files)
+
+  safe_results = furrr::future_map(tree_files,
+                                   function(.x) {
+                                     p()
+                                     safely_anpan_pglmm(tree_file = .x,
+                                                        meta_file = meta_file,
+                                                        outcome = outcome,
+                                                        out_dir = out_dir,
+                                                        trim_pattern = trim_pattern,
+                                                        covariates = covariates,
+                                                        bug_name = bug_name,
+                                                        omit_na = omit_na,
+                                                        family = family,
+                                                        show_plot_cor_mat = show_plot_cor_mat,
+                                                        show_plot_tree = show_plot_tree,
+                                                        save_object = save_object,
+                                                        verbose = verbose,
+                                                        loo_comparison = loo_comparison,
+                                                        reg_noise = reg_noise,
+                                                        plot_ext = plot_ext,
+                                                        show_yrep = show_yrep,
+                                                        parallel_chains = 1,
+                                                        ...)})
+
+  safe_res_df = purrr::transpose(safe_results) %>%
+    as_tibble() %>%
+    mutate(input_file = tree_files)
+
+  errors = safe_res_df %>%
+    dplyr::filter(map_lgl(error, ~!is.null(.x)))
+
+  if (nrow(errors) > 0){
+    save(errors,
+         file = file.path(out_dir, 'pglmm_errors.RData'))
+  }
+
+  worked = safe_res_df %>%
+    dplyr::filter(map_lgl(error, ~is.null(.x)))
+
+  return(worked$result)
+
+}
