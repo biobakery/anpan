@@ -11,7 +11,6 @@ anpan_pglmm_batch(
   covariates = NULL,
   out_dir = NULL,
   trim_pattern = NULL,
-  bug_name = NULL,
   omit_na = FALSE,
   family = "gaussian",
   show_plot_cor_mat = TRUE,

@@ -365,6 +365,7 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #' @param tree_dir string giving the path to a directory of tree files
 #' @details \code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
 #' @inheritParams anpan_pglmm
+#' @export
 anpan_pglmm_batch = function(meta_file,
                              tree_dir,
                              outcome,
