@@ -399,7 +399,7 @@ anpan_pglmm_batch = function(meta_file,
 
   if (verbose & !interactive()) message(paste0("Now running:\n\n", fn_call_string))
 
-  if (!dir.exists(out_dir)) {
+  if (!is.null(out_dir) && !dir.exists(out_dir)) {
     if (verbose) message("* Creating output directory.")
     dir.create(out_dir)
   }
