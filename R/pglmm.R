@@ -384,7 +384,10 @@ anpan_pglmm_batch = function(meta_file,
                              show_yrep = TRUE,
                              ...) {
 
-  if (exists("parallel_chains")) stop("Don't set parallel_chains, use future::plan() to parallelize instead.")
+  dot_list = list(...)
+  if ("parallel_chains" %in% names(dot_list)) {
+    stop("Don't specify parallel_chains. Use future::plan() to parallelize instead.")
+  }
 
   call = match.call()
 
