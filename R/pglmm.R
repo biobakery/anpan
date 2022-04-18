@@ -458,7 +458,7 @@ anpan_pglmm_batch = function(meta_file,
 
   # Fitting PGLMMs ----------------------------------------------------------
 
-  if (verbose) message(paste0("(2/", n_steps, ") Fitting PGLMMs."))
+  if (verbose) message(paste0("(3/", n_steps, ") Fitting PGLMMs."))
 
   p = progressr::progressor(along = tree_files)
 
@@ -493,9 +493,11 @@ anpan_pglmm_batch = function(meta_file,
   errors = safe_res_df %>%
     dplyr::filter(purrr::map_lgl(error, ~!is.null(.x)))
 
-  if (nrow(errors) > 0){
+  if (nrow(errors) > 0) {
     save(errors,
          file = file.path(out_dir, 'pglmm_errors.RData'))
+
+    if (verbose) message(paste0("* There were ", nrow(errors), " tree files that failed to fit. You can see the error messages they produced in pglmm_errors.RData in the output directory."))
   }
 
   worked = safe_res_df %>%
