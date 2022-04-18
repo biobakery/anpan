@@ -482,6 +482,7 @@ anpan_pglmm_batch = function(meta_file,
                                                         plot_ext = plot_ext,
                                                         show_yrep = show_yrep,
                                                         parallel_chains = 1,
+                                                        refresh = 0,
                                                         ...)},
                                    .options = furrr::furrr_options(seed = seed))
 
