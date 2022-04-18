@@ -491,7 +491,7 @@ anpan_pglmm_batch = function(meta_file,
     mutate(input_file = tree_files)
 
   errors = safe_res_df %>%
-    dplyr::filter(map_lgl(error, ~!is.null(.x)))
+    dplyr::filter(purrr::map_lgl(error, ~!is.null(.x)))
 
   if (nrow(errors) > 0){
     save(errors,
@@ -499,7 +499,7 @@ anpan_pglmm_batch = function(meta_file,
   }
 
   worked = safe_res_df %>%
-    dplyr::filter(map_lgl(error, ~is.null(.x)))
+    dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
 
   return(worked$result)
 
