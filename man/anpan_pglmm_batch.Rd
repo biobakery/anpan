@@ -8,9 +8,9 @@ anpan_pglmm_batch(
   meta_file,
   tree_dir,
   outcome,
+  covariates = NULL,
   out_dir = NULL,
   trim_pattern = NULL,
-  covariates = NULL,
   bug_name = NULL,
   omit_na = FALSE,
   family = "gaussian",
@@ -33,11 +33,11 @@ the metadata}
 
 \item{outcome}{the name of the outcome variable}
 
+\item{covariates}{covariates to account for (as a vector of strings)}
+
 \item{out_dir}{if saving, directory where to save}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
-
-\item{covariates}{covariates to account for (as a vector of strings)}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 

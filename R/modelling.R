@@ -210,11 +210,11 @@ fit_horseshoe = function(model_input,
 #' @param out_dir path to the desired output directory
 #' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
 #' @param model_type either "horseshoe", "glm", or "fastglm"
+#' @param outcome the name of the outcome variable
+#' @param covariates covariates to account for (as a vector of strings)
 #' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".
 #' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".
-#' @param covariates covariates to account for (as a vector of strings)
 #' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
-#' @param outcome the name of the outcome variable
 #' @param omit_na logical indicating whether to omit incomplete cases
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
