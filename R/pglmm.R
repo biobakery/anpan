@@ -371,7 +371,6 @@ anpan_pglmm_batch = function(meta_file,
                              covariates = NULL,
                              out_dir = NULL,
                              trim_pattern = NULL,
-                             bug_name = NULL,
                              omit_na = FALSE,
                              family = "gaussian",
                              show_plot_cor_mat = TRUE,
@@ -402,10 +401,10 @@ anpan_pglmm_batch = function(meta_file,
   if (!is.null(out_dir) && !dir.exists(out_dir)) {
     if (verbose) message("* Creating output directory.")
     dir.create(out_dir)
-  }
 
-  readr::write_lines(fn_call_string,
-                     file = file.path(out_dir, "anpan_pglmm_batch_call.txt"))
+    readr::write_lines(fn_call_string,
+                       file = file.path(out_dir, "anpan_pglmm_batch_call.txt"))
+  }
 
   tree_files = list.files(tree_dir,
                           full.names = TRUE)
@@ -453,7 +452,6 @@ anpan_pglmm_batch = function(meta_file,
                                                         out_dir = out_dir,
                                                         trim_pattern = trim_pattern,
                                                         covariates = covariates,
-                                                        bug_name = bug_name,
                                                         omit_na = omit_na,
                                                         family = family,
                                                         show_plot_cor_mat = show_plot_cor_mat,
