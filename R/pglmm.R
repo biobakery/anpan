@@ -483,7 +483,7 @@ anpan_pglmm_batch = function(meta_file,
                                                         show_yrep = show_yrep,
                                                         parallel_chains = 1,
                                                         ...)},
-                                   .options = furrr_options(seed = seed))
+                                   .options = furrr::furrr_options(seed = seed))
 
   safe_res_df = purrr::transpose(safe_results) %>%
     as_tibble() %>%
