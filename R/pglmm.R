@@ -363,6 +363,7 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #' @description This function fits phylogenetic generalized linear mixed models
 #'   on a batch of tree files, using the same outcome and covariate arguments.
 #' @param tree_dir string giving the path to a directory of tree files
+#' @param seed random seed to pass to furrr_options()
 #' @details \code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
 #' @inheritParams anpan_pglmm
 #' @export
@@ -382,7 +383,14 @@ anpan_pglmm_batch = function(meta_file,
                              reg_noise = TRUE,
                              plot_ext = "pdf",
                              show_yrep = TRUE,
+                             seed = 123,
                              ...) {
+
+  n_steps = 3
+
+  # Checking inputs ---------------------------------------------------------
+
+  if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
 
   dot_list = list(...)
   if ("parallel_chains" %in% names(dot_list)) {
@@ -433,6 +441,11 @@ anpan_pglmm_batch = function(meta_file,
                             mustWork = TRUE)
   }
 
+
+  # initial compilation -----------------------------------------------------
+
+  if (verbose) message(paste0("(2/", n_steps, ") Performing initial model compilation."))
+
   # Compile them once here so that they don't get compiled inside future_map()
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
                                         quiet = TRUE)
@@ -441,6 +454,11 @@ anpan_pglmm_batch = function(meta_file,
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
                                          quiet = TRUE)
   }
+
+
+  # Fitting PGLMMs ----------------------------------------------------------
+
+  if (verbose) message(paste0("(2/", n_steps, ") Fitting PGLMMs."))
 
   p = progressr::progressor(along = tree_files)
 
@@ -458,13 +476,14 @@ anpan_pglmm_batch = function(meta_file,
                                                         show_plot_cor_mat = show_plot_cor_mat,
                                                         show_plot_tree = show_plot_tree,
                                                         save_object = save_object,
-                                                        verbose = verbose,
+                                                        verbose = FALSE,
                                                         loo_comparison = loo_comparison,
                                                         reg_noise = reg_noise,
                                                         plot_ext = plot_ext,
                                                         show_yrep = show_yrep,
                                                         parallel_chains = 1,
-                                                        ...)})
+                                                        ...)},
+                                   .options = furrr_options(seed = seed))
 
   safe_res_df = purrr::transpose(safe_results) %>%
     as_tibble() %>%

@@ -21,6 +21,7 @@ anpan_pglmm_batch(
   reg_noise = TRUE,
   plot_ext = "pdf",
   show_yrep = TRUE,
+  seed = 123,
   ...
 )
 }
@@ -61,6 +62,8 @@ sigma_phylo to sigma_resid with a Gamma(1,2) prior}
 
 \item{show_yrep}{logical indicating whether to show the posterior predictive
 distribution for each observation if plotting the tree}
+
+\item{seed}{random seed to pass to furrr_options()}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
