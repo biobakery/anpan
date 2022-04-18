@@ -68,17 +68,7 @@ devtools::install("biobakery/anpan")
 You can filter large uniref tables and look for associations with outcomes (while controlling for covariates) with `anpan_batch`. Right now this only works for glm-based models.
 
 ```{r example, eval=FALSE}
-library(tidyverse)
-library(data.table)
-
-library(furrr) 
-plan(multisession, workers = 2) # Run with two parallel R sessions on the local machine
-
-library(progressr)
-handlers(global=TRUE) # show progress bars for long computations
-
 library(anpan)
-
 
 anpan_batch(bug_dir = "/path/to/gene_families/",
             meta_file = "/path/to/metadata.tsv",
@@ -91,12 +81,18 @@ anpan_batch(bug_dir = "/path/to/gene_families/",
             plot_ext = "pdf",
             save_filter_stats = TRUE)
 ```
+This will run an anpan batch analysis for each functional profile present in `bug_dir` (there should be one input file per bug). For each bug, `anpan`: 
 
-This will create the output directory with tables of regression coefficients, top-results plots, and filter statistics.
+1) reads in the metadata (containing the specified outcome and covariates) and the functional profile 
+2) applies adaptive filtering to discard samples where the species was likely not present (based on low abundance and few non-zero observations) based on the sample's functional profile.
+3) fits a model to the filtered data:
+    * `model_type = "fastglm"` or `model_type = "glm"` will fit regressions to each gene in the input file separately (using the specified outcome distribution), then apply FDR correction to the p-values associated with each gene's presence. The regression for each individual gene follows the form: `outcome ~ covariate1 + covariate2 + ... + gene_presence`
+    * `model_type = "horseshoe"` fits a single regression model with the specified outcome distribution, weak priors on the specified covariates, and a [regularized horseshoe prior](https://paul-buerkner.github.io/brms/reference/horseshoe.html) on the presence/absence of all genes associated with the bug. The regression follows the form: `outcome ~ covariate1 + covariate2 + ... + gene1_presence + gene2_presence + gene3_presence + ...` including all of the specified covariates and (typically thousands of) genes detected in the bug.
+4) then writes results to the output directory, including tables of regression coefficients, per-bug plots of the top hits, and filter statistics.
 
 ## Example - phylogenetic generalized linear mixed model
 
-You can run a PGLMM with the `anpan_pglmm` function. This fits a model where the covariance matrix of outcomes is determined from the phylogenetic tree. Right now there's only gaussian outcomes, and no regularization on the covariance matrix.
+You can run a PGLMM with the `anpan_pglmm` function. This fits a model where the covariance matrix of outcomes is determined from the phylogenetic tree. Right now the only usable outcome distributions are `family = "gaussian"` and `family = "binomial"`. If `family = "gaussian"`, the `reg_noise` parameter can be used to regularize the ratio of the noise parameters with the following prior distribution: $(\sigma_{phylo} / \sigma_{resid}) \sim Gamma(1,2)$
 
 ```{r eval=FALSE}
 meta_file = "/path/to/metadata.tsv" 
@@ -112,14 +108,15 @@ anpan_pglmm(meta_file,
             cores = 4)
 ```
 
+There is a corresponding `anpan_pglmm_batch()` function that can be pointed to a directory of .tree files with the `tree_dir` parameter.
+
 ## FAQ
 
 > What's with the name?
 
-The name "anpan" was chosen to fit into the [biobakery](https://huttenhower.sph.harvard.edu/tools/) bread theme and because it's short and easy to pronounce and remember. Also, [real anpan](https://duckduckgo.com/?q=anpan&t=h_&iax=images&ia=images) are delicious.
-
-There's no backronym, but if you think of a good one let me know.
-
-Capitalization of the name follows [the xkcd rule](https://xkcd.com/about/). All lowercase "anpan" is preferred, and all uppercase "ANPAN" is acceptable in formal contexts or the start of a sentence, but mixed-case "Anpan" should be avoided.
+* The name "anpan" was chosen to fit into the [biobakery](https://huttenhower.sph.harvard.edu/tools/) bread theme and because it's short and easy to pronounce and remember. 
+* [Real anpan](https://duckduckgo.com/?q=anpan&t=h_&iax=images&ia=images) are good.
+* There's no backronym, but if you think of a good one let me know.
+* Capitalization of the name follows [the xkcd rule](https://xkcd.com/about/). All lowercase "anpan" is preferred, and all uppercase "ANPAN" is acceptable in formal contexts or the start of a sentence, but mixed-case "Anpan" should be avoided.
 
 
