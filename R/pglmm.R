@@ -519,9 +519,9 @@ anpan_pglmm_batch = function(meta_file,
   worked = safe_res_df %>%
     dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
 
-  res_df = bind_cols(worked["input_file"],
-                     as_tibble(purrr::transpose(worked$result)))
+  res_df = dplyr::bind_cols(worked["input_file"],
+                            as_tibble(purrr::transpose(worked$result)))
 
-  return(worked)
+  return(res_df)
 
 }
