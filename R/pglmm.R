@@ -358,9 +358,8 @@ anpan_pglmm = function(meta_file,
     base_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_base_fit.RDS")))
   }
 
-  if (!is.null(pglmm_dir)){
-    unlink(pglmm_dir, recursive = TRUE)
-    unlink(base_dir, recursive = TRUE)
+  if (!is.null(pglmm_dir)) {
+    unlink(file.path(out_dir, bug_name), recursive = TRUE)
   }
 
   list(pglmm_fit = pglmm_fit,
