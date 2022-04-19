@@ -233,6 +233,16 @@ anpan_pglmm = function(meta_file,
                              mustWork = TRUE)
   }
 
+  if (!is.null(out_dir)) {
+    pglmm_dir = file.path(out_dir, bug_name, 'pglmm_fit');
+    base_dir = file.path(out_dir, bug_name, 'base_fit');
+    dir.create(pglmm_dir, recursive = TRUE)
+    dir.create(base_dir, recursive = TRUE)
+  } else {
+    pglmm_dir = NULL
+    base_dir = NULL
+  }
+
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
                                         quiet = TRUE)
 
@@ -269,6 +279,7 @@ anpan_pglmm = function(meta_file,
   pglmm_fit = pglmm_model$sample(data = data_list,
                                  chains = chains,
                                  init = init_list,
+                                 output_dir = pglmm_dir,
                                  ...)
   # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
   # appropriate (and move it to the top...)
@@ -277,6 +288,7 @@ anpan_pglmm = function(meta_file,
     base_fit = base_model$sample(data = data_list,
                                  chains = chains,
                                  init = base_init,
+                                 output_dir = base_dir,
                                  ...)
   }
 
@@ -342,8 +354,13 @@ anpan_pglmm = function(meta_file,
 
   if (save_object) {
     # V This is what to use once the pglmm_fit is done with cmdstanr
-    pglmm_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_pglmm_fit.RDS")))
-    base_fit$save_object(file = file.path(out_dir, paste0(tree_name, "_base_fit.RDS")))
+    pglmm_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_pglmm_fit.RDS")))
+    base_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_base_fit.RDS")))
+  }
+
+  if (!is.null(pglmm_dir)){
+    unlink(pglmm_dir, recursive = TRUE)
+    unlink(base_dir, recursive = TRUE)
   }
 
   list(pglmm_fit = pglmm_fit,
