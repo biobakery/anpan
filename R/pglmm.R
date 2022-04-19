@@ -163,7 +163,7 @@ anpan_pglmm = function(meta_file,
     bug_name = get_bug_name(tree_file,
                             remove_pattern = ".tre$|.tree$")
   } else {
-    bug_name = NULL # no way to get the bug name in this case
+    bug_name = basename(tempfile()) #
   }
 
   if (show_plot_cor_mat) {
@@ -173,8 +173,6 @@ anpan_pglmm = function(meta_file,
 
     if (verbose) print(p)
     if (!is.null(out_dir)) {
-      if (is.null(bug_name)) bug_name = basename(tempfile())
-
       ggsave(p,
              filename = file.path(out_dir, paste0(bug_name, "_cor_mat.", plot_ext)),
              width = 6, height = 5)
@@ -302,9 +300,6 @@ anpan_pglmm = function(meta_file,
     }
 
     if (!is.null(out_dir)) {
-
-      if (is.null(bug_name)) bug_name = basename(tempfile())
-
       ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_tree.", plot_ext)),
              width = 12, height = 8)
     }
