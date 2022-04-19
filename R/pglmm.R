@@ -500,7 +500,8 @@ anpan_pglmm_batch = function(meta_file,
 
   safe_res_df = purrr::transpose(safe_results) %>%
     as_tibble() %>%
-    mutate(input_file = basename(tree_files))
+    mutate(input_file = basename(tree_files)) %>%
+    relocate(input_file)
 
   errors = safe_res_df %>%
     dplyr::filter(purrr::map_lgl(error, ~!is.null(.x)))
@@ -514,6 +515,9 @@ anpan_pglmm_batch = function(meta_file,
 
   worked = safe_res_df %>%
     dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
+
+  res_df = bind_cols(worked["input_file"],
+                     as_tibble(purrr::transpose(worked$result)))
 
   return(worked)
 
