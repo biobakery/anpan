@@ -67,10 +67,16 @@ distribution for each observation if plotting the tree}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
+\value{
+a data frame for each file in input directory that fit successfully.
+  Columns give the PGLMM results, "base" model results, and loo comparisons
+  in list columns.
+}
 \description{
 This function fits phylogenetic generalized linear mixed models
   on a batch of tree files, using the same outcome and covariate arguments.
 }
 \details{
-\code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
+\code{tree_dir} must contain ONLY tree files readable by
+  ape::read.tree()
 }

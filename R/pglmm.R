@@ -376,7 +376,11 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'   on a batch of tree files, using the same outcome and covariate arguments.
 #' @param tree_dir string giving the path to a directory of tree files
 #' @param seed random seed to pass to furrr_options()
-#' @details \code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
+#' @details \code{tree_dir} must contain ONLY tree files readable by
+#'   ape::read.tree()
+#' @returns a data frame for each file in input directory that fit successfully.
+#'   Columns give the PGLMM results, "base" model results, and loo comparisons
+#'   in list columns.
 #' @inheritParams anpan_pglmm
 #' @export
 anpan_pglmm_batch = function(meta_file,
