@@ -24,6 +24,9 @@ model {
   // likelihood including constants
   target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma_resid);
 
+  target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
+    - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
+
 }
 generated quantities {
   // actual population-level intercept
