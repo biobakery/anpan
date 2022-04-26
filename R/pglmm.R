@@ -264,7 +264,6 @@ anpan_pglmm = function(meta_file,
                      K = length(covariates) + 1,
                      X = model.matrix(base_formula, data = model_input),
                      Lcov = Lcov,
-                     int_mean = outcome_mean,
                      resid_scale = outcome_sd)
   } else {
     data_list = list(N = nrow(model_input),

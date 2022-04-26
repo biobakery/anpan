@@ -5,7 +5,6 @@ data {
   matrix[N, K] X;  // population-level design matrix
   // int<lower=1> J_1[N];  // grouping indicator per observation
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
-  real int_mean;
   real<lower=0> resid_scale;
 }
 transformed data {
@@ -36,7 +35,6 @@ model {
   target += gamma_lpdf(sigma_phylo / sigma_resid | 1, 2);
 
   // priors including constants
-  target += normal_lpdf(Intercept | int_mean, resid_scale);
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
   target += student_t_lpdf(sigma_phylo | 3, 0, resid_scale)
