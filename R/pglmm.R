@@ -321,6 +321,9 @@ anpan_pglmm = function(meta_file,
 
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
+
+    warning("The current method used for loo-based model comparison is anti-conservative. Do not trust the results if there are bad Pareto k diagnostic values.")
+
     pglmm_loo = pglmm_fit$loo()
     base_loo = base_fit$loo()
 
