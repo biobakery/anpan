@@ -29,18 +29,23 @@ transformed parameters {
   phylo_effect = (sigma_phylo * (Lcov * z_1));
 }
 model {
-  // likelihood including constants
+  // likelihood
   vector[N] mu = Intercept + phylo_effect;
 
   target += normal_id_glm_lpdf(Y | Xc, mu, b, sigma_resid);
+
+
+  // priors
   target += gamma_lpdf(sigma_phylo / sigma_resid | 1, 2);
 
-  // priors including constants
   target += normal_lpdf(Intercept | int_mean, resid_scale);
+
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
+
   target += student_t_lpdf(sigma_phylo | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
+
   target += std_normal_lpdf(z_1);
 }
 generated quantities {

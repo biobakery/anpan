@@ -29,10 +29,12 @@ model {
   vector[N] mu = Intercept + phylo_effect;
   target += bernoulli_logit_glm_lpmf(Y | Xc, mu, b);
 
-  // priors including constants
+  // priors
   target += student_t_lpdf(Intercept | 3, 0, 2.5);
+
   target += student_t_lpdf(sigma_phylo | 3, 0, 2.5)
     - 1 * student_t_lccdf(0 | 3, 0, 2.5);
+
   target += std_normal_lpdf(std_phylo_effect);
 }
 generated quantities {

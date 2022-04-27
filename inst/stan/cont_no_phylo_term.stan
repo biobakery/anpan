@@ -21,17 +21,14 @@ parameters {
   real<lower=0> sigma_resid;  // dispersion parameter
 }
 model {
-  // likelihood including constants
+  // likelihood
   target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma_resid);
 
-<<<<<<< HEAD
+  // priors
+  target += normal_lpdf(Intercept | int_mean, resid_scale);
+
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
-
-=======
-  // priors including constants
-  target += normal_lpdf(Intercept | int_mean, resid_scale);
->>>>>>> parent of eab2ca6 (remove priors on intercept, not needed)
 }
 generated quantities {
   // actual population-level intercept
