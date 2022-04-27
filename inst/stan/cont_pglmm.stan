@@ -4,6 +4,7 @@ data {
   int<lower=1> K;  // number of covariates
   matrix[N, K] X;  // population-level design matrix (covariates only)
   matrix[N, N] Lcov;  // cholesky factor of known correlation matrix
+  real int_mean;
   real<lower=0> resid_scale;
 }
 transformed data {
@@ -31,6 +32,8 @@ model {
   vector[N] mu = Intercept + phylo_effect;
   target += normal_id_glm_lpdf(Y | Xc, mu, b, sigma_resid);
 
+  // priors including constants
+  target += normal_lpdf(Intercept | int_mean, resid_scale);
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
   target += student_t_lpdf(sigma_phylo | 3, 0, resid_scale)

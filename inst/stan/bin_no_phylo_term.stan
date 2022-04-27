@@ -21,6 +21,9 @@ parameters {
 model {
   // likelihood
   target += bernoulli_logit_glm_lpmf(Y | Xc, Intercept, b);
+
+  // priors including constants
+  target += student_t_lpdf(Intercept | 3, 0, 2.5);
 }
 generated quantities {
   // actual population-level intercept

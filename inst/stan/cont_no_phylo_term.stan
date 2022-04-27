@@ -3,7 +3,7 @@ data {
   vector[N] Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
-
+  real int_mean;
   real<lower=0> resid_scale;
 }
 transformed data {
@@ -24,9 +24,14 @@ model {
   // likelihood including constants
   target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma_resid);
 
+<<<<<<< HEAD
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
 
+=======
+  // priors including constants
+  target += normal_lpdf(Intercept | int_mean, resid_scale);
+>>>>>>> parent of eab2ca6 (remove priors on intercept, not needed)
 }
 generated quantities {
   // actual population-level intercept
