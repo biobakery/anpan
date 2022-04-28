@@ -400,9 +400,13 @@ anpan = function(bug_file,
 #' @param bug_dir a directory of gene family files
 #' @param plot_result logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
-#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
-#' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
+#' @param prefiltered_dir an optional directory to pre-filtered data from an
+#'   earlier run to skip the filtering step
+#' @param discard_absent_samples logical indicating whether to discard samples
+#'   when a bug is labelled as completely absent
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
+#' @details \code{bug_dir} should be a directory of gene (or SNVs or pathways)
+#'   abundance files, one for each bug.
 #' @inheritParams plot_results
 #' @inheritParams anpan
 #' @export

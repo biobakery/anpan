@@ -34,7 +34,8 @@ anpan_batch(
 
 \item{out_dir}{path to the desired output directory}
 
-\item{prefiltered_dir}{an optional directory to pre-filtered data from an earlier run to skip the filtering step}
+\item{prefiltered_dir}{an optional directory to pre-filtered data from an
+earlier run to skip the filtering step}
 
 \item{model_type}{either "horseshoe", "glm", or "fastglm"}
 
@@ -44,7 +45,8 @@ anpan_batch(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
+\item{discard_absent_samples}{logical indicating whether to discard samples
+when a bug is labelled as completely absent}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".}
 
@@ -68,4 +70,8 @@ anpan_batch(
 This function calls anpan() on each gene family file in the
   \code{bug_dir} directory and makes a composite data + results plot for
   each.
+}
+\details{
+\code{bug_dir} should be a directory of gene (or SNVs or pathways)
+  abundance files, one for each bug.
 }
