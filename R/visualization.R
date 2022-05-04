@@ -639,7 +639,7 @@ plot_cor_mat = function(cor_mat,
 #'   Otherwise, just return the plot.
 #' @inheritParams anpan_pglmm
 #' @export
-plot_tree = function(tree_file,
+plot_outcome_tree = function(tree_file,
                      meta_file,
                      covariates = c("age", "gender"),
                      outcome = 'crc',
@@ -714,7 +714,7 @@ plot_tree = function(tree_file,
 #' Plot a tree and the PGLMM posterior predictive
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
-#' @inheritParams plot_tree
+#' @inheritParams plot_outcome_tree
 #' @export
 plot_tree_with_post_pred = function(tree_file,
                                     meta_file,
@@ -729,7 +729,7 @@ plot_tree_with_post_pred = function(tree_file,
     stop("You must provide a pglmm fit to plot the posterior predictive")
   }
 
-  tree_plot = plot_tree(tree_file,
+  tree_plot = plot_outcome_tree(tree_file,
                         meta_file,
                         covariates = covariates,
                         outcome = outcome,

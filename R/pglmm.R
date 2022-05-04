@@ -294,7 +294,7 @@ anpan_pglmm = function(meta_file,
 
   if (show_plot_tree) {
     if (!show_yrep) {
-      p = plot_tree(tree_file,
+      p = plot_outcome_tree(tree_file,
                     meta_file,
                     covariates = covariates,
                     outcome = outcome,
