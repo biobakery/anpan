@@ -12,7 +12,8 @@ plot_tree_with_post_pred(
   omit_na = FALSE,
   verbose = TRUE,
   fit = NULL,
-  labels
+  labels,
+  return_tree_df = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,14 @@ the metadata}
 \item{fit}{a pglmm fit from \code{anpan_pglmm()}}
 
 \item{labels}{the ordered tip labels from the tree}
+
+\item{return_tree_df}{if true, return a list containing 1) the plot, 2) the
+segment data frame, and 3) the labelled terminal segment data frame.
+Otherwise, just return the plot.}
+}
+\value{
+either the plot or (if return_tree_df = TRUE) a list containing the
+  plot, the segment df, the terminal segment df, and the yrep df.
 }
 \description{
 Plot a tree and the PGLMM posterior predictive

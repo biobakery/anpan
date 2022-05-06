@@ -698,7 +698,7 @@ plot_outcome_tree = function(tree_file,
           axis.title.x = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                     size = 3),
+                                     size = 2.33),
           panel.background = element_blank(),
           panel.grid = element_blank())
 
@@ -714,6 +714,8 @@ plot_outcome_tree = function(tree_file,
 #' Plot a tree and the PGLMM posterior predictive
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
+#' @return either the plot or (if return_tree_df = TRUE) a list containing the
+#'   plot, the segment df, the terminal segment df, and the yrep df.
 #' @inheritParams plot_outcome_tree
 #' @export
 plot_tree_with_post_pred = function(tree_file,
@@ -723,19 +725,20 @@ plot_tree_with_post_pred = function(tree_file,
                                     omit_na = FALSE,
                                     verbose = TRUE,
                                     fit = NULL,
-                                    labels) {
+                                    labels,
+                                    return_tree_df = FALSE) {
 
   if (is.null(fit)) {
     stop("You must provide a pglmm fit to plot the posterior predictive")
   }
 
   tree_plot = plot_outcome_tree(tree_file,
-                        meta_file,
-                        covariates = covariates,
-                        outcome = outcome,
-                        omit_na = omit_na,
-                        verbose = verbose,
-                        return_tree_df = TRUE)
+                                meta_file,
+                                covariates = covariates,
+                                outcome = outcome,
+                                omit_na = omit_na,
+                                verbose = verbose,
+                                return_tree_df = TRUE)
 
   if (!all(labels == tree_plot$terminal_seg_df$label)) {
     stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
@@ -767,7 +770,7 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_plot = ggplot(yrep_df,
                        aes(x = param)) +
       geom_point(aes(y = value,
-                     alpha = y_type)) + # might be better to change these to little bars
+                     alpha = y_type)) +
       scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
       scale_alpha_discrete(range = c(.25, 1)) +
       theme(axis.title = element_blank(),
@@ -777,7 +780,6 @@ plot_tree_with_post_pred = function(tree_file,
             panel.background = element_blank())
 
   } else {
-    # TODO handle continuous outcome
     yrep_df = yrep_draws %>%
       posterior::summarise_draws(posterior::default_summary_measures(),
                                  q = ~quantile(.x, probs = c(.25, .75))) %>%
@@ -815,7 +817,13 @@ plot_tree_with_post_pred = function(tree_file,
 
   tree_with_post_pred = tree_no_labels / yrep_plot + plot_layout(heights = c(3,1),
                                                                  guides = "collect")
-  return(tree_with_post_pred)
 
-
+  if (return_tree_df) {
+    return(list(tree_with_post_pred = tree_with_post_pred,
+                seg_df = tree_plot$seg_df,
+                terminal_seg_df = tree_plot$terminal_seg_df,
+                yrep_df = yrep_df))
+  } else {
+    return(tree_with_post_pred)
+  }
 }
