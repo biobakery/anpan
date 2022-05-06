@@ -85,6 +85,9 @@ olap_tree_and_meta = function(tree_file,
 #' @param loo_comparison logical indicating whether to compare the phylogenetic
 #'   model against a base model (without the phylogenetic term) using
 #'   [loo::loo_compare()]
+#' @return A list containing the model input (in the order passed to the model),
+#'   estimated correlation matrix, the pglmm fit object, and (if
+#'   \code{loo_comparison} is on) the base fit object and the loo objects.
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary.
@@ -365,7 +368,9 @@ anpan_pglmm = function(meta_file,
     unlink(file.path(out_dir, bug_name), recursive = TRUE)
   }
 
-  list(pglmm_fit = pglmm_fit,
+  list(model_input = model_input,
+       cor_mat = cor_mat,
+       pglmm_fit = pglmm_fit,
        base_fit = base_fit,
        loo = list(pglmm_loo = pglmm_loo, base_loo = base_loo, comparison = comparison))
 

@@ -66,6 +66,11 @@ distribution for each observation if plotting the tree}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
+\value{
+A list containing the model input (in the order passed to the model),
+estimated correlation matrix, the pglmm fit object, and (if
+\code{loo_comparison} is on) the base fit object and the loo objects.
+}
 \description{
 Run a phylogenetic generalized linear mixed model
 }
