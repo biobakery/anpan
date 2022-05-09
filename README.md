@@ -19,6 +19,7 @@ through CRAN (the exception being cmdstanr):
     install.packages(c("ape", 
                        "broom",
                        "data.table", 
+                       "devtools",
                        "dplyr", 
                        "fastglm",
                        "furrr", 
