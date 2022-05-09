@@ -59,8 +59,8 @@ install_cmdstan(cores = 2)
 
 Once you have the dependencies, you can install anpan from github with:
 
-``` r
-devtools::install("biobakery/anpan")
+```{r, eval = FALSE}
+devtools::install_github("biobakery/anpan")
 ```
 
 ## Example - element testing

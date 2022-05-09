@@ -50,7 +50,7 @@ installed `cmdstanr`, you will need to use it to install CmdStan:
 Once you have the dependencies, you can install anpan from github with:
 
 ``` r
-devtools::install("biobakery/anpan")
+devtools::install_github("biobakery/anpan")
 ```
 
 ## Example - element testing
