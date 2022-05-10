@@ -325,14 +325,55 @@ anpan_pglmm = function(meta_file,
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
 
-    warning("The current method used for loo-based model comparison is anti-conservative. Do not trust the results if there are bad Pareto k diagnostic values.")
+    if (family != "gaussian") {
+      warning("The current method used for loo-based model comparison with non-gaussian outcomes is anti-conservative. Do not trust the results if there are bad Pareto k diagnostic values.")
+      pglmm_loo = pglmm_fit$loo()
+    } else {
 
-    pglmm_loo = pglmm_fit$loo()
+      if (!reg_noise) {
+        warning("loo-based model comparison is unstable and/or anti-conservative without regularized noise. Do not trust the results if there are bad Pareto k diagnostic values.")
+      }
+
+      draw_df = pglmm_fit$draws(format = "data.frame") |>
+        tibble::as_tibble() |>
+        select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
+        tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
+                    beta = tidyselect::matches("^b\\[")) |>
+        mutate(phylo_effects = purrr::map(phylo_effects,
+                                          unlist),
+               beta = purrr::map(beta,
+                                 ~matrix(unlist(.x), ncol = 1)))
+
+      fit_summary = pglmm_fit$summary() |>
+        tibble::as_tibble()
+
+      # These are decent starting places for offset terms
+      effect_means = fit_summary |>
+        filter(grepl("^phylo_effect", variable)) |>
+        pull(mean)
+
+      Xc = matrix(nrow = data_list$N,
+                  ncol = data_list$K - 1)
+
+      mx = colMeans(data_list$X)[-1]
+
+      for (i in 2:data_list$K) {
+        Xc[,i-1] = data_list$X[,i] - mx[i-1]
+      }
+
+      ll_mat = get_ll_mat(draw_df, max_i = nrow(draw_df),
+                          effect_means = effect_means,
+                          cor_mat = cor_mat,
+                          Xc = Xc)
+
+      pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
+    }
+
     base_loo = base_fit$loo()
 
     message("loo comparison: ")
     comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
-                                       base_fit = base_loo))
+                                       base_fit  = base_loo))
     print(comparison)
 
     if (rownames(comparison)[1] == 'pglmm_fit') {
@@ -369,10 +410,12 @@ anpan_pglmm = function(meta_file,
   }
 
   list(model_input = model_input,
-       cor_mat = cor_mat,
-       pglmm_fit = pglmm_fit,
-       base_fit = base_fit,
-       loo = list(pglmm_loo = pglmm_loo, base_loo = base_loo, comparison = comparison))
+       cor_mat     = cor_mat,
+       pglmm_fit   = pglmm_fit,
+       base_fit    = base_fit,
+       loo         = list(pglmm_loo = pglmm_loo,
+                        base_loo    = base_loo,
+                        comparison  = comparison))
 
 }
 
