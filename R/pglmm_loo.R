@@ -1,16 +1,19 @@
 # Standard loo doesn't work with PGLMMs because of the high number of random
-# effects + high number of constraints. You have to use the integrated loo
-# method from section 3.6.1 from here: Vehtari, Aki, Tommi Mononen, Ville
-# Tolvanen, Tuomas Sivula, and Ole Winther. “Bayesian Leave-One-Out
-# Cross-Validation Approximations for Gaussian Latent Variable Models,” n.d.,
-# 38.
+# effects + high number of constraints. You have to integrate the likelihood for
+# each phylogenetic effect to get the "integrated importance weights" from
+# section 3.6.1 from here: Vehtari, Aki, Tommi Mononen, Ville Tolvanen, Tuomas
+# Sivula, and Ole Winther. “Bayesian Leave-One-Out Cross-Validation
+# Approximations for Gaussian Latent Variable Models,” n.d., 38.
+
+# The integral is simple, but you have to figure out the distribution of each
+# phylogenetic effect conditional on the others. This involves a bit of linear
+# algebra that can be mostly pre-computed. See the wikipedia link below.
 
 # See also the thread where I had to ask for help lol:
 # https://discourse.mc-stan.org/t/integrated-loo-with-a-pglmm/27271
 
-
+# run loo on the log-likelihood matrix
 get_pglmm_loo = function(ll_mat, draw_df) {
-  # run loo on the log-likelihood matrix
   loo::loo(x = ll_mat,
            r_eff = loo::relative_eff(exp(ll_mat),
                                      chain_id = draw_df$`.chain`))
@@ -30,9 +33,10 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y) {
 
   cor21_arr = array(dim = c(n_obs - 1, 1, n_obs))
 
+  # Using future_map is safe here because even if anpan_pglmm_batch is run in a
+  # future, nested futures run sequentially.
   arr_list = furrr::future_map(1:n_obs, precompute_arrays,
-                        cor_mat = cor_mat, n_obs = n_obs,
-                        .progress = TRUE)
+                               cor_mat = cor_mat, n_obs = n_obs)
 
   for (j in 1:n_obs) {
     sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
