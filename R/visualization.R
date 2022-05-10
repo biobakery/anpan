@@ -646,12 +646,12 @@ plot_cor_mat = function(cor_mat,
 #' @inheritParams anpan_pglmm
 #' @export
 plot_outcome_tree = function(tree_file,
-                     meta_file,
-                     covariates = c("age", "gender"),
-                     outcome = 'crc',
-                     omit_na = FALSE,
-                     verbose = TRUE,
-                     return_tree_df = FALSE) {
+                             meta_file,
+                             covariates = c("age", "gender"),
+                             outcome = 'crc',
+                             omit_na = FALSE,
+                             verbose = TRUE,
+                             return_tree_df = FALSE) {
 
   if (length(covariates) > 2) {
     stop("more than two covariates is currently not supported")
@@ -666,6 +666,17 @@ plot_outcome_tree = function(tree_file,
 
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
+
+  if (outcome == "y") {
+    outcome = "outcome_y" # the tree df uses y as a variable already
+    model_input = dplyr::rename(model_input, "outcome_y" = "y")
+  }
+
+  if ("x" %in% covariates) {
+    covariates[covariates == "x"] = 'covariate_x'
+    model_input = dplyr::rename(model_input, 'covariate_x' = 'x')
+  }
+
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     outcome_color_values = c('#abd9e9', '#d73027')
