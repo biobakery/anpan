@@ -60,8 +60,7 @@ devtools::install_github("biobakery/anpan")
 ## Example - element testing
 
 You can filter large uniref tables and look for associations with
-outcomes (while controlling for covariates) with `anpan_batch`. Right
-now this only works for glm-based models.
+outcomes (while controlling for covariates) with `anpan_batch`.
 
 ``` r
 library(anpan)
