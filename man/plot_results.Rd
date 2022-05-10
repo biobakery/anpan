@@ -65,4 +65,8 @@ If included, \code{annotation_file} must be a tsv with two columns:
 
   When \code{cluster = "none"}, the samples are ordered by metadata and the
   genes are ordered by statistical significance.
+
+  When signficance stars are shown, they encode the following (fairly
+  standard) signficance thresholds: p.value < .001 ~ ***, p.value < .01  ~
+  **, p.value < .05  ~ *, p.value < .1   ~ ., p.value < 1    ~ " "
 }
