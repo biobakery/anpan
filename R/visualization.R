@@ -240,6 +240,8 @@ plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, 
     show_trees = FALSE
   }
 
+  if (!is.data.table(res)) res = as.data.table(res)
+
   binary_outcome = dplyr::n_distinct(model_input[[outcome]]) == 2
 
   if (!is.null(annotation_file)) {
