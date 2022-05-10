@@ -17,7 +17,7 @@ transformed data {
   }
 }
 parameters {
-  vector[Kc] b;  // covariate effects
+  vector[Kc] beta;  // covariate effects
   real Intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma_resid;  // residual noise
   real<lower=0> sigma_phylo;  // phylogenetic noise
@@ -30,7 +30,7 @@ transformed parameters {
 model {
   // likelihood
   vector[N] mu = Intercept + phylo_effect;
-  target += normal_id_glm_lpdf(Y | Xc, mu, b, sigma_resid);
+  target += normal_id_glm_lpdf(Y | Xc, mu, beta, sigma_resid);
 
   // priors
   target += normal_lpdf(Intercept | int_mean, resid_scale);
@@ -45,11 +45,9 @@ model {
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, b);
+  real b_Intercept = Intercept - dot_product(means_X, beta);
   array[N] real yrep;
-  vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept + phylo_effect[i], b, sigma_resid);
-    yrep[i] = normal_rng(Intercept + phylo_effect[i] + Xc[i]*b, sigma_resid);
+    yrep[i] = normal_rng(Intercept + phylo_effect[i] + Xc[i]*beta, sigma_resid);
   }
 }
