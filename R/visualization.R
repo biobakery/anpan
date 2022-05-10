@@ -202,7 +202,7 @@ plot_color_bars = function(color_bars, model_input,
 #' @description This funciton makes a tile plot of the top results of a fit
 #'   alongside another tile plot showing the covariates included. Optional
 #'   annotations can be included.
-#' @param res a data frame of model results (from \code{anpan})
+#' @param res a data frame of model results (from \code{anpan}) for a single bug
 #' @param covariates character string of the covariates to show
 #' @param outcome character string of the outcome variable
 #' @param model_input data frame of the model input

@@ -23,7 +23,7 @@ plot_results(
 )
 }
 \arguments{
-\item{res}{a data frame of model results (from \code{anpan})}
+\item{res}{a data frame of model results (from \code{anpan}) for a single bug}
 
 \item{covariates}{character string of the covariates to show}
 
