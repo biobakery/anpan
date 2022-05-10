@@ -391,9 +391,9 @@ anpan_pglmm = function(meta_file,
     }
 
     if (abs(comparison[2,1] / comparison[2,2]) > 2) {
-      p2 = "and the difference seems substantial (more than 2 standard errors difference in ELPD)."
+      p2 = "and the difference seems clear (more than 2 standard errors difference in ELPD)."
     } else {
-      p2 = "but the difference doesn't seem substantial (less than 2 standard errors difference in ELPD)."
+      p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
     }
 
     message(paste0(p1, p2))
