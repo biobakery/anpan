@@ -16,13 +16,13 @@ transformed data {
   }
 }
 parameters {
-  vector[Kc] b;  // population-level effects
+  vector[Kc] beta;  // population-level effects
   real Intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma_resid;  // dispersion parameter
 }
 model {
   // likelihood
-  target += normal_id_glm_lpdf(Y | Xc, Intercept, b, sigma_resid);
+  target += normal_id_glm_lpdf(Y | Xc, Intercept, beta, sigma_resid);
 
   // priors
   target += normal_lpdf(Intercept | int_mean, resid_scale);
@@ -32,9 +32,9 @@ model {
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, b);
+  real b_Intercept = Intercept - dot_product(means_X, beta);
   vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept, b, sigma_resid);
+    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept, beta, sigma_resid);
   }
 }
