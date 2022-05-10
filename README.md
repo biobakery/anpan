@@ -27,14 +27,17 @@ through CRAN (the exception being cmdstanr):
                        "ggnewscale",
                        "ggplot2",
                        "loo",
-                       "patchwork", 
+                       "patchwork",
+                       "phylogram",
+                       "posterior",
                        "progressr",
                        "purrr", 
                        "R.utils",
                        "readr",
                        "stringr",
                        "tibble", 
-                       "tidyr")) # add Ncpus = 4 to go faster
+                       "tidyr",
+                       "tidyselect")) # add Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 
