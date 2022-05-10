@@ -338,11 +338,14 @@ anpan_pglmm = function(meta_file,
         tibble::as_tibble() |>
         select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
         tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
-                    beta = tidyselect::matches("^beta")) |> # TODO handle case with no covariates
+                    beta = tidyselect::matches("^beta")) |>
         mutate(phylo_effects = purrr::map(phylo_effects,
-                                          unlist),
-               beta = purrr::map(beta,
-                                 ~matrix(unlist(.x), ncol = 1)))
+                                          unlist))
+
+      if (ncol(draw_df$beta[[1]]) != 0) {
+        draw_df$beta = purrr::map(draw_df$beta,
+                                  ~matrix(unlist(.x), ncol = 1))
+      }
 
       fit_summary = pglmm_fit$summary() |>
         tibble::as_tibble()
@@ -357,8 +360,11 @@ anpan_pglmm = function(meta_file,
 
       mx = colMeans(data_list$X)[-1]
 
-      for (i in 2:data_list$K) {
-        Xc[,i-1] = data_list$X[,i] - mx[i-1]
+      if (ncol(Xc) > 0) {
+        # can't remember how to use seq_along here
+        for (i in 2:data_list$K) {
+          Xc[,i-1] = data_list$X[,i] - mx[i-1]
+        }
       }
 
       ll_mat = get_ll_mat(draw_df,

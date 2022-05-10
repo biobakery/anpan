@@ -97,7 +97,13 @@ log_lik_terms_i = function(i_df,
   p = length(effect_means)
   cov_mat = i_df$sigma_phylo^2 * cor_mat
 
-  lm_means = Xc %*% matrix(i_df$beta[[1]], ncol = 1) + i_df$Intercept
+  if (ncol(Xc) > 0) {
+    covariate_term = Xc %*% matrix(i_df$beta[[1]], ncol = 1)
+  } else {
+    covariate_term = 0
+  }
+
+  lm_means = covariate_term + i_df$Intercept
 
   # j = index over observations
   j_df = tibble(j              = 1:p,
