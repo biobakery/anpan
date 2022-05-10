@@ -338,7 +338,7 @@ anpan_pglmm = function(meta_file,
         tibble::as_tibble() |>
         select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
         tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
-                    beta = tidyselect::matches("^b\\[")) |>
+                    beta = tidyselect::matches("^beta")) |>
         mutate(phylo_effects = purrr::map(phylo_effects,
                                           unlist),
                beta = purrr::map(beta,
