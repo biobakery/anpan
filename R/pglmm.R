@@ -338,7 +338,7 @@ anpan_pglmm = function(meta_file,
         tibble::as_tibble() |>
         select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
         tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
-                    beta = tidyselect::matches("^beta")) |>
+                    beta = tidyselect::matches("^beta")) |> # TODO handle case with no covariates
         mutate(phylo_effects = purrr::map(phylo_effects,
                                           unlist),
                beta = purrr::map(beta,
@@ -361,10 +361,11 @@ anpan_pglmm = function(meta_file,
         Xc[,i-1] = data_list$X[,i] - mx[i-1]
       }
 
-      ll_mat = get_ll_mat(draw_df, max_i = nrow(draw_df),
+      ll_mat = get_ll_mat(draw_df,
+                          max_i = nrow(draw_df),
                           effect_means = effect_means,
                           cor_mat = cor_mat,
-                          Xc = Xc)
+                          Xc = Xc, Y = data_list$Y)
 
       pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
     }
@@ -405,9 +406,9 @@ anpan_pglmm = function(meta_file,
     base_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_base_fit.RDS")))
   }
 
-  if (!is.null(pglmm_dir)) {
-    unlink(file.path(out_dir, bug_name), recursive = TRUE)
-  }
+  # if (!is.null(pglmm_dir)) {
+  #   unlink(file.path(out_dir, bug_name), recursive = TRUE)
+  # }
 
   list(model_input = model_input,
        cor_mat     = cor_mat,

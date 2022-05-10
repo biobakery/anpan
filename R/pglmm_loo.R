@@ -18,7 +18,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
 
 # For each posterior iteration, compute the log-likelihood of the
 # observations.
-get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc) {
+get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y) {
 
   n_obs = length(effect_means)
 
@@ -54,7 +54,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc) {
                          log_lik_terms_i(i_df = .x,
                                          effect_means = effect_means,
                                          cor_mat = cor_mat,
-                                         Xc = Xc,
+                                         Xc = Xc, Y = Y,
                                          sigma12x22_inv_arr = sigma12x22_inv_arr,
                                          cor21_arr = cor21_arr)
                        })
@@ -90,7 +90,7 @@ precompute_arrays = function(j, cor_mat, n_obs) {
 log_lik_terms_i = function(i_df,
                            effect_means,
                            cor_mat,
-                           Xc,
+                           Xc, Y,
                            sigma12x22_inv_arr,
                            cor21_arr) {
 
@@ -106,7 +106,7 @@ log_lik_terms_i = function(i_df,
                 sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
                 effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
                 sigma_resid    = i_df$sigma_resid,
-                yj             = data_list$Y,
+                yj             = Y,
                 effect_mean_j  = effect_means,
                 cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
 
@@ -116,14 +116,14 @@ log_lik_terms_i = function(i_df,
 }
 
 # Compute the log-likelihood of a single observation at a single iteration
+# i = posterior iteration
+# j = index over observations / phylogenetic effects
 log_lik_i_j = function(j, lm_mean, sigma12x22_inv, sigma21,
                        effects_mj, # effects minus j
                        sigma_resid, yj,
                        effect_mean_j, cov_mat_jj) {
-  # i = posterior iteration
-  # j = index over observations
 
-  p = length(effect_means)
+  p = length(effects_mj) + 1
   # ord = c(j, (1:p)[-j])
 
   # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
