@@ -5,10 +5,13 @@ output:
     toc: true
     toc_float: true
     toc_depth: 2
+    code_folding: show
 vignette: >
   %\VignetteIndexEntry{anpan_tutorial}
-  %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r, include = FALSE}
@@ -20,18 +23,93 @@ knitr::opts_chunk$set(
 
 ## Intro
 
+It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, anpan, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
+
+* Adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
+* Modeling the association between outcome variables and microbial gene presence while accounting for covariates
+* Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
+
 ## Load it
 
-```{r setup}
+We'll start by loading the library in this code chunk:
+
+```{r}
 library(anpan)
 ```
 
-## Examine inputs
+This code chunk loads some other packages we'll use.
+```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
+library(tidyverse)
+library(ape)
+library(ggdendro)
+```
 
 ## PGLMMs
-```{r eval = FALSE}
-anpan_pglmm()
+
+To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
+
+This chunk sets a randomization seed, the parameters we'll use, and generates a random tree:
+
+```{r eval = TRUE}
+set.seed(1234)
+n = 100
+sigma_phylo = 1
+sigma_resid = 1
+
+tr = ape::rtree(n)
 ```
+
+You can try `plot(tr)` if you want to see what your tree looks like, but we'll take a more detailed look at it later.
+
+This chunk derives the correlation matrix implied by the tree:
+```{r}
+cov_mat = ape::vcv.phylo(tr)
+s       = sqrt(diag(cov_mat))
+cor_mat = diag(1/s) %*% cov_mat %*% diag(1/s) 
+
+rownames(cor_mat) = rownames(cov_mat)
+
+```
+
+This chunk generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`.
+```{r}
+covariate = rnorm(n)
+
+true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_mat)
+
+metadata = tibble(sample_id = colnames(cov_mat),
+                  covariate = covariate,
+                  outcome   = true_phylo_effects +
+                              rnorm(n, mean = covariate, sd = sigma_resid))
+```
+
+Now we have our tree and the metadata that goes along with it. We can use the function `anpan::plot_outcome_tree()` to show the tree with outcome as a dot on each leaf.
+
+```{r fig.retina=3}
+plot_outcome_tree(tr, metadata, 
+                  covariates = NULL,
+                  outcome = 'outcome')
+```
+
+You can sort of see by eye that the phylogeny impacts the outcome. The left side is a bit brighter, and close neighbors usually have about the same shade of color. We can assess this pattern statistically with a PGLMM.
+
+The code chunk below shows how to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. By default it regularizes the noise ratio `sigma_resid / sigma_phylo` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component.
+
+```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE}
+result = anpan_pglmm(meta_file = metadata,
+                     tree_file = tr,
+                     outcome = 'outcome',
+                     covariates = 'covariate',
+                     family = 'gaussian',
+                     refresh = 500)
+```
+
+By default this command produces two plots (and likely a lot of console output with messages about the progression of the MCMC sampler). 
+
+* The correlation matrix implied by the tree
+* The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf.
+
+//loo interpretation
 
 ## Element testing
 ```{r eval = FALSE}
