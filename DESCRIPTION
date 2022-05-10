@@ -28,7 +28,10 @@ Imports:
     loo,
     fastglm,
     ggdendro,
-    stringr
+    stringr,
+    phylogram,
+    posterior,
+    tidyselect
 RoxygenNote: 7.1.1
 Suggests: 
     rmarkdown,
