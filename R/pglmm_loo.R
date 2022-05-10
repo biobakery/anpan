@@ -21,7 +21,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
 
 # For each posterior iteration, compute the log-likelihood of the
 # observations.
-get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y) {
+get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, verbose = TRUE) {
 
   n_obs = length(effect_means)
 
@@ -33,10 +33,15 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y) {
 
   cor21_arr = array(dim = c(n_obs - 1, 1, n_obs))
 
+  if (verbose) message("- 1/2 precomputing conditional distribution arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
-  arr_list = furrr::future_map(1:n_obs, precompute_arrays,
-                               cor_mat = cor_mat, n_obs = n_obs)
+  p = progressr::progressor(steps = n_obs)
+
+  arr_list = furrr::future_map(1:n_obs,
+                               function(.x) {
+                                 p()
+                                 precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)})
 
   for (j in 1:n_obs) {
     sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
@@ -44,6 +49,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y) {
   }
 
   # set up the progressr and list over posterior iterations
+  if (verbose) message("- 2/2 computing integrated importance weights for loo CV")
 
   p = progressr::progressor(along = 1:max_i)
 

@@ -371,7 +371,8 @@ anpan_pglmm = function(meta_file,
                           max_i = nrow(draw_df),
                           effect_means = effect_means,
                           cor_mat = cor_mat,
-                          Xc = Xc, Y = data_list$Y)
+                          Xc = Xc, Y = data_list$Y,
+                          verbose = verbose)
 
       pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
     }
