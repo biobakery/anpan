@@ -703,6 +703,9 @@ plot_outcome_tree = function(tree_file,
     left_join(tip_df, by = "x") %>% # join on tip labels
     left_join(model_input, by = c("label" = "sample_id")) # join on metadata
 
+  n = nrow(model_input)
+  leaf_label_size = if (n > 100) 2.33 else 4 # TODO make this more thoughtful
+
   p = ggplot(seg_df, aes(x = x, y = yend)) +
     geom_segment(aes(x = x, xend = xend,
                      y = y, yend = yend)) +
@@ -715,7 +718,7 @@ plot_outcome_tree = function(tree_file,
           axis.title.x = element_blank(),
           axis.ticks.x = element_blank(),
           axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
-                                     size = 2.33),
+                                     size = leaf_label_size),
           panel.background = element_blank(),
           panel.grid = element_blank())
 
