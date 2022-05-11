@@ -6,6 +6,7 @@ output:
     toc_float: true
     toc_depth: 2
     code_folding: show
+bibliography: anpan_vignette_refs.bib
 vignette: >
   %\VignetteIndexEntry{anpan_tutorial}
   %\VignetteEncoding{UTF-8}
@@ -21,7 +22,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Introduction.
+## Introduction
 
 It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, anpan, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
 
@@ -29,7 +30,7 @@ It's difficult to find associations between microbial strains and host health ou
 * Modeling the association between outcome variables and microbial gene presence while accounting for covariates
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
 
-We'll cover the last point first in the section on [PGLMMs].
+We'll cover the last point first in the section on phylogenetic generalized linear mixed models [PGLMMs].
 
 ## Libraries
 
@@ -39,10 +40,11 @@ We'll start by loading the library in this code chunk:
 library(anpan)
 ```
 
-The startup message points out that you can easily parallelize most long-running computations in `anpan` by setting `plan()` and `handlers()`. In my
+The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers("progress")` are probably what you want, though both the parallelization strategy and progress reporting are highly customizable.
 
 This code chunk loads some other packages we'll use.
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
+library(ggplot2)
 library(tibble)
 library(dplyr)
 library(ape)
@@ -52,7 +54,7 @@ library(ape)
 
 To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
-This chunk sets a randomization seed, the parameters we'll use, and generates a random tree:
+The code chunk below sets a randomization seed and the parameters we'll use, then generates a random tree:
 
 ```{r eval = TRUE}
 set.seed(1234)
@@ -64,7 +66,7 @@ sigma_resid = 1
 tr = ape::rtree(n)
 ```
 
-You can try `plot(tr)` if you want to take a quick look at your tree, but we'll examine it with some additional detail later later.
+You can try `plot(tr)` if you want to take a quick look at your tree, but we'll examine it with some additional detail later.
 
 This chunk derives the correlation matrix implied by the tree:
 ```{r}
@@ -74,13 +76,14 @@ cor_mat = diag(1/s) %*% cov_mat %*% diag(1/s)
 
 rownames(cor_mat) = rownames(cov_mat)
 colnames(cor_mat) = colnames(cov_mat)
+
 cor_mat[1:5,1:5]
 ```
 
 The "t#" labels are the default sample IDs that `ape::rtree()` puts as tip labels.
 
 
-This chunk generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`.
+This chunk generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`.
 ```{r}
 covariate = rnorm(n)
 
@@ -89,29 +92,30 @@ true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_
 metadata = tibble(sample_id = colnames(cov_mat),
                   covariate = covariate,
                   outcome   = true_phylo_effects +
-                              rnorm(n, mean = covariate, sd = sigma_resid))
+                              rnorm(n, mean = 1 * covariate, sd = sigma_resid))
 
-head(metadata)
+metadata
 ```
 
 Now we have our tree and the metadata that goes along with it. We can use the function `anpan::plot_outcome_tree()` to show the tree with outcome as a dot on each leaf.
 
-```{r fig.retina=3}
+```{r fig.retina=3, out.width="120%"}
 plot_outcome_tree(tr, metadata, 
                   covariates = NULL,
-                  outcome = 'outcome')
+                  outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny impacts the outcome. The left side is a bit brighter, and close neighbors usually have about the same shade of color. We can assess this pattern statistically with a PGLMM.
+You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color. (The randomized title comes from the fact we ) We can assess this pattern statistically with a PGLMM.
 
 The code chunk below shows how to use `anpan` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
 
-```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE}
+```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE, out.width = "120%"}
 result = anpan_pglmm(meta_file      = metadata,
                      tree_file      = tr,
                      outcome        = "outcome",
                      covariates     = "covariate",
                      family         = "gaussian",
+                     bug_name       = "sim_bug",
                      reg_noise      = TRUE,
                      loo_comparison = TRUE,
                      refresh        = 500)
@@ -119,8 +123,8 @@ result = anpan_pglmm(meta_file      = metadata,
 
 By default this command prints two plots (and a lot of console output with messages about the progression of the MCMC sampler). These plots show:
 
-* The correlation matrix implied by the tree 
-* The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf as a boxplot, overlaid with the true value.
+* The correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves.
+* The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf as a boxplot, overlaid with the true value. You can see that even though the phylogenetic predictive distributions are regularized a bit toward 0, they still generally capture the true values and the overall correlation structure.
 
 `result` is a list with five elements:
 
@@ -129,17 +133,35 @@ By default this command prints two plots (and a lot of console output with messa
 * `pglmm_fit` - a [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the PGLMM fit
 * `base_fit` - another [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the "base" GLM fit (without the phylogenetic component)
 * `loo` - a list containing three elements: 
-    * `pglmm_loo` - a [loo](https://mc-stan.org/loo/) result for the PGLMM model using integrated importance weights
-    * `base_loo` - a [loo](https://mc-stan.org/loo/) result for the base model
+    * `pglmm_loo` - a [loo()](https://mc-stan.org/loo/) result for the PGLMM model using integrated importance weights
+    * `base_loo` - a [loo()](https://mc-stan.org/loo/) result for the base model
     * `comparison` - a [loo_compare()](https://mc-stan.org/loo/reference/loo_compare.html) result comparing the two models by leave-one-out predictive performance.
     
-The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the summary method, which we demonstrate here to examine the posterior means for the covariate effects `beta`, the intercept, noise terms `sigma_resid` and `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
+The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method, which we demonstrate here to examine the posterior means for the covariate effects `beta`, the `intercept`, residual noise term `sigma_resid`, the spread of phylogenetic effects `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
 
 ```{r}
-result$pglmm_fit$summary() |> 
-  filter(grepl("beta|Intercept|sigma|phylo_effect", variable))
+post_summary = result$pglmm_fit$summary() |> 
+  filter(grepl("beta|^intercept|sigma|^phylo_effect", variable)) |> 
+  mutate(true_value = c(1,1,1, true_phylo_effects, 0))
+
+post_summary
+
+post_summary[-c(4:93),] |> 
+  ggplot(aes(mean, variable)) + 
+  geom_point() + 
+  geom_segment(aes(x = q5, xend = q95,
+                   y = variable, yend = variable)) + 
+  geom_point(aes(x = true_value), 
+             color = 'firebrick1',
+             size = 3) + 
+  labs(x = 'value',
+       y = 'parameter',
+       title = 'Posterior mean & 90% interval in black, true values in red') + 
+  theme_light()
 ```
-We can see that the posterior mean for beta is fairly close to the true value (1), as is the intercept (0) and noise terms. Importantly, the 90% posterior intervals capture the true values.
+
+Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta is fairly close to the true value (1), as is the intercept (0) and noise terms. Importantly, the 90% posterior intervals capture the true values.
+
 
 Let's look at the `pglmm_loo` result:
 
@@ -147,7 +169,7 @@ Let's look at the `pglmm_loo` result:
 result$loo$pglmm_loo
 ```
 
-PGLMM models are very flexible because they have a parameter for every leaf. The loo result produces some diagnostics that can help confirm that the importance weights `loo()` uses for model comparison are stable/trustworthy. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. We only got 1 non-good result, so in this case the model comparison should be okay.
+PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. We only got 1 non-good result, so in this case the model comparison should be fine.
 
 Let's look at the model comparison:
 
@@ -155,7 +177,7 @@ Let's look at the model comparison:
 result$loo$comparison
 ```
 
-`loo` prints the model with the best fit on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error on the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model.
+`loo` prints the model with the leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model.
 
 ## Element testing
 
@@ -166,6 +188,8 @@ anpan_batch()
 ```
 
 ## References
+
+<div id="refs"></div>
 
 ## Session Info
 
