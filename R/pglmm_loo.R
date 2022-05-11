@@ -113,7 +113,7 @@ log_lik_terms_i = function(i_df,
     covariate_term = 0
   }
 
-  lm_means = covariate_term + i_df$Intercept
+  lm_means = covariate_term + i_df$centered_cov_intercept
 
   # j = index over observations
   j_df = tibble(j              = 1:p,

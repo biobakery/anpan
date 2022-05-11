@@ -284,8 +284,6 @@ anpan_pglmm = function(meta_file,
                                  init = init_list,
                                  output_dir = pglmm_dir,
                                  ...)
-  # TODO throw out the "Intercept" parameter and rename "b_Intercept" as
-  # appropriate (and move it to the top...)
 
   if (loo_comparison) {
     base_fit = base_model$sample(data = data_list,
