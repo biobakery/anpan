@@ -15,21 +15,21 @@ transformed data {
   }
 }
 parameters {
-  vector[Kc] b;  // population-level effects
-  real Intercept;
+  vector[Kc] beta;  // population-level effects
+  real centered_cov_intercept;
 }
 model {
   // likelihood
-  target += bernoulli_logit_glm_lpmf(Y | Xc, Intercept, b);
+  target += bernoulli_logit_glm_lpmf(Y | Xc, centered_cov_intercept, beta);
 
   // priors
-  target += student_t_lpdf(Intercept | 3, 0, 2.5);
+  target += student_t_lpdf(centered_cov_intercept | 3, 0, 2.5);
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, b);
+  real intercept = centered_cov_intercept - dot_product(means_X, beta);
   vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), Intercept, b);
+    log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept, beta);
   }
 }

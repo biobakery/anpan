@@ -17,24 +17,24 @@ transformed data {
 }
 parameters {
   vector[Kc] beta;  // population-level effects
-  real Intercept;  // temporary intercept for centered predictors
+  real centered_cov_intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma_resid;  // dispersion parameter
 }
 model {
   // likelihood
-  target += normal_id_glm_lpdf(Y | Xc, Intercept, beta, sigma_resid);
+  target += normal_id_glm_lpdf(Y | Xc, centered_cov_intercept, beta, sigma_resid);
 
   // priors
-  target += normal_lpdf(Intercept | int_mean, resid_scale);
+  target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
 
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, beta);
+  real intercept = centered_cov_intercept - dot_product(means_X, beta);
   vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), Intercept, beta, sigma_resid);
+    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept, beta, sigma_resid);
   }
 }

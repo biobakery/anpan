@@ -15,8 +15,8 @@ transformed data {
   }
 }
 parameters {
-  vector[Kc] b;  // population-level effects
-  real Intercept;  // temporary intercept for centered predictors
+  vector[Kc] beta;  // population-level effects
+  real centered_cov_intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma_phylo;
   vector[N] std_phylo_effect;  // standardized group-level effects
 }
@@ -26,11 +26,11 @@ transformed parameters {
 }
 model {
   // likelihood
-  vector[N] mu = Intercept + phylo_effect;
-  target += bernoulli_logit_glm_lpmf(Y | Xc, mu, b);
+  vector[N] mu = centered_cov_intercept + phylo_effect;
+  target += bernoulli_logit_glm_lpmf(Y | Xc, mu, beta);
 
   // priors
-  target += student_t_lpdf(Intercept | 3, 0, 2.5);
+  target += student_t_lpdf(centered_cov_intercept | 3, 0, 2.5);
 
   target += student_t_lpdf(sigma_phylo | 3, 0, 2.5)
     - 1 * student_t_lccdf(0 | 3, 0, 2.5);
@@ -39,11 +39,11 @@ model {
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, b);
+  real intercept = centered_cov_intercept - dot_product(means_X, beta);
   array[N] int yrep;
   vector[N] log_lik;
   for (i in 1:N){
-    log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), Intercept + phylo_effect[i], b);
-    yrep[i] = bernoulli_logit_rng(Intercept + phylo_effect[i] + Xc[i]*b);
+    log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept + phylo_effect[i], beta);
+    yrep[i] = bernoulli_logit_rng(centered_cov_intercept + phylo_effect[i] + Xc[i]*beta);
   }
 }

@@ -19,18 +19,18 @@ transformed data {
 }
 parameters {
   vector[Kc] beta;  // population-level effects
-  real Intercept;  // temporary intercept for centered predictors
+  real centered_cov_intercept;  // temporary intercept for centered predictors
   real<lower=0> sigma_resid;  // dispersion parameter
   real<lower=0> sigma_phylo;  // group-level standard deviations
-  vector[N] z_1;
+  vector[N] std_phylo_effects;
 }
 transformed parameters {
   vector[N] phylo_effect;  // actual group-level effects
-  phylo_effect = (sigma_phylo * (Lcov * z_1));
+  phylo_effect = (sigma_phylo * (Lcov * std_phylo_effects));
 }
 model {
   // likelihood
-  vector[N] mu = Intercept + phylo_effect;
+  vector[N] mu = centered_cov_intercept + phylo_effect;
 
   target += normal_id_glm_lpdf(Y | Xc, mu, beta, sigma_resid);
 
@@ -38,7 +38,7 @@ model {
   // priors
   target += gamma_lpdf(sigma_phylo / sigma_resid | 1, 2);
 
-  target += normal_lpdf(Intercept | int_mean, resid_scale);
+  target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
 
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
@@ -46,13 +46,13 @@ model {
   target += student_t_lpdf(sigma_phylo | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
 
-  target += std_normal_lpdf(z_1);
+  target += std_normal_lpdf(std_phylo_effects);
 }
 generated quantities {
   // actual population-level intercept
-  real b_Intercept = Intercept - dot_product(means_X, beta);
+  real intercept = centered_cov_intercept - dot_product(means_X, beta);
   array[N] real yrep;
   for (i in 1:N){
-    yrep[i] = normal_rng(Intercept + phylo_effect[i] + Xc[i]*beta, sigma_resid);
+    yrep[i] = normal_rng(centered_cov_intercept + phylo_effect[i] + Xc[i]*beta, sigma_resid);
   }
 }
