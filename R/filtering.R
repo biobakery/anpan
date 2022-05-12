@@ -251,6 +251,14 @@ final_prevalence_filter = function(filtered_gf,
   return(res)
 }
 
+#' Read and filter a gene family file
+#'
+#' @inheritParams anpan
+#' @param minmax_thresh genes must have at least this many (or N - this many)
+#'   non-zero observations or else be discarded
+#' @param discard_absent_samples Discard samples that are labelled as missing
+#'   the bug according to the filtering strategy (otherwise keep them as
+#'   observations of absence)
 #' @export
 read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
