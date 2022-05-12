@@ -60,9 +60,14 @@ $$(1|\textbf{phylogeny}) \sim \text{MVNormal}(0, σ_p^2\Omega)$$
 
 $$\epsilon \sim \text{Normal}(0, σ_R^2)$$
 
-The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\textbf{phylogeny})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_P$.
+The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\textbf{phylogeny})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_p$.
 
-To understand how a tree implies a correlation structure, first imagine a tree featuring a branch with two leaves that are deeply branched from the root node and very close together. This pair of leaves would would show high correlation with each other. Now imagine a pair of leaves that are on opposite ends of the tree, only very distantly connected to one another through the root node. This pair would show low correlation. By numerically quantifying the "higher inter-leaf distance --> lower correlation" principle, we can repeat this process for every possible pair of leaves to fill out $\Omega$.
+To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the correlation matrix it implies. First consider a pair of two leaves that are deeply branched from the root node and very close together (red highlight). If the phylogeny is truly impacting the outcome, this pair of leaves would would show high correlation with each other. Now imagine a pair of leaves that are on opposite ends of the tree, only very distantly connected to one another through the root node (green highlight). This pair would show low correlation. By numerically quantifying the "higher inter-leaf distance → lower correlation" principle, we can repeat this process for every possible pair of leaves to fill out $\Omega$.
+
+```{r echo=FALSE}
+knitr::include_graphics("leaf_pairs.PNG")
+```
+
 
 To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
@@ -189,7 +194,7 @@ Let's look at the model comparison:
 result$loo$comparison
 ```
 
-`loo` prints the model with the leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model.
+`loo` prints the model with the leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the tree with $\sigma_p \neq 0$, that is the correct conclusion.
 
 ## Element testing
 
