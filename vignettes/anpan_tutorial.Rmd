@@ -40,7 +40,7 @@ We'll start by loading the library in this code chunk:
 library(anpan)
 ```
 
-The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers(global = TRUE)` are probably what you want, though both the parallelization strategy and progress reporting are highly customizable.
+The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers(global = TRUE)` are probably close to what you want, though both the parallelization strategy and progress reporting are highly customizable.
 
 This code chunk loads some other packages we'll use.
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
@@ -51,6 +51,18 @@ library(ape)
 ```
 
 ## PGLMMs
+
+Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a simple linear regression as the base model, the model structure is as follows:
+
+$$ y = X \beta + (1|\textbf{phylogeny}) + \epsilon $$
+            
+$$(1|\textbf{phylogeny}) \sim \text{MVNormal}(0, σ_p^2\Omega)$$
+
+$$\epsilon \sim \text{Normal}(0, σ_R^2)$$
+
+The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\textbf{phylogeny})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_P$.
+
+To understand how a tree implies a correlation structure, first imagine a tree featuring a branch with two leaves that are deeply branched from the root node and very close together. This pair of leaves would would show high correlation with each other. Now imagine a pair of leaves that are on opposite ends of the tree, only very distantly connected to one another through the root node. This pair would show low correlation. By numerically quantifying the "higher inter-leaf distance --> lower correlation" principle, we can repeat this process for every possible pair of leaves to fill out $\Omega$.
 
 To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
