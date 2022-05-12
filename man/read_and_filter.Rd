@@ -22,6 +22,8 @@ read_and_filter(
 \arguments{
 \item{bug_file}{path to a gene family file (usually probably from HUMAnN)}
 
+\item{pivot_wide}{logical indicating whether to return data in wide format}
+
 \item{minmax_thresh}{genes must have at least this many (or N - this many)
 non-zero observations or else be discarded}
 
@@ -29,11 +31,17 @@ non-zero observations or else be discarded}
 
 \item{outcome}{the name of the outcome variable}
 
+\item{filtering_method}{either "kmeans" or "none"}
+
 \item{discard_absent_samples}{Discard samples that are labelled as missing
 the bug according to the filtering strategy (otherwise keep them as
 observations of absence)}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
+
+\item{filter_stats_dir}{directory to save filtering statistics to}
+
+\item{plot_ext}{extension to use for plots}
 }
 \description{
 Read and filter a gene family file

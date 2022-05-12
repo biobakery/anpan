@@ -259,6 +259,10 @@ final_prevalence_filter = function(filtered_gf,
 #' @param discard_absent_samples Discard samples that are labelled as missing
 #'   the bug according to the filtering strategy (otherwise keep them as
 #'   observations of absence)
+#' @param pivot_wide logical indicating whether to return data in wide format
+#' @param filtering_method either "kmeans" or "none"
+#' @param filter_stats_dir directory to save filtering statistics to
+#' @param plot_ext extension to use for plots
 #' @export
 read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
