@@ -19,9 +19,10 @@ get_pglmm_loo = function(ll_mat, draw_df) {
                                      chain_id = draw_df$`.chain`))
 }
 
+
 # For each posterior iteration, compute the log-likelihood of the
 # observations.
-get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, verbose = TRUE) {
+get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verbose = TRUE) {
 
   n_obs = length(effect_means)
 
@@ -66,7 +67,8 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, verbose = TR
                                          cor_mat = cor_mat,
                                          Xc = Xc, Y = Y,
                                          sigma12x22_inv_arr = sigma12x22_inv_arr,
-                                         cor21_arr = cor21_arr)
+                                         cor21_arr = cor21_arr,
+                                         family = family)
                        })
 
   # put the result into a matrix
@@ -102,7 +104,8 @@ log_lik_terms_i = function(i_df,
                            cor_mat,
                            Xc, Y,
                            sigma12x22_inv_arr,
-                           cor21_arr) {
+                           cor21_arr,
+                           family = 'gaussian') {
 
   p = length(effect_means)
   cov_mat = i_df$sigma_phylo^2 * cor_mat
@@ -116,19 +119,33 @@ log_lik_terms_i = function(i_df,
   lm_means = covariate_term + i_df$centered_cov_intercept
 
   # j = index over observations
-  j_df = tibble(j              = 1:p,
-                lm_mean        = c(lm_means),
-                sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
-                sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
-                effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-                sigma_resid    = i_df$sigma_resid,
-                yj             = Y,
-                effect_mean_j  = effect_means,
-                cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
+  if (family == 'gaussian') {
+    j_df = tibble(j              = 1:p,
+                  lm_mean        = c(lm_means),
+                  sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
+                  sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
+                  effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+                  sigma_resid    = i_df$sigma_resid,
+                  yj             = Y,
+                  effect_mean_j  = effect_means,
+                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
+
+    ll_ij_fun = log_lik_i_j
+  } else {
+    j_df = tibble(j              = 1:p,
+                  lm_mean        = c(lm_means),
+                  sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
+                  sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
+                  effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+                  yj             = Y,
+                  effect_mean_j  = effect_means,
+                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
+    ll_ij_fun = log_lik_i_j_logistic
+  }
 
   # Map over all p leaves
   purrr::pmap_dbl(j_df,
-                  log_lik_i_j)
+                  ll_ij_fun)
 }
 
 # Compute the log-likelihood of a single observation at a single iteration
@@ -180,12 +197,8 @@ vec_integrand = function(phylo_effect_vec,
                          sigma_resid, yj, lm_term,   # LM term components
                          offset_term,
                          log = FALSE) {
-  # This function for the integrand is vectorized because that's what
-  # integrate() needs. The log argument keeps the result on the log scale, which
-  # can be helpful for finding an offset for numerical precision.
 
-  # This is for a gaussian outcome variable. It will likely need to be changed
-  # for non-gaussian outcomes.
+  # This is for a gaussian outcome variable.
 
   phylo_term = dnorm(phylo_effect_vec,
                      mean = mu_bar_j,
@@ -198,6 +211,74 @@ vec_integrand = function(phylo_effect_vec,
                    mean = model_mean,
                    sd = sigma_resid,
                    log = TRUE)
+
+  res = phylo_term + fit_term - offset_term
+
+  if (!log) res = exp(res)
+
+  return(res)
+}
+
+log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
+                                effects_mj, # effects minus j
+                                yj,
+                                effect_mean_j, cov_mat_jj) {
+
+  p = length(effects_mj) + 1
+
+  # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+  sigma_bar_j = cov_mat_jj - c(sigma12x22_inv %*% sigma21)
+
+  mu_bar_j = c(sigma12x22_inv %*% (effects_mj))
+  #^ a = the other phylo effects from iteration i, mu2 = 0
+
+  offset_j = vec_integrand_logistic(phylo_effect_vec = effect_mean_j,
+                                    mu_bar_j         = mu_bar_j,
+                                    sigma_bar_j      = sigma_bar_j,
+                                    yj               = yj,
+                                    lm_term          = lm_mean,
+                                    offset_term      = 0,
+                                    log              = TRUE)
+
+  int_res = integrate(vec_integrand_logistic,
+                      lower = -Inf, upper = Inf,
+                      mu_bar_j         = mu_bar_j,
+                      sigma_bar_j      = sigma_bar_j,
+                      yj               = yj,
+                      lm_term          = lm_mean,
+                      offset_term      = offset_j,
+                      log              = FALSE)
+
+  ll_ij = log(int_res$value) + offset_j
+
+  ll_ij
+
+}
+
+inv_logit = function(x) 1 / (1 + exp(-x))
+
+vec_integrand_logistic = function(phylo_effect_vec,
+                                  mu_bar_j, sigma_bar_j,      # phylo term components
+                                  yj, lm_term,   # LM term components, NO SIGMA_RESID NOW!
+                                  offset_term,
+                                  log = FALSE) {
+  # This function for the integrand is vectorized because that's what
+  # integrate() needs. The log argument keeps the result on the log scale, which
+  # can be helpful for finding an offset for numerical precision.
+
+  # This is for a binomial outcome variable.
+
+  phylo_term = dnorm(phylo_effect_vec,
+                     mean = mu_bar_j,
+                     sd = sqrt(sigma_bar_j),
+                     log = TRUE)
+
+  model_mean = c(lm_term) + phylo_effect_vec
+
+  fit_term = dbinom(x = yj,
+                    size = 1,
+                    prob = inv_logit(model_mean),
+                    log = TRUE)
 
   res = phylo_term + fit_term - offset_term
 

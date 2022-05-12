@@ -142,7 +142,8 @@ anpan_pglmm = function(meta_file,
   }
 
   if (reg_noise && family != "gaussian") {
-    stop("You can't regularize the noise ratio with non-gaussian outcomes. Set reg_noise = FALSE to use a model without regularized noise.")
+    warning("You can't regularize the noise ratio with non-gaussian outcomes. Setting reg_noise = FALSE.")
+    reg_noise = FALSE
   }
 
   olap_list = olap_tree_and_meta(tree_file,
@@ -323,57 +324,52 @@ anpan_pglmm = function(meta_file,
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
 
-    if (family != "gaussian") {
-      warning("The current method used for loo-based model comparison with non-gaussian outcomes is anti-conservative. Do not trust the results if there are bad Pareto k diagnostic values.")
-      pglmm_loo = pglmm_fit$loo()
-    } else {
-
-      if (!reg_noise) {
-        warning("loo-based model comparison is unstable and/or anti-conservative without regularized noise. Do not trust the results if there are bad Pareto k diagnostic values.")
-      }
-
-      draw_df = pglmm_fit$draws(format = "data.frame") |>
-        tibble::as_tibble() |>
-        select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
-        tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
-                    beta = tidyselect::matches("^beta")) |>
-        mutate(phylo_effects = purrr::map(phylo_effects,
-                                          unlist))
-
-      if (ncol(draw_df$beta[[1]]) != 0) {
-        draw_df$beta = purrr::map(draw_df$beta,
-                                  ~matrix(unlist(.x), ncol = 1))
-      }
-
-      fit_summary = pglmm_fit$summary() |>
-        tibble::as_tibble()
-
-      # These are decent starting places for offset terms
-      effect_means = fit_summary |>
-        filter(grepl("^phylo_effect", variable)) |>
-        pull(mean)
-
-      Xc = matrix(nrow = data_list$N,
-                  ncol = data_list$K - 1)
-
-      mx = colMeans(data_list$X)[-1]
-
-      if (ncol(Xc) > 0) {
-        # can't remember how to use seq_along here
-        for (i in 2:data_list$K) {
-          Xc[,i-1] = data_list$X[,i] - mx[i-1]
-        }
-      }
-
-      ll_mat = get_ll_mat(draw_df,
-                          max_i = nrow(draw_df),
-                          effect_means = effect_means,
-                          cor_mat = cor_mat,
-                          Xc = Xc, Y = data_list$Y,
-                          verbose = verbose)
-
-      pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
+    if (!reg_noise && family == "gaussian") {
+      warning("loo-based model comparison is unstable and/or anti-conservative without regularized noise. Do not trust the results if there are bad Pareto k diagnostic values.")
     }
+
+    draw_df = pglmm_fit$draws(format = "data.frame") |>
+      tibble::as_tibble() |>
+      select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
+      tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
+                  beta = tidyselect::matches("^beta")) |>
+      mutate(phylo_effects = purrr::map(phylo_effects,
+                                        unlist))
+
+    if (ncol(draw_df$beta[[1]]) != 0) {
+      draw_df$beta = purrr::map(draw_df$beta,
+                                ~matrix(unlist(.x), ncol = 1))
+    }
+
+    fit_summary = pglmm_fit$summary() |>
+      tibble::as_tibble()
+
+    # These are decent starting places for offset terms
+    effect_means = fit_summary |>
+      filter(grepl("^phylo_effect", variable)) |>
+      pull(mean)
+
+    Xc = matrix(nrow = data_list$N,
+                ncol = data_list$K - 1)
+
+    mx = colMeans(data_list$X)[-1]
+
+    if (ncol(Xc) > 0) {
+      # can't remember how to use seq_along here
+      for (i in 2:data_list$K) {
+        Xc[,i-1] = data_list$X[,i] - mx[i-1]
+      }
+    }
+
+    ll_mat = get_ll_mat(draw_df,
+                        max_i = nrow(draw_df),
+                        effect_means = effect_means,
+                        cor_mat = cor_mat,
+                        Xc = Xc, Y = data_list$Y,
+                        family = family,
+                        verbose = verbose)
+
+    pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
 
     base_loo = base_fit$loo()
 
