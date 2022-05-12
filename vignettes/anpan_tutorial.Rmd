@@ -40,7 +40,7 @@ We'll start by loading the library in this code chunk:
 library(anpan)
 ```
 
-The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers("progress")` are probably what you want, though both the parallelization strategy and progress reporting are highly customizable.
+The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers(global = TRUE)` are probably what you want, though both the parallelization strategy and progress reporting are highly customizable.
 
 This code chunk loads some other packages we'll use.
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
