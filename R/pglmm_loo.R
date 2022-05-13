@@ -120,17 +120,23 @@ log_lik_terms_i = function(i_df,
 
   # j = index over observations
   if (family == 'gaussian') {
-    j_df = tibble(j              = 1:p,
-                  lm_mean        = c(lm_means),
+    # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+    j_df = tibble(j = 1:p,
+                  l = c(lm_means),
                   sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
                   sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
                   effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
                   sigma_resid    = i_df$sigma_resid,
                   yj             = Y,
                   effect_mean_j  = effect_means,
-                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
+                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x])) |>
+      transmute(m1 = map2_dbl(sigma12x22_inv, effects_mj, ~c(.x %*% .y)),
+                s1 = pmap_dbl(list(cov_mat_jj, sigma12x22_inv, sigma21), function(.x, .y, .z) sqrt(.x - c(.y %*% .z))),
+                l  = l,
+                yj = yj,
+                s2 = sigma_resid)
 
-    ll_ij_fun = log_lik_i_j
+    ll_ij_fun = log_lik_i_j_gaussian
   } else {
     j_df = tibble(j              = 1:p,
                   lm_mean        = c(lm_means),
@@ -184,6 +190,28 @@ log_lik_i_j = function(j, lm_mean, sigma12x22_inv, sigma21,
   abc = solve(A, offset_j_terms) # max at -b/2a
 
   ll_max = -abc[2] / (2*abc[1])
+
+  # Compute the integrated log-likelihood value directly from the parabola.
+  # https://www.wolframalpha.com/input?i=integrate+exp%28a*x%5E2+%2B+b*x+%2B+c%29+from+-inf+to+inf
+  lik = sqrt(pi) * exp(abc[3] - (abc[2]^2)/(4*abc[1])) / sqrt(-abc[1])
+
+  return(log(lik))
+}
+
+log_lik_i_j_gaussian = function(m1, s1, l, yj, s2) {
+
+  # Get the coefficients of the quadratic log-likelihood of the two components of a gaussian PGLMM
+  # m1, s1 = mean, sd of the PGLMM correlation term
+  # yj, l, s2 = outcome, linear fit term, sigma_resid for the normally distributed outcome
+  # Sum of two parabolas = a new parabola. Get the coefficients of that.
+
+  abc = c(-1/2 * (1/s1^2 + 1/s2^2),
+          m1 / s1^2 + (yj - l) / s2^2,
+          -1/2*(m1^2/s1^2)
+            - 1/2 * (l^2 - 2*l*yj + yj^2)/s2^2
+            - log(2*pi*s1^2)/2
+            - log(2*pi*s2^2)/2)
+
 
   # Compute the integrated log-likelihood value directly from the parabola.
   # https://www.wolframalpha.com/input?i=integrate+exp%28a*x%5E2+%2B+b*x+%2B+c%29+from+-inf+to+inf
