@@ -231,7 +231,7 @@ Let's look at the model comparison:
 result$loo$comparison
 ```
 
-`loo` prints the model with the leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the tree with $\sigma_p \neq 0$, that is the correct conclusion.
+`loo` prints the model with the best leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the tree with $\sigma_p \neq 0$, that is the correct conclusion.
 
 There's a lot more to be said about loo model comparison that is beyond the scope of this vignette. You can read more interpretation of loo results on the [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#11_What_is_the_interpretation_of_ELPD__elpd_loo__elpd_diff) written by the loo authors. 
 
