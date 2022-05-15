@@ -309,7 +309,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
   if (!is.null(int_res$error) || !is.finite(int_res$result$value)) {
     opt_res = optim(par = mu_bar_j,
                     fn = vec_integrand_logistic,
-                    method = "L-BFGS-B",
+                    method = "Nelder-Mead",
                     control = list(fnscale = -1),
                     mu_bar_j         = mu_bar_j,
                     sigma_bar_j      = sigma_bar_j,
