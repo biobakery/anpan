@@ -42,7 +42,8 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
                                  p()
-                                 precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)})
+                                 precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)},
+                               .options = furrr_options(globals = c("cor_mat", "n_obs")))
 
   for (j in 1:n_obs) {
     sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
@@ -59,6 +60,27 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
 
   # future map over posterior iterations
 
+  if (family == "gaussian") {
+    global_list = c("effect_means",
+                    "cor_mat",
+                    "Xc", "Y",
+                    "sigma12x22_inv_arr",
+                    "cor21_arr",
+                    "family",
+                    "log_lik_terms_i",
+                    "log_lik_i_j_gaussian")
+  } else {
+    global_list = c("effect_means",
+                    "cor_mat",
+                    "Xc", "Y",
+                    "sigma12x22_inv_arr",
+                    "cor21_arr",
+                    "family",
+                    "log_lik_terms_i",
+                    "log_lik_i_j_logistic", "vec_integrand_logistic")
+
+  }
+
   ll_list = furrr::future_map(draw_split,
                        function(.x) {
                          p()
@@ -69,7 +91,8 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
                                          sigma12x22_inv_arr = sigma12x22_inv_arr,
                                          cor21_arr = cor21_arr,
                                          family = family)
-                       })
+                       },
+                       .options = furrr_options(globals = global_list))
 
   # put the result into a matrix
   res = ll_list |>
