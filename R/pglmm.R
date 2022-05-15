@@ -530,6 +530,21 @@ anpan_pglmm_batch = function(meta_file,
 
   p = progressr::progressor(along = tree_files)
 
+  global_list = c('meta_file', # TODO figure out if passing this is necessary. If so, find out what else needs to be added...
+                  'outcome'  ,
+                  'out_dir' ,
+                  'trim_pattern' ,
+                  'covariates' ,
+                  'omit_na' ,
+                  'family' ,
+                  'show_plot_cor_mat' ,
+                  'show_plot_tree' ,
+                  'save_object' ,
+                  'loo_comparison',
+                  'reg_noise',
+                  'plot_ext' ,
+                  'show_yrep')
+
   safe_results = furrr::future_map(tree_files,
                                    function(.x) {
                                      p()
