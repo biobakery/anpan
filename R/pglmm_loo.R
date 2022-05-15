@@ -315,17 +315,17 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                        offset_term      = 0,
                        log              = TRUE)$value
 
-    int_res = integrate(vec_integrand_logistic,
-                        lower = -Inf, upper = Inf,
-                        mu_bar_j         = mu_bar_j,
-                        sigma_bar_j      = sigma_bar_j,
-                        yj               = yj,
-                        lm_term          = lm_mean,
-                        offset_term      = offset_j,
-                        log              = FALSE)
+    int_res = safely_integrate(vec_integrand_logistic,
+                               lower = -Inf, upper = Inf,
+                               mu_bar_j         = mu_bar_j,
+                               sigma_bar_j      = sigma_bar_j,
+                               yj               = yj,
+                               lm_term          = lm_mean,
+                               offset_term      = offset_j,
+                               log              = FALSE)
   }
 
-  ll_ij = log(int_res$value) + offset_j
+  ll_ij = log(int_res$result$value) + offset_j
 
   ll_ij
 
