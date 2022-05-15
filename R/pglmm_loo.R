@@ -34,7 +34,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
 
   cor21_arr = array(dim = c(n_obs - 1, 1, n_obs))
 
-  if (verbose) message("- 1/2 precomputing conditional distribution arrays")
+  if (verbose) message("- 1/2 precomputing conditional covariance arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
   p = progressr::progressor(steps = n_obs)
