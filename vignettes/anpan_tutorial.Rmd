@@ -42,7 +42,7 @@ library(anpan)
 
 The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers(global = TRUE)` are probably close to what you want, though both the parallelization strategy and progress reporting are highly customizable.
 
-This code chunk loads some other packages we'll use.
+This code chunk loads some other packages we'll use:
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
 library(ggplot2)
 library(tibble)
@@ -54,13 +54,13 @@ library(ape)
 
 Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a simple linear regression as the base model, the model structure is as follows:
 
-$$ y = X \beta + (1|\textbf{phylogeny}) + \epsilon $$
+$$ y = X \beta + (1|\text{phylogeny}) + \epsilon $$
             
-$$(1|\textbf{phylogeny}) \sim \text{MVNormal}(0, σ_p^2\Omega)$$
+$$(1|\text{phylogeny}) \sim \text{MVNormal}(0, σ_p^2\Omega)$$
 
 $$\epsilon \sim \text{Normal}(0, σ_R^2)$$
 
-The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\textbf{phylogeny})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_p$.
+The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\text{phylogeny})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_p$.
 
 To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the correlation matrix it implies. First consider a pair of two leaves that are deeply branched from the root node and very close together (red highlight). If the phylogeny is truly impacting the outcome, this pair of leaves would would show high correlation with each other. Now imagine a pair of leaves that are on opposite ends of the tree, only very distantly connected to one another through the root node (green highlight). This pair would show low correlation. By numerically quantifying the "higher inter-leaf distance → lower correlation" principle, we can repeat this process for every possible pair of leaves to fill out $\Omega$.
 
@@ -85,7 +85,7 @@ tr = ape::rtree(n)
 
 You can try `plot(tr)` if you want to take a quick look at your tree, but we'll examine it with some additional detail later.
 
-This chunk derives the correlation matrix implied by the tree:
+The chunk below derives the correlation matrix implied by the tree:
 ```{r}
 cov_mat = ape::vcv.phylo(tr)
 s       = sqrt(diag(cov_mat))
@@ -100,7 +100,7 @@ cor_mat[1:5,1:5]
 The "t#" labels are the default sample IDs that `ape::rtree()` puts as tip labels.
 
 
-This chunk generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`.
+The chunk below generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`.
 ```{r}
 covariate = rnorm(n)
 
@@ -122,7 +122,7 @@ plot_outcome_tree(tr, metadata,
                   outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color. (The randomized title comes from the fact we ) We can assess this pattern statistically with a PGLMM.
+You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color. (As a side note, the randomized tree name shows up because we didn't provide one and the function wasn't able to pull one from the tree input either). We can assess this pattern statistically with a PGLMM.
 
 The code chunk below shows how to use `anpan` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
 
