@@ -307,16 +307,18 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                              log              = FALSE)
 
   if (!is.null(int_res$error) || !is.finite(int_res$result$value)) {
-    offset_j = optim(par = effect_mean_j,
-                       fn = vec_integrand_logistic,
-                       method = "L-BFGS-B",
-                       control = list(fnscale = -1),
-                       mu_bar_j         = mu_bar_j,
-                       sigma_bar_j      = sigma_bar_j,
-                       yj               = yj,
-                       lm_term          = lm_mean,
-                       offset_term      = 0,
-                       log              = TRUE)$value
+    opt_res = optim(par = effect_mean_j,
+                    fn = vec_integrand_logistic,
+                    method = "L-BFGS-B",
+                    control = list(fnscale = -1),
+                    mu_bar_j         = mu_bar_j,
+                    sigma_bar_j      = sigma_bar_j,
+                    yj               = yj,
+                    lm_term          = lm_mean,
+                    offset_term      = 0,
+                    log              = TRUE)
+
+    offset_j = opt_res$value
 
     int_res = safely_integrate(vec_integrand_logistic,
                                lower = -Inf, upper = Inf,
@@ -326,6 +328,39 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                lm_term          = lm_mean,
                                offset_term      = offset_j,
                                log              = FALSE)
+
+    if (!is.null(int_res$error)) {
+      # If it still fails, it's a really sharp integral. Take a parabolic
+      # approximation about the optimum to find integration limits.
+
+      offset_j_terms = vec_integrand_logistic(phylo_effect_vec = opt_res$par + c(-.01, 0, .01),
+                                              mu_bar_j         = mu_bar_j,
+                                              sigma_bar_j      = sigma_bar_j,
+                                              yj               = yj,
+                                              lm_term          = lm_mean,
+                                              offset_term      = 0,
+                                              log              = TRUE)
+
+      # Set up the linear system
+      A = c(opt_res$par + c(-.01, 0, .01)) |> sapply(\(x) c(x^2, x, 1)) |> t()
+
+      abc = solve(A, offset_j_terms)
+      ll_max = opt_res$par
+
+      # https://www.wolframalpha.com/input?i=solve+a*%28x%2Bd%29%5E2+%2B+b*%28x%2Bd%29+%2B+c+%3D+k-10+for+d
+      # d is the +/- delta value over which the log-likelihood of the phylogenetic effect[ij] will decrease by 10
+      d = -(2*(abc[1]*ll_max) + abc[2] + sqrt(abc[2]^2 - 4*abc[1]*(abc[3]-opt_res$value+10))) / (2*abc[1])
+
+      int_res = safely_integrate(vec_integrand_logistic,
+                                 lower = ll_max - d,
+                                 upper = ll_max + d,
+                                 mu_bar_j         = mu_bar_j,
+                                 sigma_bar_j      = sigma_bar_j,
+                                 yj               = yj,
+                                 lm_term          = lm_mean,
+                                 offset_term      = offset_j,
+                                 log              = FALSE)
+    }
   }
 
   ll_ij = log(int_res$result$value) + offset_j
