@@ -78,7 +78,10 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
                     "family",
                     "log_lik_terms_i",
                     "inv_logit",
-                    "log_lik_i_j_logistic", "vec_integrand_logistic", "p")
+                    "log_lik_i_j_logistic",
+                    "vec_integrand_logistic",
+                    "p",
+                    'safely_integrate')
 
   }
 
