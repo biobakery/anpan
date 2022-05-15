@@ -461,7 +461,7 @@ anpan_pglmm_batch = function(meta_file,
   if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
 
   dot_list = list(...)
-  if ("parallel_chains" %in% names(dot_list)) {
+  if ("parallel_chains" %in% names(dot_list) && attr(future::plan(), "class")[2] != "sequential") {
     stop("Don't specify parallel_chains. Use future::plan() to parallelize instead.")
   }
 
