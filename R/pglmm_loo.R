@@ -275,9 +275,10 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                       yj               = yj,
                       lm_term          = lm_mean,
                       offset_term      = offset_j,
-                      log              = FALSE)
+                      log              = FALSE,
+                      stop.on.error = FALSE)
 
-  if (!is.finite(int_res$value)) {
+  if (int_res$message != "OK" || !is.finite(int_res$value)) {
     offset_j = optim(par = effect_mean_j,
                      fn = vec_integrand_logistic,
                      method = "L-BFGS-B",
