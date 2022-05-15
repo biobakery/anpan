@@ -462,7 +462,7 @@ anpan_pglmm_batch = function(meta_file,
 
   dot_list = list(...)
   if ("parallel_chains" %in% names(dot_list) && attr(future::plan(), "class")[2] != "sequential") {
-    stop("Don't specify parallel_chains. Use future::plan() to parallelize instead.")
+    stop("Don't specify parallel_chains with a non-sequential plan. Use future::plan() to parallelize over trees instead. A two-level future topology may be used to fit the model with parallel chains parallelize loo evaluation within each tree e.g. plan(list(sequential, multisession)).")
   }
 
   call = match.call()
@@ -530,20 +530,20 @@ anpan_pglmm_batch = function(meta_file,
 
   p = progressr::progressor(along = tree_files)
 
-  global_list = c('meta_file', # TODO figure out if passing this is necessary. If so, find out what else needs to be added...
-                  'outcome'  ,
-                  'out_dir' ,
-                  'trim_pattern' ,
-                  'covariates' ,
-                  'omit_na' ,
-                  'family' ,
-                  'show_plot_cor_mat' ,
-                  'show_plot_tree' ,
-                  'save_object' ,
-                  'loo_comparison',
-                  'reg_noise',
-                  'plot_ext' ,
-                  'show_yrep')
+  # global_list = c('meta_file', # TODO figure out if passing this is necessary. If so, find out what else needs to be added...
+  #                 'outcome'  ,
+  #                 'out_dir' ,
+  #                 'trim_pattern' ,
+  #                 'covariates' ,
+  #                 'omit_na' ,
+  #                 'family' ,
+  #                 'show_plot_cor_mat' ,
+  #                 'show_plot_tree' ,
+  #                 'save_object' ,
+  #                 'loo_comparison',
+  #                 'reg_noise',
+  #                 'plot_ext' ,
+  #                 'show_yrep')
 
   safe_results = furrr::future_map(tree_files,
                                    function(.x) {
@@ -564,7 +564,6 @@ anpan_pglmm_batch = function(meta_file,
                                                         reg_noise = reg_noise,
                                                         plot_ext = plot_ext,
                                                         show_yrep = show_yrep,
-                                                        parallel_chains = 1,
                                                         refresh = 0,
                                                         ...)},
                                    .options = furrr::furrr_options(seed = seed))
