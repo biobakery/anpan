@@ -22,7 +22,31 @@ knitr::opts_chunk$set(
 )
 ```
 
-## Introduction
+<style type="text/css">
+
+body{ /* Normal  */
+      font-size: 12px;
+  }
+td {  /* Table  */
+  font-size: 8px;
+}
+h1.title {
+  font-size: 38px;
+}
+h1 { /* Header 1 */
+  font-size: 28px;
+}
+h2 { /* Header 2 */
+    font-size: 22px;
+}
+h3 { /* Header 3 */
+  font-size: 18px;
+}
+</style>
+
+<!-- https://stackoverflow.com/questions/30446905/rmarkdown-font-size-and-header -->
+
+# Introduction
 
 It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, anpan, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
 
@@ -32,7 +56,7 @@ It's difficult to find associations between microbial strains and host health ou
 
 We'll cover the last point first in the section on phylogenetic generalized linear mixed models [PGLMMs].
 
-## Libraries
+# Libraries
 
 We'll start by loading the library in this code chunk:
 
@@ -50,7 +74,7 @@ library(dplyr)
 library(ape)
 ```
 
-## PGLMMs
+# PGLMMs
 
 Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a simple linear regression as the base model, the model structure is as follows:
 
@@ -68,6 +92,7 @@ To understand how a tree implies a correlation structure, consider the plot belo
 knitr::include_graphics("leaf_pairs.PNG")
 ```
 
+## Simulate data
 
 To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
@@ -124,6 +149,8 @@ plot_outcome_tree(tr, metadata,
 
 You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color. (As a side note, the randomized tree name shows up because we didn't provide one and the function wasn't able to pull one from the tree input either). We can assess this pattern statistically with a PGLMM.
 
+## Fit the PGLMM
+
 The code chunk below shows how to use `anpan` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
 
 ```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE, out.width = "120%"}
@@ -142,6 +169,16 @@ By default this command prints two plots (and a lot of console output with messa
 
 * The correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves.
 * The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf as a boxplot, overlaid with the true value. You can see that even though the phylogenetic predictive distributions are regularized a bit toward 0, they still generally capture the true values and the overall correlation structure.
+
+If you want to tl;dr the rest of this section, look at the model comparison result to decide if the phylogeny is informative beyond the base model: 
+
+```{r}
+result$loo$comparison
+```
+
+The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome.
+
+## Detailed interpretation
 
 `result` is a list with five elements:
 
@@ -196,7 +233,9 @@ result$loo$comparison
 
 `loo` prints the model with the leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about -14.7 with a SE around +/- 5. So in this we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the tree with $\sigma_p \neq 0$, that is the correct conclusion.
 
-## Element testing
+There's a lot more to be said about loo model comparison that is beyond the scope of this vignette. You can read more interpretation of loo results on the [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#11_What_is_the_interpretation_of_ELPD__elpd_loo__elpd_diff) written by the loo authors. 
+
+# Element testing
 
 This section isn't done.
 
@@ -204,11 +243,11 @@ This section isn't done.
 anpan_batch()
 ```
 
-## References
+# References
 
 <div id="refs"></div>
 
-## Session Info
+# Session Info
 
 ```{r}
 sessionInfo()
