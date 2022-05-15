@@ -139,7 +139,16 @@ metadata = tibble(sample_id = colnames(cov_mat),
 metadata
 ```
 
-Now we have our tree and the metadata that goes along with it. We can use the function `anpan::plot_outcome_tree()` to show the tree with outcome as a dot on each leaf.
+Now we have our tree and the metadata that goes along with it. A quick plot shows that the outcome correlates with the simulated covariate as desired:
+
+```{r class.source = "fold-hide"}
+ggplot(metadata, aes(covariate, outcome)) + 
+  geom_point() + 
+  labs(title = "The simulated covariate correlates with the outcome") + 
+  theme_light()
+```
+
+We can use the function `anpan::plot_outcome_tree()` to visually inspect relationship between the tree structure and the outcome, by showing a dot on each leaf shaded according to the outcome:
 
 ```{r fig.retina=3, out.width="120%"}
 plot_outcome_tree(tr, metadata, 
@@ -147,7 +156,9 @@ plot_outcome_tree(tr, metadata,
                   outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color. (As a side note, the randomized tree name shows up because we didn't provide one and the function wasn't able to pull one from the tree input either). We can assess this pattern statistically with a PGLMM.
+You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color.
+
+How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
 ## Fit the PGLMM
 
@@ -167,7 +178,7 @@ result = anpan_pglmm(meta_file      = metadata,
 
 By default this command prints two plots (and a lot of console output with messages about the progression of the MCMC sampler). These plots show:
 
-* The correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves.
+* The correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
 * The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf as a boxplot, overlaid with the true value. You can see that even though the phylogenetic predictive distributions are regularized a bit toward 0, they still generally capture the true values and the overall correlation structure.
 
 If you want to tl;dr the rest of this section, look at the model comparison result to decide if the phylogeny is informative beyond the base model: 
@@ -176,7 +187,7 @@ If you want to tl;dr the rest of this section, look at the model comparison resu
 result$loo$comparison
 ```
 
-The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome.
+The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_p \neq 0$, that is the correct conclusion.
 
 ## Detailed interpretation
 
@@ -191,7 +202,7 @@ The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive
     * `base_loo` - a [loo()](https://mc-stan.org/loo/) result for the base model
     * `comparison` - a [loo_compare()](https://mc-stan.org/loo/reference/loo_compare.html) result comparing the two models by leave-one-out predictive performance.
     
-The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method, which we demonstrate here to examine the posterior means for the covariate effects `beta`, the `intercept`, residual noise term `sigma_resid`, the spread of phylogenetic effects `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
+The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method. We'll use that here to pull out the posterior means for several parameters (black) and compare them to their true values (red). These parameters include for the covariate effects `beta`, the `intercept`, residual noise term `sigma_resid`, the spread of phylogenetic effects `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
 
 ```{r}
 post_summary = result$pglmm_fit$summary() |> 
@@ -215,7 +226,6 @@ post_summary[-c(4:93),] |>
 ```
 
 Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta is fairly close to the true value (1), as is the intercept (0) and noise terms. Importantly, the 90% posterior intervals capture the true values.
-
 
 Let's look at the `pglmm_loo` result:
 
