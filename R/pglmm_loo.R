@@ -43,7 +43,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
                                function(.x) {
                                  p()
                                  precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)},
-                               .options = furrr_options(globals = c("cor_mat", "n_obs")))
+                               .options = furrr::furrr_options(globals = c("cor_mat", "n_obs")))
 
   for (j in 1:n_obs) {
     sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
@@ -96,7 +96,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
                                          cor21_arr = cor21_arr,
                                          family = family)
                        },
-                       .options = furrr_options(globals = global_list))
+                       .options = furrr::furrr_options(globals = global_list))
 
   # put the result into a matrix
   res = ll_list |>
