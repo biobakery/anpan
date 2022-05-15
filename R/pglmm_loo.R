@@ -255,7 +255,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
   p = length(effects_mj) + 1
 
   # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-  sigma_bar_j = cov_mat_jj - c(sigma12x22_inv %*% sigma21)
+  sigma_bar_j = sqrt(cov_mat_jj - c(sigma12x22_inv %*% sigma21))
 
   mu_bar_j = c(sigma12x22_inv %*% (effects_mj))
   #^ a = the other phylo effects from iteration i, mu2 = 0
@@ -320,7 +320,7 @@ vec_integrand_logistic = function(phylo_effect_vec,
 
   phylo_term = dnorm(phylo_effect_vec,
                      mean = mu_bar_j,
-                     sd = sqrt(sigma_bar_j),
+                     sd = sigma_bar_j,
                      log = TRUE)
 
   model_mean = c(lm_term) + phylo_effect_vec
