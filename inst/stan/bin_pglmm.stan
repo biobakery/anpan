@@ -4,6 +4,7 @@ data {
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
+  array[K-1] real<lower=0> beta_sd;
 }
 transformed data {
   int Kc = K - 1;
@@ -31,6 +32,7 @@ model {
 
   // priors
   target += student_t_lpdf(centered_cov_intercept | 3, 0, 2.5);
+  target += normal_lpdf(beta | 0, beta_sd);
 
   target += student_t_lpdf(sigma_phylo | 3, 0, 2.5)
     - 1 * student_t_lccdf(0 | 3, 0, 2.5);

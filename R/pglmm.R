@@ -71,6 +71,8 @@ olap_tree_and_meta = function(tree_file,
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param family string giving the name of the distribution of the outcome
 #'   variable (usually "gaussian" or "binomial")
+#' @param beta_sd prior standard deviation parameters on the normal distribution
+#'   for each covariate in the GLM component
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
 #' @param reg_noise logical indicating whether to regularize the ratio of
@@ -127,6 +129,7 @@ anpan_pglmm = function(meta_file,
                        reg_noise = TRUE,
                        plot_ext = "pdf",
                        show_yrep = TRUE,
+                       beta_sd = NULL,
                        ...) {
 
   n_steps = ifelse(loo_comparison,
@@ -145,6 +148,8 @@ anpan_pglmm = function(meta_file,
     warning("You can't regularize the noise ratio with non-gaussian outcomes. Setting reg_noise = FALSE.")
     reg_noise = FALSE
   }
+
+  if (!is.null(beta_sd) && length(beta_sd) != length(covariates)) stop("The number of covariates provided doesn't match the length of the provided beta_sd argument.")
 
   olap_list = olap_tree_and_meta(tree_file,
                                  meta_file,
@@ -278,6 +283,27 @@ anpan_pglmm = function(meta_file,
                      Lcov = Lcov)
   }
 
+  Xc = matrix(nrow = data_list$N,
+              ncol = data_list$K - 1)
+
+  mx = colMeans(data_list$X)[-1]
+
+  if (ncol(Xc) > 0) {
+    # can't remember how to use seq_along here
+    for (i in 2:data_list$K) {
+      Xc[,i-1] = data_list$X[,i] - mx[i-1]
+    }
+  }
+
+  if (is.null(beta_sd)) {
+    message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n\n",
+            paste(round(apply(Xc, 2, sd), digits = 4), collapse = ", "),
+            "\n\nIt would be better to set these based on scientific background knowledge.")
+    data_list$beta_sd = apply(Xc, 2, sd)
+  } else {
+    data_list$beta_sd = beta_sd
+  }
+
   if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))
 
   pglmm_fit = pglmm_model$sample(data = data_list,
@@ -348,18 +374,6 @@ anpan_pglmm = function(meta_file,
     effect_means = fit_summary |>
       filter(grepl("^phylo_effect", variable)) |>
       pull(mean)
-
-    Xc = matrix(nrow = data_list$N,
-                ncol = data_list$K - 1)
-
-    mx = colMeans(data_list$X)[-1]
-
-    if (ncol(Xc) > 0) {
-      # can't remember how to use seq_along here
-      for (i in 2:data_list$K) {
-        Xc[,i-1] = data_list$X[,i] - mx[i-1]
-      }
-    }
 
     ll_mat = get_ll_mat(draw_df,
                         max_i = nrow(draw_df),

@@ -6,6 +6,7 @@ data {
   matrix[N, N] Lcov;  // cholesky factor of known correlation matrix
   real int_mean;
   real<lower=0> resid_scale;
+  array[K-1] real<lower=0> beta_sd;
 }
 transformed data {
   int Kc = K - 1;
@@ -34,6 +35,7 @@ model {
 
   // priors
   target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
+  target += normal_lpdf(beta | 0, beta_sd);
 
   target += student_t_lpdf(sigma_resid | 3, 0, resid_scale)
     - 1 * student_t_lccdf(0 | 3, 0, resid_scale);
