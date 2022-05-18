@@ -422,6 +422,11 @@ anpan_pglmm = function(meta_file,
     comparison = NULL
   }
 
+  if (!is.null(out_dir)) {
+    save(model_input, cor_mat,
+         file = file.path(out_dir, paste0(bug_name, "_inputs.RData")))
+  }
+
   if (save_object) {
     # V This is what to use once the pglmm_fit is done with cmdstanr
     pglmm_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_pglmm_fit.RDS")))
@@ -437,8 +442,8 @@ anpan_pglmm = function(meta_file,
        pglmm_fit   = pglmm_fit,
        base_fit    = base_fit,
        loo         = list(pglmm_loo = pglmm_loo,
-                        base_loo    = base_loo,
-                        comparison  = comparison))
+                          base_loo    = base_loo,
+                          comparison  = comparison))
 
 }
 
