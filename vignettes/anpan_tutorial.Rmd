@@ -125,7 +125,7 @@ cor_mat[1:5,1:5]
 The "t#" labels are the default sample IDs that `ape::rtree()` puts as tip labels.
 
 
-The chunk below generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`.
+The chunk below generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`. Note that the effect size of the `outcome ~ covariate` relationship is explicitly set to 1:
 ```{r}
 covariate = rnorm(n)
 
@@ -148,7 +148,7 @@ ggplot(metadata, aes(covariate, outcome)) +
   theme_light()
 ```
 
-We can use the function `anpan::plot_outcome_tree()` to visually inspect relationship between the tree structure and the outcome, by showing a dot on each leaf shaded according to the outcome:
+We can use the function `anpan::plot_outcome_tree()` to visually inspect the tree and confirm that it also appears related to the outcome. The dot on each leaf is shaded according to the outcome:
 
 ```{r fig.retina=3, out.width="120%"}
 plot_outcome_tree(tr, metadata, 
@@ -156,7 +156,7 @@ plot_outcome_tree(tr, metadata,
                   outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny impacts the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color.
+You can sort of see by eye that the phylogeny correlates with the outcome. The left side is generally a bit brighter, and close neighbors usually have about the same shade of color.
 
 How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
