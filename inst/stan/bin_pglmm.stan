@@ -31,11 +31,11 @@ model {
   target += bernoulli_logit_glm_lpmf(Y | Xc, mu, beta);
 
   // priors
-  target += student_t_lpdf(centered_cov_intercept | 3, 0, 2.5);
+  target += student_t_lpdf(centered_cov_intercept | 3, 0, 1);
   target += normal_lpdf(beta | 0, beta_sd);
 
-  target += student_t_lpdf(sigma_phylo | 3, 0, 2.5)
-    - 1 * student_t_lccdf(0 | 3, 0, 2.5);
+  target += student_t_lpdf(sigma_phylo | 3, 0, 1)
+    - 1 * student_t_lccdf(0 | 3, 0, 1);
 
   target += std_normal_lpdf(std_phylo_effect);
 }
