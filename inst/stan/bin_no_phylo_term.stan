@@ -4,7 +4,7 @@ data {
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
-  array[K-1] real<lower=0> beta_sd;
+  vector<lower=0>[K-1] beta_sd;
 }
 transformed data {
   int Kc = K - 1;

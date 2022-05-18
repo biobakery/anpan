@@ -6,7 +6,7 @@ data {
   matrix[N, N] Lcov;  // cholesky factor of known correlation matrix
   real int_mean;
   real<lower=0> resid_scale;
-  array[K-1] real<lower=0> beta_sd;
+  vector<lower=0>[K-1] beta_sd;
 }
 transformed data {
   int Kc = K - 1;
