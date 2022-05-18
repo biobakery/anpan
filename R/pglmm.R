@@ -253,7 +253,7 @@ anpan_pglmm = function(meta_file,
                                package = 'anpan',
                                mustWork = TRUE)
 
-      if (any(reg_gamma_params) < 0) {
+      if (any(reg_gamma_params < 0)) {
         stop("Parameters for the regularizing gamma distribution (reg_gamma_params) must be positive.")
       }
     }
