@@ -20,8 +20,10 @@ anpan_pglmm(
   verbose = TRUE,
   loo_comparison = TRUE,
   reg_noise = TRUE,
+  reg_gamma_params = c(1, 2),
   plot_ext = "pdf",
   show_yrep = TRUE,
+  beta_sd = NULL,
   ...
 )
 }
@@ -63,6 +65,9 @@ sigma_phylo to sigma_resid with a Gamma(1,2) prior}
 
 \item{show_yrep}{logical indicating whether to show the posterior predictive
 distribution for each observation if plotting the tree}
+
+\item{beta_sd}{prior standard deviation parameters on the normal distribution
+for each covariate in the GLM component}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }

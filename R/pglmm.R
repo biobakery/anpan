@@ -1,3 +1,10 @@
+#' Overlap a tree and metadata
+#' @description Overlap a tree's leaves with the observations in metadata,
+#'   returning an intersected tree and metadata data.table.
+#' @value A list with two elements: the tree and metadata, both cut down to
+#'   samples that are present in the other.
+#' @inheritParams anpan_pglmm
+#' @export
 olap_tree_and_meta = function(tree_file,
                               meta_file,
                               covariates,
@@ -60,6 +67,18 @@ olap_tree_and_meta = function(tree_file,
              model_input)
 
   return(res)
+}
+
+#' Get the correlation matrix of a tree
+#' @param bug_tree a tree object of class "phylo"
+#' @seealso [ape::read.tree()]
+#' @export
+get_cor_mat = function(bug_tree) {
+  cov_mat = ape::vcv.phylo(bug_tree)
+
+  d = sqrt(diag(cov_mat))
+  cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
+  dimnames(cor_mat) = dimnames(cov_mat)
 }
 
 #' @title Run a phylogenetic generalized linear mixed model
@@ -163,11 +182,7 @@ anpan_pglmm = function(meta_file,
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
 
-  cov_mat = ape::vcv.phylo(bug_tree)
-
-  d = sqrt(diag(cov_mat))
-  cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
-  dimnames(cor_mat) = dimnames(cov_mat)
+  cor_mat = get_cor_mat(bug_tree)
 
   if (!(class(tree_file) == "phylo") && is.null(bug_name)) {
     bug_name = get_bug_name(tree_file,
