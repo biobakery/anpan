@@ -7,6 +7,7 @@ data {
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
   real int_mean;
   real<lower=0> resid_scale;
+  vector[2] reg_gamma_params;
   array[K-1] real<lower=0> beta_sd;
 }
 transformed data {
@@ -37,7 +38,7 @@ model {
 
 
   // priors
-  target += gamma_lpdf(sigma_phylo / sigma_resid | 1, 2);
+  target += gamma_lpdf(sigma_phylo / sigma_resid | reg_gamma_params[1], reg_gamma_params[2]);
 
   target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
   target += normal_lpdf(beta | 0, beta_sd);

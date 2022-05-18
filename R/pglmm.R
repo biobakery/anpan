@@ -127,6 +127,7 @@ anpan_pglmm = function(meta_file,
                        verbose = TRUE,
                        loo_comparison = TRUE,
                        reg_noise = TRUE,
+                       reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
                        show_yrep = TRUE,
                        beta_sd = NULL,
@@ -225,6 +226,10 @@ anpan_pglmm = function(meta_file,
       model_path = system.file("stan", "cont_pglmm_noise_reg.stan",
                                package = 'anpan',
                                mustWork = TRUE)
+
+      if (any(reg_gamma_params) < 0) {
+        stop("Parameters for the regularizing gamma distribution (reg_gamma_params) must be positive.")
+      }
     }
   } else if (family == "binomial") {
 
@@ -275,6 +280,7 @@ anpan_pglmm = function(meta_file,
                      Lcov = Lcov,
                      int_mean = outcome_mean,
                      resid_scale = outcome_sd)
+    if (reg_noise) data_list$reg_gamma_params = reg_gamma_params
   } else {
     data_list = list(N = nrow(model_input),
                      Y = model_input[[outcome]],
@@ -296,6 +302,7 @@ anpan_pglmm = function(meta_file,
   }
 
   if (is.null(beta_sd)) {
+    # TODO write this to a log file...
     message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n\n",
             paste(round(apply(Xc, 2, sd), digits = 4), collapse = ", "),
             "\n\nIt would be better to set these based on scientific background knowledge.")
