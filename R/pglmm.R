@@ -79,7 +79,10 @@ get_cor_mat = function(bug_tree) {
   d = sqrt(diag(cov_mat))
   cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
   dimnames(cor_mat) = dimnames(cov_mat)
+  return(cor_mat)
 }
+
+safely_chol = purrr::safely(chol)
 
 #' @title Run a phylogenetic generalized linear mixed model
 #' @md
@@ -186,6 +189,12 @@ anpan_pglmm = function(meta_file,
 
   cor_mat = get_cor_mat(bug_tree)
 
+  chol_res = safely_chol(cor_mat)
+
+  if (!is.null(chol_res$error)) stop("Could not compute the Cholesky factorization of the correlation matrix. It's probably not positive definite up to numerical precision. Try olap_tree_and_meta() and get_cor_mat() to examine the correlation matrix directly.")
+
+  Lcov = t(chol_res$result)
+
   if (!(class(tree_file) == "phylo") && is.null(bug_name)) {
     bug_name = get_bug_name(tree_file,
                             remove_pattern = ".tre$|.tree$")
@@ -281,8 +290,6 @@ anpan_pglmm = function(meta_file,
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
                                          quiet = TRUE)
   }
-
-  Lcov = t(chol(cor_mat))
 
   model_input$sample_id = factor(model_input$sample_id,
                                  levels = rownames(Lcov))
