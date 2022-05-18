@@ -349,7 +349,8 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
       # If it still fails, it's a really sharp integral. Take a parabolic
       # approximation about the optimum to find integration limits.
 
-      offset_j_terms = vec_integrand_logistic(phylo_effect_vec = mu_bar_j + c(-.01, 0, .01),
+      integrand_pts = mu_bar_j + c(-.001, 0, .001)
+      offset_j_terms = vec_integrand_logistic(phylo_effect_vec = integrand_pts,
                                               mu_bar_j         = mu_bar_j,
                                               sigma_bar_j      = sigma_bar_j,
                                               yj               = yj,
@@ -358,7 +359,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                               log              = TRUE)
 
       # Set up the linear system
-      A = c(mu_bar_j + c(-.01, 0, .01)) |> sapply(\(x) c(x^2, x, 1)) |> t()
+      A = c(integrand_pts) |> sapply(\(x) c(x^2, x, 1)) |> t()
 
       abc = solve(A, offset_j_terms)
       ll_max = opt_res$par
