@@ -56,7 +56,7 @@ model against a base model (without the phylogenetic term) using
 \code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of
-sigma_phylo to sigma_resid with a Gamma(1,2) prior}
+sigma_phylo to sigma_resid with a Gamma prior}
 
 \item{plot_ext}{extension to use when saving plots}
 

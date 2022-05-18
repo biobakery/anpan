@@ -95,7 +95,9 @@ get_cor_mat = function(bug_tree) {
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
 #' @param reg_noise logical indicating whether to regularize the ratio of
-#'   sigma_phylo to sigma_resid with a Gamma(1,2) prior
+#'   sigma_phylo to sigma_resid with a Gamma prior
+#' @param reg_gamma_params the shape and rate parameters of the Gamma prior on
+#'   the noise term ratio. Default: c(1,2)
 #' @param plot_ext extension to use when saving plots
 #' @param show_plot_cor_mat show a plot of the correlation matrix derived from
 #'   the tree
