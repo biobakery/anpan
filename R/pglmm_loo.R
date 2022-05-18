@@ -345,7 +345,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                offset_term      = offset_j,
                                log              = FALSE)
 
-    if (!is.null(int_res$error)) {
+    if (!is.null(int_res$error) || int_res$result$value == 0) {
       # If it still fails, it's a really sharp integral. Take a parabolic
       # approximation about the optimum to find integration limits.
 
