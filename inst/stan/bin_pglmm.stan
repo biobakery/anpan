@@ -35,7 +35,7 @@ model {
 
   target += normal_lpdf(beta | 0, beta_sd);
 
-  target += std_normal_lpdf(sigma_phylo);
+  target += std_normal_lpdf(sigma_phylo) - std_normal_lccdf(0);
 
   target += std_normal_lpdf(std_phylo_effect);
 }
