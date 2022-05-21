@@ -9,7 +9,7 @@ anpan_batch(
   meta_file,
   out_dir,
   prefiltered_dir = NULL,
-  model_type = "horseshoe",
+  model_type = "fastglm",
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
