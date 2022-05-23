@@ -327,9 +327,11 @@ anpan_pglmm = function(meta_file,
 
   if (is.null(beta_sd)) {
     # TODO write this to a log file...
-    message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n\n",
-            paste(round(apply(Xc, 2, sd), digits = 4), collapse = ", "),
-            "\n\nIt would be better to set these based on scientific background knowledge.")
+    if (length(covariates) > 0) {
+      message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n\n",
+              paste(round(apply(Xc, 2, sd), digits = 4), collapse = ", "),
+              "\n\nIt would be better to set these based on scientific background knowledge.")
+    }
     if (ncol(Xc) > 0) {
       data_list$beta_sd = array(apply(Xc, 2, sd), dim = 1)
     } else {
