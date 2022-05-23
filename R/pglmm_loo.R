@@ -307,7 +307,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                              offset_term      = offset_j,
                              log              = FALSE)
 
-  if (!is.null(int_res$error) || !is.finite(int_res$result$value)) {
+  if (!is.null(int_res$error) || !is.finite(int_res$result$value) || int_res$result$value == 0) {
     opt_res = safely_optim(par = mu_bar_j,
                            fn = vec_integrand_logistic,
                            method = "L-BFGS-B",
