@@ -41,8 +41,8 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
 
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
-                                 p()
-                                 precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)},
+                                 precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)
+                                 p()},
                                .options = furrr::furrr_options(globals = c("cor_mat", "n_obs")))
 
   for (j in 1:n_obs) {
@@ -87,7 +87,6 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
 
   ll_list = furrr::future_map(draw_split,
                        function(.x) {
-                         p()
                          log_lik_terms_i(i_df = .x,
                                          effect_means = effect_means,
                                          cor_mat = cor_mat,
@@ -95,6 +94,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
                                          sigma12x22_inv_arr = sigma12x22_inv_arr,
                                          cor21_arr = cor21_arr,
                                          family = family)
+                         p()
                        },
                        .options = furrr::furrr_options(globals = global_list))
 

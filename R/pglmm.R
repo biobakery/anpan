@@ -603,7 +603,6 @@ anpan_pglmm_batch = function(meta_file,
 
   safe_results = furrr::future_map(tree_files,
                                    function(.x) {
-                                     p()
                                      safely_anpan_pglmm(tree_file = .x,
                                                         meta_file = meta_file,
                                                         outcome = outcome,
@@ -621,7 +620,8 @@ anpan_pglmm_batch = function(meta_file,
                                                         plot_ext = plot_ext,
                                                         show_yrep = show_yrep,
                                                         refresh = 0,
-                                                        ...)},
+                                                        ...)
+                                     p()},
                                    .options = furrr::furrr_options(seed = seed))
 
   safe_res_df = purrr::transpose(safe_results) %>%
