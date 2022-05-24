@@ -173,13 +173,11 @@ result = anpan_pglmm(meta_file      = metadata,
                      bug_name       = "sim_bug",
                      reg_noise      = TRUE,
                      loo_comparison = TRUE,
-                     refresh        = 500)
+                     refresh        = 500,
+                     show_plot_tree = FALSE)
 ```
 
-By default this command prints two plots (and a lot of console output with messages about the progression of the MCMC sampler). These plots show:
-
-* The correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
-* The same outcome tree as before, but now there's a lower panel showing the posterior predictive distribution for each leaf as a boxplot, overlaid with the true value. You can see that even though the phylogenetic predictive distributions are regularized a bit toward 0, they still generally capture the true values and the overall correlation structure.
+Aside from fitting the model, this command prints a plot (and a lot of console output with messages about the progression of the MCMC sampler). This plots shows he correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
 
 If you want to tl;dr the rest of this section, look at the model comparison result to decide if the phylogeny is informative beyond the base model: 
 
