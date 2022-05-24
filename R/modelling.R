@@ -391,6 +391,8 @@ anpan = function(bug_file,
   return(res)
 }
 
+safely_anpan = purrr::safely(anpan)
+
 #' Apply anpan to a many bugs
 #'
 #' @description This function calls anpan() on each gene family file in the
@@ -453,9 +455,9 @@ anpan_batch = function(bug_dir,
 
   p = progressr::progressor(along = bug_files)
 
-  all_bug_terms = purrr::map(.x = bug_files,
+  anpan_results = purrr::map(.x = bug_files,
                              .f = function(.x) {
-                               anpan_res = anpan(.x,
+                               anpan_res = safely_anpan(.x,
                                                  meta_file = meta_file,
                                                  out_dir = out_dir,
                                                  prefiltered_dir = prefiltered_dir,
@@ -474,7 +476,25 @@ anpan_batch = function(bug_dir,
                                                  ...)
                                p()
                                anpan_res
-                             }) %>%
+                             }) |>
+    purrr::transpose() |>
+    as_tibble()
+
+  worked = anpan_results |>
+    dplyr::filter(purrr::map_lgl(error, is.null))
+
+  errors = anpan_results |>
+    dplyr::mutate(bug_file = bug_files) |>
+    dplyr::filter(purrr::map_lgl(result, is.null)) |>
+    dplyr::relocate(bug_file) |>
+    dplyr::select(-result)
+
+  if (nrow(errors) > 0) {
+    save(errors,
+         file = file.path(out_dir, 'errors.RData'))
+  }
+
+  all_bug_terms = worked$result %>%
     dplyr::bind_rows() %>%
     dplyr::relocate(bug_name, gene) %>%
     data.table::as.data.table()
