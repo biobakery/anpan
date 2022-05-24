@@ -43,7 +43,7 @@ plot_lines = function(bug_file = NULL,
                                        levels = c("present", "absent")))
 
   if (subset_line != 0) {
-    plot_df = plot_df[,.SD[floor(seq(1, nrow(.SD), length.out = subset_line))], by = sample_id]
+    plot_df = plot_df[,.SD[unique(floor(seq(1, nrow(.SD), length.out = subset_line)))], by = sample_id]
   }
 
   p = plot_df %>%
