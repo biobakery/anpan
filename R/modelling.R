@@ -484,7 +484,7 @@ anpan_batch = function(bug_dir,
     dplyr::filter(purrr::map_lgl(error, is.null))
 
   errors = anpan_results |>
-    dplyr::mutate(bug_file = bug_files) |>
+    dplyr::mutate(bug_file = basename(bug_files)) |>
     dplyr::filter(purrr::map_lgl(result, is.null)) |>
     dplyr::relocate(bug_file) |>
     dplyr::select(-result)
