@@ -79,4 +79,7 @@ This function fits phylogenetic generalized linear mixed models
 \details{
 \code{tree_dir} must contain ONLY tree files readable by
   ape::read.tree()
+
+  If any trees cause an error while fitting, these are saved into a data
+  frame in a file \code{pglmm_errors.RData} in the output directory.
 }

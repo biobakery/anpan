@@ -195,8 +195,9 @@ The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive
 * `cor_mat` - the correlation matrix derived from the tree
 * `pglmm_fit` - a [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the PGLMM fit
 * `base_fit` - another [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the "base" GLM fit (without the phylogenetic component)
-* `loo` - a list containing three elements: 
+* `loo` - a list containing four elements: 
     * `pglmm_loo` - a [loo()](https://mc-stan.org/loo/) result for the PGLMM model using integrated importance weights
+    * `pglmm_ll_mat` - a matrix giving the integrated log-likelihood importance weights with for posterior iterations (rows) of each leaf (columns)
     * `base_loo` - a [loo()](https://mc-stan.org/loo/) result for the base model
     * `comparison` - a [loo_compare()](https://mc-stan.org/loo/reference/loo_compare.html) result comparing the two models by leave-one-out predictive performance.
     

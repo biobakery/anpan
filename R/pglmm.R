@@ -113,7 +113,8 @@ safely_chol = purrr::safely(chol)
 #'   [loo::loo_compare()]
 #' @return A list containing the model input (in the order passed to the model),
 #'   estimated correlation matrix, the pglmm fit object, and (if
-#'   \code{loo_comparison} is on) the base fit object and the loo objects.
+#'   \code{loo_comparison} is on) the base fit object and the associated loo
+#'   objects.
 #' @details the tip labels of the tree must be the sample ids from the metadata.
 #'   You can use the \code{trim_pattern} argument to automatically trim off any
 #'   consistent pattern from the tip labels if necessary.
@@ -450,6 +451,7 @@ anpan_pglmm = function(meta_file,
     pglmm_loo = NULL
     base_loo = NULL
     comparison = NULL
+    ll_mat = NULL
   }
 
   if (!is.null(out_dir)) {
@@ -471,9 +473,10 @@ anpan_pglmm = function(meta_file,
        cor_mat     = cor_mat,
        pglmm_fit   = pglmm_fit,
        base_fit    = base_fit,
-       loo         = list(pglmm_loo = pglmm_loo,
-                          base_loo    = base_loo,
-                          comparison  = comparison))
+       loo         = list(pglmm_loo    = pglmm_loo,
+                          pglmm_ll_mat = ll_mat,
+                          base_loo     = base_loo,
+                          comparison   = comparison))
 
 }
 
@@ -486,6 +489,9 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #' @param seed random seed to pass to furrr_options()
 #' @details \code{tree_dir} must contain ONLY tree files readable by
 #'   ape::read.tree()
+#'
+#'   If any trees cause an error while fitting, these are saved into a data
+#'   frame in a file \code{pglmm_errors.RData} in the output directory.
 #' @returns a data frame for each file in input directory that fit successfully.
 #'   Columns give the PGLMM results, "base" model results, and loo comparisons
 #'   in list columns.
