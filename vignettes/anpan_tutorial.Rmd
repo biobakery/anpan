@@ -177,9 +177,9 @@ result = anpan_pglmm(meta_file      = metadata,
                      show_plot_tree = FALSE)
 ```
 
-Aside from fitting the model, this command prints a plot (and a lot of console output with messages about the progression of the MCMC sampler). This plots shows he correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
+Aside from fitting the model, this command prints a plot (and a lot of console output with messages about the progression of the MCMC sampler). This plots shows the correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
 
-If you want to tl;dr the rest of this section, look at the model comparison result to decide if the phylogeny is informative beyond the base model: 
+If you want to tl;dr the rest of the PGLMMs section, look at the model comparison result to decide if the phylogeny is informative beyond the base model: 
 
 ```{r}
 result$loo$comparison
@@ -191,7 +191,7 @@ The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive
 
 `result` is a list with five elements:
 
-* `model_input` - the input metadata that made it into the analysis after taking the samples that overlapped with the leaves of the tree.
+* `model_input` - the input metadata that made it into the analysis after taking the samples that overlapped with the leaves of the tree, re-ordered to the order of samples given in the correlation matrix.
 * `cor_mat` - the correlation matrix derived from the tree
 * `pglmm_fit` - a [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the PGLMM fit
 * `base_fit` - another [CmdStanMCMC](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) object containing the "base" GLM fit (without the phylogenetic component)
@@ -200,9 +200,13 @@ The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive
     * `base_loo` - a [loo()](https://mc-stan.org/loo/) result for the base model
     * `comparison` - a [loo_compare()](https://mc-stan.org/loo/reference/loo_compare.html) result comparing the two models by leave-one-out predictive performance.
     
-The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method. We'll use that here to pull out the posterior means for several parameters (black) and compare them to their true values (red). These parameters include for the covariate effects `beta`, the `intercept`, residual noise term `sigma_resid`, the spread of phylogenetic effects `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
+The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method which we'll use to inspect model fit.
 
-```{r}
+### Inspect model fit
+
+We'll use the `summary()` method here to pull out the posterior means for several parameters (black) and compare them to their true values (red). These parameters include for the covariate effects `beta`, the `intercept`, residual noise term `sigma_resid`, the spread of phylogenetic effects `sigma_phylo` and the per-leaf phylogenetic effects (which are indexed in the same order as `model_input`):
+
+```{r out.width = "120%"}
 post_summary = result$pglmm_fit$summary() |> 
   filter(grepl("beta|^intercept|sigma|^phylo_effect", variable)) |> 
   mutate(true_value = c(1,1,1, true_phylo_effects, 0))
@@ -225,13 +229,50 @@ post_summary[-c(4:93),] |>
 
 Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta is fairly close to the true value (1), as is the intercept (0) and noise terms. Importantly, the 90% posterior intervals capture the true values.
 
+So we mostly recaptured our simulation parameters, but how well does the model really fit the data overall? We can use `anpan::plot_tree_with_post_pred()` to overlay the posterior predictive distribution for each leaf and show that, if held out, our model's predictions for that point would usually capture the true observation:
+
+```{r out.width = "120%"}
+anpan::plot_tree_with_post_pred(tree_file = tr,
+                                meta_file = metadata,
+                                covariates = "covariate",
+                                outcome = "outcome",
+                                fit = result$pglmm_fit,
+                                labels = metadata$sample_id,
+                                verbose = FALSE)
+```
+
+
+What about the posterior on the linear model component? We can visualize that two by taking some of the posterior draws (with `cmdstanr::draws()`) of the line and overlay that onto the marginal linear component:
+
+```{r}
+line_draws = result$pglmm_fit$draws(format = 'data.frame') |> 
+  as_tibble() |> 
+  select(beta = `beta[1]`, intercept) |> 
+  slice_sample(n = 40)
+
+result$model_input |> 
+  ggplot(aes(covariate, outcome)) + 
+  geom_point() + 
+  geom_abline(data = line_draws,
+              aes(slope = beta,
+                  intercept = intercept),
+              alpha = .2) + 
+  theme_light()
+
+```
+
+You can see that there's a bit more uncertainty in the slope and intercept than you might expect. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component if free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
+
+
+### `loo` interpretation
+
 Let's look at the `pglmm_loo` result:
 
 ```{r}
 result$loo$pglmm_loo
 ```
 
-PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes, though these cutoffs depend on the tree as well).
+PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes, though these cutoffs depend heavily on the tree as well).
 
 The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
 
