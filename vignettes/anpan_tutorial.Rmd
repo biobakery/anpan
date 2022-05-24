@@ -233,7 +233,11 @@ Let's look at the `pglmm_loo` result:
 result$loo$pglmm_loo
 ```
 
-PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. We only got 1 non-good result, so in this case the model comparison should be fine.
+PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes).
+
+The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
+
+We only got 1 non-good Pareto k value here, so in this case the model comparison should be fine.
 
 Let's look at the model comparison:
 
