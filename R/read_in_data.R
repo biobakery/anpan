@@ -57,7 +57,7 @@ read_bug = function(bug_file, meta = NULL,
 }
 
 get_file_list = function(file_dir) {
-  list.files(file_dir, full.names = TRUE, pattern = "*.genefamilies.tsv")
+  list.files(file_dir, full.names = TRUE)
 }
 
 # The readr progress messes up the progressr bar
