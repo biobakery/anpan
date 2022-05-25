@@ -216,6 +216,7 @@ anpan_pglmm = function(meta_file,
     }
   }
 
+  # Prepare model formulae
   if (!is.null(covariates)) {
     cov_str = paste(covariates, collapse = " + ")
     base_formula = as.formula(paste0(outcome, " ~ ", cov_str))
@@ -609,25 +610,26 @@ anpan_pglmm_batch = function(meta_file,
 
   safe_results = furrr::future_map(tree_files,
                                    function(.x) {
-                                     safely_anpan_pglmm(tree_file = .x,
-                                                        meta_file = meta_file,
-                                                        outcome = outcome,
-                                                        out_dir = out_dir,
-                                                        trim_pattern = trim_pattern,
-                                                        covariates = covariates,
-                                                        omit_na = omit_na,
-                                                        family = family,
-                                                        show_plot_cor_mat = show_plot_cor_mat,
-                                                        show_plot_tree = show_plot_tree,
-                                                        save_object = save_object,
-                                                        verbose = FALSE,
-                                                        loo_comparison = loo_comparison,
-                                                        reg_noise = reg_noise,
-                                                        plot_ext = plot_ext,
-                                                        show_yrep = show_yrep,
-                                                        refresh = 0,
-                                                        ...)
-                                     p()},
+                                     res = safely_anpan_pglmm(tree_file = .x,
+                                                              meta_file = meta_file,
+                                                              outcome = outcome,
+                                                              out_dir = out_dir,
+                                                              trim_pattern = trim_pattern,
+                                                              covariates = covariates,
+                                                              omit_na = omit_na,
+                                                              family = family,
+                                                              show_plot_cor_mat = show_plot_cor_mat,
+                                                              show_plot_tree = show_plot_tree,
+                                                              save_object = save_object,
+                                                              verbose = FALSE,
+                                                              loo_comparison = loo_comparison,
+                                                              reg_noise = reg_noise,
+                                                              plot_ext = plot_ext,
+                                                              show_yrep = show_yrep,
+                                                              refresh = 0,
+                                                              ...)
+                                     p()
+                                     return(res)},
                                    .options = furrr::furrr_options(seed = seed))
 
   safe_res_df = purrr::transpose(safe_results) %>%
