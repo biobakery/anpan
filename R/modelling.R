@@ -475,7 +475,7 @@ anpan_batch = function(bug_dir,
                                                  verbose = verbose,
                                                  ...)
                                p()
-                               anpan_res
+                               return(anpan_res)
                              }) |>
     purrr::transpose() |>
     as_tibble()
