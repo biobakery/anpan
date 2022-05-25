@@ -29,6 +29,10 @@ the metadata}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 }
+\value{
+A list with two elements: the tree and metadata, both cut down to
+  samples that are present in the other.
+}
 \description{
 Overlap a tree's leaves with the observations in metadata,
   returning an intersected tree and metadata data.table.

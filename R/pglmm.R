@@ -1,7 +1,7 @@
 #' Overlap a tree and metadata
 #' @description Overlap a tree's leaves with the observations in metadata,
 #'   returning an intersected tree and metadata data.table.
-#' @value A list with two elements: the tree and metadata, both cut down to
+#' @return A list with two elements: the tree and metadata, both cut down to
 #'   samples that are present in the other.
 #' @inheritParams anpan_pglmm
 #' @export

@@ -24,6 +24,8 @@ anpan_batch(
   plot_ext = "png",
   q_threshold = NULL,
   n_top = 50,
+  width = 10,
+  height = 8,
   ...
 )
 }
@@ -63,6 +65,10 @@ when a bug is labelled as completely absent}
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
 
 \item{n_top}{number of top elements to show from the results}
+
+\item{width}{width of saved plot in inches}
+
+\item{height}{height of saved plot in inches}
 
 \item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }

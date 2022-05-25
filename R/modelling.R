@@ -431,6 +431,8 @@ anpan_batch = function(bug_dir,
                        plot_ext = "png",
                        q_threshold = NULL,
                        n_top = 50,
+                       width = 10,
+                       height = 8,
                        ...) {
 
   call = match.call()
@@ -531,7 +533,9 @@ anpan_batch = function(bug_dir,
                                                         annotation_file = annotation_file,
                                                         plot_ext = plot_ext,
                                                         n_top = n_top,
-                                                        q_threshold = q_threshold)})
+                                                        q_threshold = q_threshold,
+                                                        width = width,
+                                                        height = height)})
   }
 
   all_bug_terms
