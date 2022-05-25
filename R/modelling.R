@@ -534,6 +534,8 @@ anpan_batch = function(bug_dir,
                                                         plot_ext = plot_ext,
                                                         n_top = n_top,
                                                         q_threshold = q_threshold,
+                                                        cluster = 'both',
+                                                        show_trees = TRUE,
                                                         width = width,
                                                         height = height)})
   }
