@@ -522,24 +522,30 @@ anpan_batch = function(bug_dir,
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
+
+  if (verbose) message("Saving results plots to output directory...")
   if (plot_result) {
-    purrr::pmap(all_bug_terms[,.(s = list(.SD)), by = bug_name],
-                function(bug_name, s){safely_plot_results(res = s,
-                                                        bug_name = bug_name,
-                                                        covariates = covariates,
-                                                        outcome = outcome,
-                                                        model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
-                                                        plot_dir = plot_dir,
-                                                        annotation_file = annotation_file,
-                                                        plot_ext = plot_ext,
-                                                        n_top = n_top,
-                                                        q_threshold = q_threshold,
-                                                        cluster = 'both',
-                                                        show_trees = TRUE,
-                                                        width = width,
-                                                        height = height)})
+    plotting_input = all_bug_terms[,.(s = list(.SD)), by = bug_name]
+    p = progressr::progressor(steps = nrow(plotting_input))
+    plot_list = furrr::future_pmap(plotting_input,
+                                   function(bug_name, s){plot_res = safely_plot_results(res = s,
+                                                                                        bug_name = bug_name,
+                                                                                        covariates = covariates,
+                                                                                        outcome = outcome,
+                                                                                        model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
+                                                                                        plot_dir = plot_dir,
+                                                                                        annotation_file = annotation_file,
+                                                                                        plot_ext = plot_ext,
+                                                                                        n_top = n_top,
+                                                                                        q_threshold = q_threshold,
+                                                                                        cluster = 'both',
+                                                                                        show_trees = TRUE,
+                                                                                        width = width,
+                                                                                        height = height)
+                                                         p()
+                                                         return(plot_res)})
   }
 
-  all_bug_terms
+  return(all_bug_terms)
 
 }
