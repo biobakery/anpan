@@ -805,22 +805,27 @@ plot_tree_with_post_pred = function(tree_file,
                                  q = ~quantile(.x, probs = c(.25, .75))) %>%
       bind_cols(tree_plot$terminal_seg_df) %>%
       mutate(variable = factor(variable,
-                               levels = variable))
+                               levels = variable)) |>
+      arrange(variable) |>
+      mutate(variable_i = 1:(nlevels(variable)))
 
-    yrep_plot = ggplot(yrep_df, aes(x = variable)) +
+    yrep_plot = ggplot(yrep_df, aes(x = variable_i)) +
+      geom_hline(lty = 2,
+                 color = 'grey80',
+                 yintercept = 0) +
       geom_boxplot(aes(ymin = q5,
                        lower = `25%`,
                        middle = median,
                        upper = `75%`,
-                       ymax = q95),
+                       ymax = q95,
+                       group = variable_i),
                    stat = 'identity') +
-      geom_hline(lty = 2,
-                 color = 'grey80',
-                 yintercept = mean(yrep_df[[outcome]])) +
       geom_point(aes_string(y = outcome,
                             color = outcome)) +
       scale_color_viridis_c() +
-      scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
+      scale_x_continuous(breaks = 1:(nlevels(yrep_df$variable)),
+                         labels = tree_plot$terminal_seg_df$label,
+                         expand = waiver()) +
       labs(y = paste0(outcome, "\n posterior predictive")) +
       theme(axis.title.x = element_blank(),
             axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
@@ -832,8 +837,7 @@ plot_tree_with_post_pred = function(tree_file,
 
   tree_no_labels = tree_plot$tree_plot +
     theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank()) +
-    coord_cartesian(expand = FALSE)
+          axis.ticks.x = element_blank())
 
   tree_with_post_pred = tree_no_labels / yrep_plot + plot_layout(heights = c(3,1),
                                                                  guides = "collect")
