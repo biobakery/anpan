@@ -151,7 +151,8 @@ ggplot(metadata, aes(covariate, outcome)) +
 We can use the function `anpan::plot_outcome_tree()` to visually inspect the tree and confirm that it also appears related to the outcome. The dot on each leaf is shaded according to the outcome:
 
 ```{r fig.retina=3, out.width="120%"}
-plot_outcome_tree(tr, metadata, 
+plot_outcome_tree(tr,
+                  metadata, 
                   covariates = NULL,
                   outcome    = "outcome")
 ```
@@ -187,6 +188,23 @@ result$loo$comparison
 
 The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_{phylo} \neq 0$, that is the correct conclusion.
 
+If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()`:
+
+```{r out.width='120%'}
+plot_tree_with_post(tr,
+                    metadata,
+                    fit        = result$pglmm_fit,
+                    covariates = "covariate",
+                    outcome    = "outcome",
+                    labels     = metadata$sample_id)
+```
+
+You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up on the left side and tightly correlated neighbors generally have very similar phylogenetic effects.
+
+But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is the simplest presentation of the raw model fit. 
+
+In principle one could manually define a clade (ideally with some orthogonal justification for the choice of membership) and sum the phylogenetic effects of that clade to get a "clade effect", then contrast that quantity against a similar quantity summed over all nonmembers. One could then compute the posterior on the difference between the two clades. But automating the selection of clades is highly non-trivial and beyond the scope of this package.
+
 ## Detailed interpretation
 
 `result` is a list with five elements:
@@ -212,8 +230,6 @@ post_summary = result$pglmm_fit$summary() |>
   filter(grepl("beta|^intercept|sigma|^phylo_effect", variable)) |> 
   mutate(true_value = c(1,1,1, true_phylo_effects, 0))
 
-post_summary
-
 post_summary[-c(4:93),] |> 
   ggplot(aes(mean, variable)) + 
   geom_point() + 
@@ -233,13 +249,13 @@ Most of the phylogenetic effects are cut from the plot for the sake of visibilit
 So we mostly recaptured our simulation parameters, but how well does the model really fit the data overall? We can use `anpan::plot_tree_with_post_pred()` to overlay the posterior predictive distribution for each leaf and show that, if held out, our model's predictions for that point would usually capture the true observation:
 
 ```{r out.width = "120%"}
-anpan::plot_tree_with_post_pred(tree_file = tr,
-                                meta_file = metadata,
+anpan::plot_tree_with_post_pred(tree_file  = tr,
+                                meta_file  = metadata,
                                 covariates = "covariate",
-                                outcome = "outcome",
-                                fit = result$pglmm_fit,
-                                labels = metadata$sample_id,
-                                verbose = FALSE)
+                                outcome    = "outcome",
+                                fit        = result$pglmm_fit,
+                                labels     = metadata$sample_id,
+                                verbose    = FALSE)
 ```
 
 
