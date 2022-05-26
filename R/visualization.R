@@ -734,6 +734,8 @@ plot_outcome_tree = function(tree_file,
 #' Plot a tree and the PGLMM posterior on phylogenetic effects
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
+#' @details The whiskers of each box plot are the 90% posterior intervals, the
+#'   box is the 50% interval, and the middle line is the posterior mean.
 #' @return either the plot or (if return_tree_df = TRUE) a list containing the
 #'   plot, the segment df, the terminal segment df, and the yrep df.
 #' @inheritParams plot_outcome_tree
@@ -776,7 +778,7 @@ plot_tree_with_post = function(tree_file,
                      upper  = `75%`)) +
     theme_light() +
     scale_x_continuous(breaks = 1:(nrow(tree_plot$terminal_seg_df)),
-                       labels = post_summary$label) +
+                       labels = post_df$label) +
     theme(axis.text.x = element_text(angle = 90,
                                      size  = 3.5,
                                      vjust = .5,
@@ -802,6 +804,10 @@ plot_tree_with_post = function(tree_file,
 #' Plot a tree and the PGLMM posterior predictive
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
+#' @details The whiskers of each box plot are the 90% posterior intervals, the
+#'   box is the 50% interval, and the middle line is the posterior mean. In the
+#'   case of binary outcomes, the dot for each leaf represents the mean of the
+#'   posterior predictions (which is a proportion).
 #' @return either the plot or (if return_tree_df = TRUE) a list containing the
 #'   plot, the segment df, the terminal segment df, and the yrep df.
 #' @inheritParams plot_outcome_tree
@@ -879,7 +885,7 @@ plot_tree_with_post_pred = function(tree_file,
                  yintercept = 0) +
       geom_boxplot(aes(ymin = q5,
                        lower = `25%`,
-                       middle = median,
+                       middle = mean,
                        upper = `75%`,
                        ymax = q95,
                        group = variable_i),
