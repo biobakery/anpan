@@ -298,11 +298,13 @@ anpan_pglmm = function(meta_file,
   model_input = model_input %>%
     arrange(sample_id)
 
+  model_mat = model.matrix(base_formula, data = model_input)
+
   if (family == "gaussian") {
     data_list = list(N = nrow(model_input),
                      Y = model_input[[outcome]],
-                     K = length(covariates) + 1,
-                     X = model.matrix(base_formula, data = model_input),
+                     K = ncol(model_mat),
+                     X = model_mat,
                      Lcov = Lcov,
                      int_mean = outcome_mean,
                      resid_scale = outcome_sd)
@@ -310,8 +312,8 @@ anpan_pglmm = function(meta_file,
   } else {
     data_list = list(N = nrow(model_input),
                      Y = model_input[[outcome]],
-                     K = length(covariates) + 1,
-                     X = model.matrix(base_formula, data = model_input),
+                     K = ncol(model_mat),
+                     X = model_mat,
                      Lcov = Lcov)
   }
 
