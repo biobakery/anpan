@@ -731,6 +731,74 @@ plot_outcome_tree = function(tree_file,
   }
 }
 
+#' Plot a tree and the PGLMM posterior on phylogenetic effects
+#' @param fit a pglmm fit from \code{anpan_pglmm()}
+#' @param labels the ordered tip labels from the tree
+#' @return either the plot or (if return_tree_df = TRUE) a list containing the
+#'   plot, the segment df, the terminal segment df, and the yrep df.
+#' @inheritParams plot_outcome_tree
+#' @export
+plot_tree_with_post = function(tree_file,
+                               meta_file,
+                               fit,
+                               covariates = c("age", "gender"),
+                               outcome = 'crc',
+                               omit_na = FALSE,
+                               verbose = TRUE,
+                               labels,
+                               return_tree_df = FALSE) {
+
+  tree_plot = plot_outcome_tree(tree_file,
+                                meta_file,
+                                covariates = covariates,
+                                outcome = outcome,
+                                omit_na = omit_na,
+                                verbose = verbose,
+                                return_tree_df = TRUE)
+
+  post_df = fit$summary(NULL, "mean", ~quantile(., probs = c(.05, .25, .75, .95))) |>
+    filter(grepl("^phylo_effect", variable)) |>
+    bind_cols(tree_plot$terminal_seg_df) |>
+    mutate(variable_i = 1:(nrow(tree_plot$terminal_seg_df)))
+
+  post_plot = post_df |>
+    ggplot(aes(variable_i, mean)) +
+    geom_hline(yintercept = 0,
+               lty = 2,
+               color = 'grey40') +
+    geom_point() +
+    geom_boxplot(stat = 'identity',
+                 aes(group  = variable_i,
+                     ymin   = `5%`,
+                     ymax   = `95%`,
+                     middle = mean,
+                     lower  = `25%`,
+                     upper  = `75%`)) +
+    theme_light() +
+    scale_x_continuous(breaks = 1:(nrow(tree_plot$terminal_seg_df)),
+                       labels = post_summary$label) +
+    theme(axis.text.x = element_text(angle = 90,
+                                     size  = 3.5,
+                                     vjust = .5,
+                                     hjust = 1),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank()) +
+    labs(y = "phylo_effect posterior",
+         x = NULL)
+
+  p = (tree_plot$tree_plot + theme(axis.text.x = element_blank())) / post_plot + plot_layout(heights = c(2,1))
+
+
+  if (return_tree_df) {
+    return(list(tree_with_post  = p,
+                seg_df          = tree_plot$seg_df,
+                terminal_seg_df = tree_plot$terminal_seg_df,
+                post_df         = post_df))
+  } else {
+    return(p)
+  }
+}
+
 #' Plot a tree and the PGLMM posterior predictive
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
@@ -744,13 +812,9 @@ plot_tree_with_post_pred = function(tree_file,
                                     outcome = 'crc',
                                     omit_na = FALSE,
                                     verbose = TRUE,
-                                    fit = NULL,
+                                    fit,
                                     labels,
                                     return_tree_df = FALSE) {
-
-  if (is.null(fit)) {
-    stop("You must provide a pglmm fit to plot the posterior predictive")
-  }
 
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
