@@ -188,6 +188,10 @@ anpan_pglmm = function(meta_file,
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
 
+  if (!omit_na && nrow(na.omit(model_input)) < nrow(model_input)) {
+    stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
+  }
+
   cor_mat = get_cor_mat(bug_tree)
 
   chol_res = safely_chol(cor_mat)
