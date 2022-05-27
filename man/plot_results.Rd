@@ -9,6 +9,7 @@ plot_results(
   covariates,
   outcome,
   model_input,
+  discretize_inputs = TRUE,
   plot_dir = NULL,
   bug_name,
   annotation_file = NULL,

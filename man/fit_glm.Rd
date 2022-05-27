@@ -9,6 +9,7 @@ fit_glm(
   covariates,
   outcome,
   out_dir,
+  discretized_inputs = TRUE,
   mod_family,
   fastglm_method = NULL
 )

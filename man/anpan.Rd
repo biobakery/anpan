@@ -9,11 +9,12 @@ anpan(
   meta_file,
   out_dir,
   prefiltered_dir = NULL,
-  model_type = "horseshoe",
+  model_type = "fastglm",
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
   filtering_method = "kmeans",
+  discretize_inputs = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
   discard_absent_samples = TRUE,
@@ -30,7 +31,8 @@ anpan(
 
 \item{out_dir}{path to the desired output directory}
 
-\item{prefiltered_dir}{an optional directory to pre-filtered data from an earlier run to skip the filtering step}
+\item{prefiltered_dir}{an optional directory to pre-filtered data from an
+earlier run to skip the filtering step}
 
 \item{model_type}{either "horseshoe", "glm", or "fastglm"}
 
@@ -40,11 +42,21 @@ anpan(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".}
+\item{filtering_method}{method to use for filtering samples. Either "kmeans"
+or "none"}
 
-\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".}
+\item{discretize_inputs}{logical indicating whether to discretize the input
+abundance measurements (0/nonzero --> FALSE/TRUE) before passing them to
+the modelling function}
 
-\item{discard_absent_samples}{logical indicating whether to discard samples when a bug is labelled as completely absent}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes.
+Only used when model_type = "horseshoe".}
+
+\item{save_fit}{logical indicating whether to save horseshoe fit objects.
+Only used when model_type = "horseshoe".}
+
+\item{discard_absent_samples}{logical indicating whether to discard samples
+when a bug is labelled as completely absent}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
@@ -54,6 +66,6 @@ anpan(
 Run the anpan model on a single bug
 }
 \details{
-The specified metadata file must contain columns matching "sample_id"
-  and the specified covariates and outcome variables.
+The specified metadata file must contain columns matching
+  "sample_id" and the specified covariates and outcome variables.
 }

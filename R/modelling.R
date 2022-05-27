@@ -5,6 +5,7 @@ get_bug_name = function(bug_file,
 }
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
+                    discretized_inputs = TRUE,
                     glm_fun,
                     fastglm_method = 1) {
 
@@ -25,6 +26,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
                                        covariates = covariates,
                                        outcome = outcome,
                                        mod_family = mod_family,
+                                       discretized_inputs = discretized_inputs,
                                        fastglm_method = fastglm_method,
                                        .options = furrr::furrr_options(seed = 123))
   # TODO progress bar with progressr
@@ -53,8 +55,14 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
                    file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
   # TODO write this and the one two lines down to a "bug_results/" directory rather than the top level output directory
 
+  if (!discretized_inputs) {
+    bug_term_name = "abd"
+  } else {
+    bug_term_name = "presentTRUE"
+  }
+
   bug_terms = all_terms %>%
-    dplyr::filter(term == "presentTRUE") %>%
+    dplyr::filter(term == bug_term_name) %>%
     dplyr::arrange(p.value) %>%
     dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) %>%
     dplyr::select(-term)
@@ -67,29 +75,44 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
 
 #' Fit a GLM to one gene
 fit_glm = function(gene_dat, covariates, outcome, out_dir,
+                   discretized_inputs = TRUE,
                    mod_family,
                    fastglm_method = NULL) {
   # fastglm_method is NOT used in this function. It's an argument here to make
   # calling a varying function easier inside fit_glms().
 
-  glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + present"))
+  if (!discretized_inputs) {
+    bug_covariate = "abd"
+  } else {
+    bug_covariate = "present"
+  }
+
+  glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + ", bug_covariate))
 
   res = glm(glm_formula,
             data = gene_dat,
             family = mod_family) %>%
     broom::tidy() %>% # Only place I use broom, maybe do it manually
     as.data.table()
+
   return(res)
 }
 
 fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
+                       discretized_inputs = TRUE,
                        mod_family, fastglm_method = 1) {
 
   y = gene_dat[[outcome]]
 
   if (dplyr::n_distinct(y) == 2) y = 1*y
 
-  glm_formula = as.formula(paste0(" ~ ", paste(covariates, collapse = " + "), " + present"))
+  if (!discretized_inputs) {
+    bug_covariate = "abd"
+  } else {
+    bug_covariate = "present"
+  }
+
+  glm_formula = as.formula(paste0(" ~ ", paste(covariates, collapse = " + "), " + ", bug_covariate))
   x = model.matrix(glm_formula,
                    data = gene_dat)
 
@@ -208,28 +231,38 @@ fit_horseshoe = function(model_input,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
-#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the filtering step
+#' @param prefiltered_dir an optional directory to pre-filtered data from an
+#'   earlier run to skip the filtering step
 #' @param model_type either "horseshoe", "glm", or "fastglm"
 #' @param outcome the name of the outcome variable
 #' @param covariates covariates to account for (as a vector of strings)
-#' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".
-#' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".
-#' @param discard_absent_samples logical indicating whether to discard samples when a bug is labelled as completely absent
+#' @param skip_large logical indicating whether to skip bugs with over 5k genes.
+#'   Only used when model_type = "horseshoe".
+#' @param save_fit logical indicating whether to save horseshoe fit objects.
+#'   Only used when model_type = "horseshoe".
+#' @param discard_absent_samples logical indicating whether to discard samples
+#'   when a bug is labelled as completely absent
 #' @param omit_na logical indicating whether to omit incomplete cases
+#' @param filtering_method method to use for filtering samples. Either "kmeans"
+#'   or "none"
+#' @param discretize_inputs logical indicating whether to discretize the input
+#'   abundance measurements (0/nonzero --> FALSE/TRUE) before passing them to
+#'   the modelling function
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
-#' @details The specified metadata file must contain columns matching "sample_id"
-#'   and the specified covariates and outcome variables.
+#' @details The specified metadata file must contain columns matching
+#'   "sample_id" and the specified covariates and outcome variables.
 #' @export
 anpan = function(bug_file,
                  meta_file,
                  out_dir,
                  prefiltered_dir = NULL,
-                 model_type = "horseshoe",
+                 model_type = "fastglm",
                  covariates = c("age", "gender"),
                  outcome = "crc",
                  omit_na = FALSE,
                  filtering_method = "kmeans",
+                 discretize_inputs = TRUE,
                  skip_large = TRUE,
                  save_fit = TRUE,
                  discard_absent_samples = TRUE,
@@ -281,6 +314,12 @@ anpan = function(bug_file,
 
 # Filtering ---------------------------------------------------------------
 
+  if (!discretize_inputs) {
+    bug_covariate = "abd"
+  } else {
+    bug_covariate = "present"
+  }
+
   if (!is.null(prefiltered_dir)) {
 
     if (verbose) message(paste0("(2/", n_steps, ") Reading ", bug_file, " from the provided directory of pre-filtered data."))
@@ -301,7 +340,7 @@ anpan = function(bug_file,
       model_input = data.table::melt(model_input,
                                      id.vars = c(covariates, outcome, "sample_id"),
                                      variable.name = "gene",
-                                     value.name = "present")
+                                     value.name = bug_covariate)
     }
 
   } else {
@@ -312,6 +351,7 @@ anpan = function(bug_file,
                                   covariates = covariates,
                                   outcome = outcome,
                                   filtering_method = filtering_method,
+                                  discretize_inputs = discretize_inputs,
                                   discard_absent_samples = discard_absent_samples,
                                   save_filter_stats = save_filter_stats,
                                   filter_stats_dir = filter_stats_dir,
@@ -337,18 +377,14 @@ anpan = function(bug_file,
 
     if (save_filter_stats) {
       if (verbose) message("* Saving filtered data in wide format. ")
-      pivot_wide = model_type == "horseshoe"
-      if (pivot_wide) {
-        wide_dat = model_input
-      } else {
-        spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
-                               sep = "") %>%
-          as.formula()
 
-        wide_dat = dcast(model_input,
-                         formula = spread_formula,
-                         value.var = 'present')
-      }
+      spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
+                             sep = "") %>%
+        as.formula()
+
+      wide_dat = dcast(model_input,
+                       formula = spread_formula,
+                       value.var = bug_covariate)
 
       write_tsv_no_progress(wide_dat,
                             file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
@@ -372,11 +408,13 @@ anpan = function(bug_file,
                                   covariates = covariates,
                                   outcome = outcome,
                                   bug_name = bug_name,
+                                  discretized_inputs = discretize_inputs,
                                   glm_fun = safely_fit_glm),
                fastglm = fit_glms(model_input, out_dir,
                                   covariates = covariates,
                                   outcome = outcome,
                                   bug_name = bug_name,
+                                  discretized_inputs = discretize_inputs,
                                   glm_fun = safely_fit_fastglm))
 
 
@@ -421,6 +459,7 @@ anpan_batch = function(bug_dir,
                        outcome = "crc",
                        omit_na = FALSE,
                        filtering_method = "kmeans",
+                       discretize_inputs = TRUE,
                        discard_absent_samples = TRUE,
                        skip_large = TRUE,
                        save_fit = TRUE,
@@ -467,6 +506,7 @@ anpan_batch = function(bug_dir,
                                                  skip_large = skip_large,
                                                  save_fit = save_fit,
                                                  filtering_method = filtering_method,
+                                                 discretize_inputs = discretize_inputs,
                                                  discard_absent_samples = discard_absent_samples,
                                                  covariates = covariates,
                                                  outcome = outcome,
@@ -533,6 +573,7 @@ anpan_batch = function(bug_dir,
                                                                                         covariates = covariates,
                                                                                         outcome = outcome,
                                                                                         model_input = fread(file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz"))),
+                                                                                        discretize_inputs = discretize_inputs,
                                                                                         plot_dir = plot_dir,
                                                                                         annotation_file = annotation_file,
                                                                                         plot_ext = plot_ext,

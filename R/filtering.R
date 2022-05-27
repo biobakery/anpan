@@ -270,6 +270,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                            covariates = NULL,
                            outcome = NULL,
                            filtering_method = "kmeans",
+                           discretize_inputs = TRUE,
                            discard_absent_samples = TRUE,
                            save_filter_stats = TRUE,
                            filter_stats_dir = NULL,
@@ -342,7 +343,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   if (save_filter_stats && filtering_method != "none") {
     write_tsv_no_progress(sample_labels,
-                     file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
+                          file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
   }
 
   if (discard_absent_samples && filtering_method != "none") {
@@ -361,7 +362,13 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                                         verbose = verbose) %>%
     dplyr::select(-dplyr::all_of(outcome))
 
-  select_cols = c("gene", "present", "sample_id", covariates, outcome)
+  if (!discretize_inputs) {
+    bug_covariate = "abd"
+  } else {
+    bug_covariate = "present"
+  }
+
+  select_cols = c("gene", bug_covariate, "sample_id", covariates, outcome)
 
   if (nrow(filtered_gf) == 0){
     return(NULL)

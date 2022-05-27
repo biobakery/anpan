@@ -229,16 +229,18 @@ plot_color_bars = function(color_bars, model_input,
 #'   standard) signficance thresholds: p.value < .001 ~ ***, p.value < .01  ~
 #'   **, p.value < .05  ~ *, p.value < .1   ~ ., p.value < 1    ~ " "
 #' @export
-plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, bug_name,
-                             annotation_file = NULL,
-                             cluster = 'none',
-                             show_trees = FALSE,
-                             n_top = 50,
-                             q_threshold = NULL,
-                             show_intervals = TRUE,
-                             width = NULL,
-                             height = NULL,
-                             plot_ext = "pdf") {
+plot_results = function(res, covariates, outcome, model_input,
+                        discretize_inputs = TRUE,
+                        plot_dir = NULL, bug_name,
+                        annotation_file = NULL,
+                        cluster = 'none',
+                        show_trees = FALSE,
+                        n_top = 50,
+                        q_threshold = NULL,
+                        show_intervals = TRUE,
+                        width = NULL,
+                        height = NULL,
+                        plot_ext = "pdf") {
 
   if (cluster %in% c("none", "genes")) {
     show_trees = FALSE
@@ -277,6 +279,7 @@ plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, 
   input_mat = model_input %>% dplyr::select('sample_id', all_of(gene_levels)) %>%
     tibble::column_to_rownames("sample_id") %>%
     as.matrix()
+
   input_mat = 1*input_mat # convert to numeric
 
   if (cluster %in% c('genes', 'both') && ncol(input_mat) > 2) {
@@ -327,10 +330,18 @@ plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, 
                                   levels = unique(color_bars$sample_id))
   }
 
+  if (!discretize_inputs) {
+    bug_covariate = "abd"
+    fill_scale = scale_fill_viridis_c(option = "magma")
+  } else {
+    bug_covariate = "present"
+    fill_scale = scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse"))
+  }
+
   model_input = data.table::melt(model_input %>% dplyr::select(all_of(select_cols), all_of(gene_levels)),
                                  id.vars = c(covariates, outcome, "sample_id"),
                                  variable.name = "gene",
-                                 value.name = "present")
+                                 value.name = bug_covariate)
 
   plot_data = model_input %>%
     mutate(gene = factor(gene, levels = gene_levels),
@@ -399,20 +410,42 @@ plot_results = function(res, covariates, outcome, model_input, plot_dir = NULL, 
     black_vline = NULL
   }
 
-  heatmap_tile = plot_data %>%
-    mutate(present = as.logical(present)) %>%
-    ggplot(aes(y = gene, x = sample_id)) +
-    geom_tile(aes(fill = present)) +
-    black_vline +
-    scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse")) +
-    y_scale +
-    labs(x = "samples",
-         y = NULL) +
-    theme(axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          panel.border = element_blank(),
-          axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
-    coord_cartesian(expand = FALSE)
+  if (!discretize_inputs) {
+
+    if (max(plot_data$abd) > 100*(min(plot_data$abd[plot_data$abd!=0]))) {
+      plot_data$abd = log(plot_data$abd)
+      plot_data$abd[!is.finite(plot_data$abd)] = NA
+      threshold_warning_string = paste0(threshold_warning_string, " Abundance color shown on log scale.")
+    }
+    heatmap_tile = plot_data %>%
+      ggplot(aes(y = gene, x = sample_id)) +
+      geom_tile(aes(fill = abd)) +
+      black_vline +
+      fill_scale +
+      y_scale +
+      labs(x = "samples",
+           y = NULL) +
+      theme(axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            panel.border = element_blank(),
+            axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
+      coord_cartesian(expand = FALSE)
+  } else {
+    heatmap_tile = plot_data %>%
+      mutate(present = as.logical(present)) %>%
+      ggplot(aes(y = gene, x = sample_id)) +
+      geom_tile(aes(fill = present)) +
+      black_vline +
+      fill_scale +
+      y_scale +
+      labs(x = "samples",
+           y = NULL) +
+      theme(axis.text.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            panel.border = element_blank(),
+            axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
+      coord_cartesian(expand = FALSE)
+  }
 
   int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
     dplyr::mutate(max_val = estimate + 1.96*std.error,

@@ -14,6 +14,7 @@ anpan_batch(
   outcome = "crc",
   omit_na = FALSE,
   filtering_method = "kmeans",
+  discretize_inputs = TRUE,
   discard_absent_samples = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
@@ -47,12 +48,21 @@ earlier run to skip the filtering step}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
+\item{filtering_method}{method to use for filtering samples. Either "kmeans"
+or "none"}
+
+\item{discretize_inputs}{logical indicating whether to discretize the input
+abundance measurements (0/nonzero --> FALSE/TRUE) before passing them to
+the modelling function}
+
 \item{discard_absent_samples}{logical indicating whether to discard samples
 when a bug is labelled as completely absent}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when model_type = "horseshoe".}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes.
+Only used when model_type = "horseshoe".}
 
-\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when model_type = "horseshoe".}
+\item{save_fit}{logical indicating whether to save horseshoe fit objects.
+Only used when model_type = "horseshoe".}
 
 \item{annotation_file}{optional path file giving annotations}
 
