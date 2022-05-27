@@ -915,7 +915,7 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_plot = ggplot(yrep_df, aes(x = variable_i)) +
       geom_hline(lty = 2,
                  color = 'grey80',
-                 yintercept = 0) +
+                 yintercept = tree_plot$terminal_seg_df[[outcome]]) +
       geom_boxplot(aes(ymin = q5,
                        lower = `25%`,
                        middle = mean,

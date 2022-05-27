@@ -383,18 +383,151 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   }
 
   if (pivot_wide) {
-    spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
-                           sep = "") %>%
+    if (!is.null(covariates)) {
+      cov_str = paste(covariates, collapse = " + ")
+      form_lhs = paste(cov_str, "sample_id", outcome, sep = " + ")
+    } else {
+      form_lhs = paste("sample_id", outcome, sep = " + ")
+    }
+
+    spread_formula = paste(form_lhs,
+                           " ~ gene",
+                           sep = "") |>
       as.formula()
 
     wide_dat = dcast(joined,
                      formula = spread_formula,
-                     value.var = 'present')
+                     value.var = bug_covariate)
 
     return(wide_dat)
   } else {
     return(joined)
   }
+}
+
+check_filter_res = function(model_input,
+                            bug_file,
+                            warnings_file,
+                            covariates, outcome,
+                            bug_covariate,
+                            filter_stats_dir) {
+
+  if (is.null(model_input)) {
+    readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
+                       file = warnings_file,
+                       append = TRUE)
+    return(NULL)
+  }
+
+  if (nrow(model_input) == 0) {
+    # ^ if nothing passed the prevalence or kmeans filters:
+    readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
+                       file = warnings_file,
+                       append = TRUE)
+    return(NULL)
+  }
+
+  if (!is.null(covariates)) {
+    cov_str = paste(covariates, collapse = " + ")
+    form_lhs = paste(cov_str, "sample_id", outcome, sep = " + ")
+  } else {
+    form_lhs = paste("sample_id", outcome, sep = " + ")
+  }
+
+  spread_formula = paste(form_lhs,
+                         " ~ gene",
+                         sep = "") |>
+    as.formula()
+
+  wide_dat = dcast(model_input,
+                   formula = spread_formula,
+                   value.var = bug_covariate)
+
+  bug_name = get_bug_name(bug_file)
+
+  write_tsv_no_progress(wide_dat,
+                        file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
+
+  return(NULL)
+}
+
+#' Filter a batch of files
+#'
+#' @description This function applies anpan::read_and_filter() to a set of files.
+#' @return A list of filtered data frames
+#' @inheritParams read_and_filter
+#' @inheritParams anpan_batch
+#' @export
+filter_batch = function(bug_dir, metadata,
+                        filter_stats_dir,
+                        pivot_wide = TRUE,
+                        minmax_thresh = 5,
+                        covariates = NULL,
+                        outcome = NULL,
+                        filtering_method = "kmeans",
+                        discretize_inputs = TRUE,
+                        discard_absent_samples = TRUE,
+                        plot_ext = "pdf",
+                        verbose = TRUE) {
+
+  if (!dir.exists(filter_stats_dir)) {
+    if (verbose) message("* Creating the filter stats directory.")
+    dir.create(filter_stats_dir)
+  }
+
+  fs_plot_dir = file.path(filter_stats_dir, 'plots')
+  fs_labs_dir = file.path(filter_stats_dir, 'labels')
+
+  if (!dir.exists(fs_plot_dir)) dir.create(fs_plot_dir)
+  if (!dir.exists(fs_labs_dir)) dir.create(fs_labs_dir)
+
+  warnings_file = file.path(filter_stats_dir, "warnings.txt")
+  if (!file.exists(warnings_file)) {
+    file.create(warnings_file)
+  }
+
+  metadata = read_meta(meta_file,
+                       select_cols = c("sample_id", outcome, covariates),
+                       omit_na = omit_na)
+
+  # Filtering ---------------------------------------------------------------
+
+  if (!discretize_inputs) {
+    bug_covariate = "abd"
+  } else {
+    bug_covariate = "present"
+  }
+
+  bug_files = get_file_list(bug_dir)
+
+  p = progressr::progressor(along = bug_files)
+
+  filter_list = furrr::future_map(bug_files,
+                                  ~{filter_res = read_and_filter(.x,
+                                                                 metadata = metadata,
+                                                                 pivot_wide = pivot_wide,
+                                                                 covariates = covariates,
+                                                                 outcome = outcome,
+                                                                 filtering_method = filtering_method,
+                                                                 discretize_inputs = discretize_inputs,
+                                                                 discard_absent_samples = discard_absent_samples,
+                                                                 save_filter_stats = save_filter_stats,
+                                                                 filter_stats_dir = filter_stats_dir,
+                                                                 plot_ext = plot_ext,
+                                                                 verbose = verbose)
+                                    check_filter_res(filter_res,
+                                                     bug_file = .x,
+                                                     warnings_file = warnings_file,
+                                                     covariates = covariates,
+                                                     outcome = outcome,
+                                                     bug_covariate = bug_covariate,
+                                                     filter_stats_dir = filter_stats_dir)
+                                    p()
+                                    return(filter_res)
+                                  })
+
+  return(filter_list)
+
 }
 
 
