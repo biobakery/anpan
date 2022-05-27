@@ -341,7 +341,7 @@ anpan_pglmm = function(meta_file,
               "\n\nIt would be better to set these based on scientific background knowledge.")
     }
     if (ncol(Xc) > 0) {
-      data_list$beta_sd = array(apply(Xc, 2, sd), dim = 1)
+      data_list$beta_sd = apply(Xc, 2, sd)
     } else {
       data_list$beta_sd = numeric()
     }
