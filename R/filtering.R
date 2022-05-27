@@ -409,6 +409,7 @@ check_filter_res = function(model_input,
                             bug_file,
                             warnings_file,
                             covariates, outcome,
+                            already_wide,
                             bug_covariate,
                             filter_stats_dir) {
 
@@ -427,21 +428,25 @@ check_filter_res = function(model_input,
     return(NULL)
   }
 
-  if (!is.null(covariates)) {
-    cov_str = paste(covariates, collapse = " + ")
-    form_lhs = paste(cov_str, "sample_id", outcome, sep = " + ")
+  if (already_wide) {
+    wide_dat = model_input
   } else {
-    form_lhs = paste("sample_id", outcome, sep = " + ")
+    if (!is.null(covariates)) {
+      cov_str = paste(covariates, collapse = " + ")
+      form_lhs = paste(cov_str, "sample_id", outcome, sep = " + ")
+    } else {
+      form_lhs = paste("sample_id", outcome, sep = " + ")
+    }
+
+    spread_formula = paste(form_lhs,
+                           " ~ gene",
+                           sep = "") |>
+      as.formula()
+
+    wide_dat = dcast(model_input,
+                     formula = spread_formula,
+                     value.var = bug_covariate)
   }
-
-  spread_formula = paste(form_lhs,
-                         " ~ gene",
-                         sep = "") |>
-    as.formula()
-
-  wide_dat = dcast(model_input,
-                   formula = spread_formula,
-                   value.var = bug_covariate)
 
   bug_name = get_bug_name(bug_file)
 
@@ -458,7 +463,7 @@ check_filter_res = function(model_input,
 #' @inheritParams read_and_filter
 #' @inheritParams anpan_batch
 #' @export
-filter_batch = function(bug_dir, metadata,
+filter_batch = function(bug_dir, meta_file,
                         filter_stats_dir,
                         pivot_wide = TRUE,
                         minmax_thresh = 5,
@@ -467,6 +472,7 @@ filter_batch = function(bug_dir, metadata,
                         filtering_method = "kmeans",
                         discretize_inputs = TRUE,
                         discard_absent_samples = TRUE,
+                        omit_na = FALSE,
                         plot_ext = "pdf",
                         verbose = TRUE) {
 
@@ -511,7 +517,7 @@ filter_batch = function(bug_dir, metadata,
                                                                  filtering_method = filtering_method,
                                                                  discretize_inputs = discretize_inputs,
                                                                  discard_absent_samples = discard_absent_samples,
-                                                                 save_filter_stats = save_filter_stats,
+                                                                 save_filter_stats = TRUE,
                                                                  filter_stats_dir = filter_stats_dir,
                                                                  plot_ext = plot_ext,
                                                                  verbose = verbose)
@@ -520,6 +526,7 @@ filter_batch = function(bug_dir, metadata,
                                                      warnings_file = warnings_file,
                                                      covariates = covariates,
                                                      outcome = outcome,
+                                                     already_wide = pivot_wide,
                                                      bug_covariate = bug_covariate,
                                                      filter_stats_dir = filter_stats_dir)
                                     p()
