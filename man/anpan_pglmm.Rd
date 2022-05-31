@@ -16,13 +16,13 @@ anpan_pglmm(
   family = "gaussian",
   show_plot_cor_mat = TRUE,
   show_plot_tree = TRUE,
+  show_yrep = FALSE,
   save_object = FALSE,
   verbose = TRUE,
   loo_comparison = TRUE,
   reg_noise = TRUE,
   reg_gamma_params = c(1, 2),
   plot_ext = "pdf",
-  show_yrep = TRUE,
   beta_sd = NULL,
   ...
 )
@@ -50,7 +50,11 @@ variable (usually "gaussian" or "binomial")}
 \item{show_plot_cor_mat}{show a plot of the correlation matrix derived from
 the tree}
 
-\item{show_plot_tree}{show a plot of the tree overlaid with the outcome}
+\item{show_plot_tree}{show a plot of the tree overlaid with the outcome and
+posterior distribution on phylogenetic effects.}
+
+\item{show_yrep}{logical indicating whether to also plot the posterior
+predictive distribution for each observation if plotting the tree}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
@@ -65,9 +69,6 @@ sigma_phylo to sigma_resid with a Gamma prior}
 the noise term ratio. Default: c(1,2)}
 
 \item{plot_ext}{extension to use when saving plots}
-
-\item{show_yrep}{logical indicating whether to show the posterior predictive
-distribution for each observation if plotting the tree}
 
 \item{beta_sd}{prior standard deviation parameters on the normal distribution
 for each covariate in the GLM component}

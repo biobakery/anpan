@@ -104,9 +104,10 @@ safely_chol = purrr::safely(chol)
 #' @param plot_ext extension to use when saving plots
 #' @param show_plot_cor_mat show a plot of the correlation matrix derived from
 #'   the tree
-#' @param show_plot_tree show a plot of the tree overlaid with the outcome
-#' @param show_yrep logical indicating whether to show the posterior predictive
-#'   distribution for each observation if plotting the tree
+#' @param show_plot_tree show a plot of the tree overlaid with the outcome and
+#'   posterior distribution on phylogenetic effects.
+#' @param show_yrep logical indicating whether to also plot the posterior
+#'   predictive distribution for each observation if plotting the tree
 #' @param ... other arguments to pass to [cmdstanr::sample()]
 #' @param loo_comparison logical indicating whether to compare the phylogenetic
 #'   model against a base model (without the phylogenetic term) using
@@ -148,13 +149,13 @@ anpan_pglmm = function(meta_file,
                        family = "gaussian",
                        show_plot_cor_mat = TRUE,
                        show_plot_tree = TRUE,
+                       show_yrep = FALSE,
                        save_object = FALSE,
                        verbose = TRUE,
                        loo_comparison = TRUE,
                        reg_noise = TRUE,
                        reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
-                       show_yrep = TRUE,
                        beta_sd = NULL,
                        ...) {
 
@@ -366,30 +367,38 @@ anpan_pglmm = function(meta_file,
   }
 
   if (show_plot_tree) {
-    if (!show_yrep) {
-      p = plot_outcome_tree(tree_file,
-                    meta_file,
-                    covariates = covariates,
-                    outcome = outcome,
-                    omit_na = omit_na,
-                    verbose = FALSE)
-    } else {
-      p = plot_tree_with_post_pred(tree_file,
-                                   meta_file,
-                                   covariates = covariates,
-                                   outcome = outcome,
-                                   omit_na = omit_na,
-                                   verbose = FALSE,
-                                   fit = pglmm_fit,
-                                   labels = levels(model_input$sample_id))
-    }
+
+    p = plot_tree_with_post_pred(tree_file,
+                                 meta_file,
+                                 covariates = covariates,
+                                 outcome = outcome,
+                                 omit_na = omit_na,
+                                 verbose = FALSE,
+                                 fit = pglmm_fit,
+                                 labels = levels(model_input$sample_id))
 
     if (!is.null(out_dir)) {
-      ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_tree.", plot_ext)),
+      ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_posterior_tree.", plot_ext)),
              width = 12, height = 8)
     }
 
     if (verbose) print(p)
+
+    if (!show_yrep) {
+      p_post_pred = plot_outcome_tree(tree_file,
+                                      meta_file,
+                                      covariates = covariates,
+                                      outcome = outcome,
+                                      omit_na = omit_na,
+                                      verbose = FALSE)
+
+      if (!is.null(out_dir)) {
+        ggsave(p_post_pred, filename = file.path(out_dir, paste0(bug_name, "_posterior_predictive_tree.", plot_ext)),
+               width = 12, height = 8)
+      }
+
+      if (verbose) print(p_post_pred)
+    }
   }
 
   if (loo_comparison) {
