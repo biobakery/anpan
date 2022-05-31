@@ -125,16 +125,17 @@ cor_mat[1:5,1:5]
 The "t#" labels are the default sample IDs that `ape::rtree()` puts as tip labels.
 
 
-The chunk below generates a normally distributed covariate `covariate`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`. Note that the effect size of the `outcome ~ covariate` relationship is explicitly set to 1:
+The chunk below generates a normally distributed covariate `covariate`, the linear term contribution, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`. Note that the effect size of the linear covariate is explicitly set to 1:
 ```{r}
 covariate = rnorm(n)
+
+linear_term = rnorm(n, mean = 1 * covariate, sd = sigma_resid)
 
 true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_mat)
 
 metadata = tibble(sample_id = colnames(cov_mat),
                   covariate = covariate,
-                  outcome   = true_phylo_effects +
-                              rnorm(n, mean = 1 * covariate, sd = sigma_resid))
+                  outcome   = linear_term + true_phylo_effects)
 
 metadata
 ```
