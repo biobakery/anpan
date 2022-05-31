@@ -715,6 +715,8 @@ plot_outcome_tree = function(tree_file,
     outcome_color_values = c('#abd9e9', '#d73027')
     names(outcome_color_values) = sort(unique(model_input[[outcome]]))
     outcome_color_scale = scale_color_manual(values = outcome_color_values)
+    model_input[[outcome]] = factor(model_input[[outcome]],
+                                    levels = names(outcome_color_values))
   } else {
     outcome_color_scale = scale_color_viridis_c()
   }
@@ -801,7 +803,6 @@ plot_tree_with_post = function(tree_file,
     geom_hline(yintercept = 0,
                lty = 2,
                color = 'grey40') +
-    geom_point() +
     geom_boxplot(stat = 'identity',
                  aes(group  = variable_i,
                      ymin   = `5%`,
@@ -863,35 +864,38 @@ plot_tree_with_post_pred = function(tree_file,
                                 verbose = verbose,
                                 return_tree_df = TRUE)
 
-  if (!all(labels == tree_plot$terminal_seg_df$label)) {
-    stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
-  }
+  # if (!all(labels == tree_plot$terminal_seg_df$label)) {
+  #   stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
+  # }
 
-  yrep_draws = fit$draws(format = "draws_df") %>%
-    tibble::as_tibble() %>%
+  yrep_draws = fit$draws(format = "draws_df") |>
+    tibble::as_tibble() |>
     dplyr::select(matches("yrep"))
 
   if (dplyr::n_distinct(tree_plot$terminal_seg_df[[outcome]]) == 2) {
-    yrep_df = yrep_draws %>%
-      dplyr::summarise_all(mean) %>%
-      tidyr::pivot_longer(dplyr::everything(), 'param', values_to = "prop_1") %>%
-      dplyr::mutate(prop_0 = 1 - prop_1,
-                    one = 1.1, # lol
-                    zero = -0.1) %>%
-      bind_cols(tree_plot$terminal_seg_df) %>%
-      mutate(param = factor(param,
-                            levels = param))
+    yrep_df = yrep_draws  |>
+      posterior::summarise_draws(mean) |>
+      mutate(sample_id = labels) |>
+      dplyr::rename(`y_rep` = mean) |>
+      left_join(tree_plot$terminal_seg_df, by = c("sample_id" = "label")) |>
+      mutate(variable = factor(variable,
+                            levels = variable)) |>
+      select(variable, y_rep, all_of(outcome), sample_id) |>
+      dplyr::rename(y = outcome)
 
-    yrep_df$outcome = as.numeric(yrep_df[[outcome]])
+    # V plot_outcome_tree() made the outcome a factor, need it to be a numeric
+    # so we can have it on a continuous scale with the y / y_rep legend.
+    yrep_df$y = as.numeric(yrep_df$y) - 1
 
-    yrep_df = yrep_df %>%
-      dplyr::select(param, mean_yrep = prop_1, y = outcome) %>%
-      tidyr::pivot_longer(-param,
-                          names_to = "y_type",
-                          values_to = "value")
+    yrep_df = yrep_df |>
+      tidyr::pivot_longer(cols = c("y_rep", "y"),
+                          names_to = 'y_type',
+                          values_to = 'value') |>
+      mutate(y_type = factor(y_type,
+                             levels = c("y_rep", "y")))
 
     yrep_plot = ggplot(yrep_df,
-                       aes(x = param)) +
+                       aes(x = variable)) +
       geom_point(aes(y = value,
                      alpha = y_type)) +
       scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
@@ -900,13 +904,15 @@ plot_tree_with_post_pred = function(tree_file,
             axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
                                        size = 3.5),
             panel.grid = element_blank(),
-            panel.background = element_blank())
+            panel.background = element_blank()) +
+      labs(alpha = NULL)
 
   } else {
-    yrep_df = yrep_draws %>%
+    yrep_df = yrep_draws |>
       posterior::summarise_draws(posterior::default_summary_measures(),
-                                 q = ~quantile(.x, probs = c(.25, .75))) %>%
-      bind_cols(tree_plot$terminal_seg_df) %>%
+                                 q = ~quantile(.x, probs = c(.25, .75))) |>
+      mutate(sample_id = labels) |>
+      left_join(tree_plot$terminal_seg_df, by = c("sample_id" = 'label')) |>
       mutate(variable = factor(variable,
                                levels = variable)) |>
       arrange(variable) |>
@@ -915,7 +921,7 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_plot = ggplot(yrep_df, aes(x = variable_i)) +
       geom_hline(lty = 2,
                  color = 'grey80',
-                 yintercept = tree_plot$terminal_seg_df[[outcome]]) +
+                 yintercept = mean(tree_plot$terminal_seg_df[[outcome]])) +
       geom_boxplot(aes(ymin = q5,
                        lower = `25%`,
                        middle = mean,
