@@ -278,7 +278,7 @@ result$model_input |>
 
 ```
 
-You can see that there's a bit more uncertainty in the slope and intercept than you might expect. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component if free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
+You can see that there's a bit more uncertainty in the slope and intercept than you might expect. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component is free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
 
 
 ### `loo` interpretation
