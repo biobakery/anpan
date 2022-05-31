@@ -456,6 +456,8 @@ check_filter_res = function(model_input,
   return(NULL)
 }
 
+safely_read_and_filter = purrr::safely(read_and_filter)
+
 #' Filter a batch of files
 #'
 #' @description This function applies anpan::read_and_filter() to a set of files.
@@ -509,7 +511,7 @@ filter_batch = function(bug_dir, meta_file,
   p = progressr::progressor(along = bug_files)
 
   filter_list = furrr::future_map(bug_files,
-                                  ~{filter_res = read_and_filter(.x,
+                                  ~{filter_res = safely_read_and_filter(.x,
                                                                  metadata = metadata,
                                                                  pivot_wide = pivot_wide,
                                                                  covariates = covariates,
@@ -521,7 +523,8 @@ filter_batch = function(bug_dir, meta_file,
                                                                  filter_stats_dir = filter_stats_dir,
                                                                  plot_ext = plot_ext,
                                                                  verbose = verbose)
-                                    check_filter_res(filter_res,
+                                    if (!is.null(filter_res$error)) return(NULL)
+                                    check_filter_res(filter_res$result,
                                                      bug_file = .x,
                                                      warnings_file = warnings_file,
                                                      covariates = covariates,
@@ -530,7 +533,7 @@ filter_batch = function(bug_dir, meta_file,
                                                      bug_covariate = bug_covariate,
                                                      filter_stats_dir = filter_stats_dir)
                                     p()
-                                    return(filter_res)
+                                    return(filter_res$result)
                                   })
 
   return(filter_list)
