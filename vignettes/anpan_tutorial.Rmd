@@ -99,9 +99,9 @@ To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariat
 The code chunk below sets a randomization seed and the parameters we'll use, then generates a random tree:
 
 ```{r eval = TRUE}
-set.seed(1234)
+set.seed(123)
 
-n = 100
+n = 120
 sigma_phylo = 1
 sigma_resid = 1
 
@@ -158,7 +158,7 @@ plot_outcome_tree(tr,
                   outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny correlates with the outcome. The right side is generally a bit brighter, and close neighbors usually have about the same shade of color.
+You can sort of see by eye that the phylogeny correlates with the outcome. The middle clade is generally brighter, and close neighbors usually have about the same shade of color.
 
 How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
@@ -200,9 +200,9 @@ plot_tree_with_post(tr,
                     labels     = metadata$sample_id)
 ```
 
-You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up on the right side and tightly correlated neighbors generally have very similar phylogenetic effects.
+You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up in the middle clade and tightly correlated neighbors generally have very similar phylogenetic effects.
 
-But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is the simplest presentation of the raw model fit. 
+But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is a simple presentation of the raw model fit, but can't draw the sharp dividing lines we might want. 
 
 In principle one could manually define a clade (ideally with some orthogonal justification for the choice of membership) and sum the phylogenetic effects of that clade to get a "clade effect", then contrast that quantity against a similar quantity summed over all nonmembers. One could then compute the posterior on the difference between the two clades. But automating the selection of clades is highly non-trivial and beyond the scope of this package.
 
@@ -231,7 +231,7 @@ post_summary = result$pglmm_fit$summary() |>
   filter(grepl("beta|^intercept|sigma|^phylo_effect", variable)) |> 
   mutate(true_value = c(1,1,1, true_phylo_effects, 0))
 
-post_summary[-c(4:93),] |> 
+post_summary[-c(4:113),] |> 
   ggplot(aes(mean, variable)) + 
   geom_point() + 
   geom_segment(aes(x = q5, xend = q95,
@@ -245,7 +245,7 @@ post_summary[-c(4:93),] |>
   theme_light()
 ```
 
-Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta is fairly close to the true value (1), as is the intercept (0) and noise terms. Importantly, the 90% posterior intervals capture the true values.
+Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta[1] (the effect of the covariate) is fairly close to the true value (1), as are the intercept (0) and noise terms (1 and 1). Importantly, the 90% posterior intervals capture the true values.
 
 So we mostly recaptured our simulation parameters, but how well does the model really fit the data overall? We can use `anpan::plot_tree_with_post_pred()` to overlay the posterior predictive distribution for each leaf and show that, if held out, our model's predictions for that point would usually capture the true observation:
 
@@ -258,9 +258,9 @@ anpan::plot_tree_with_post_pred(tree_file  = tr,
                                 labels     = metadata$sample_id,
                                 verbose    = FALSE)
 ```
+So when observations (the colored dots) are held out, the posterior predictive distribution for each leaf (the boxplots) generally capture the true value, showing that our model generally fits the data well.
 
-
-What about the posterior on the linear model component? We can visualize that two by taking some of the posterior draws (with `cmdstanr::draws()`) of the line and overlay that onto the marginal linear component:
+What about the posterior on the linear model component? We can visualize that by taking some of the posterior draws (with `cmdstanr::draws()`) of the line (the parameters `beta[1]` and `intercept`) and overlay those onto the `outcome ~ covariate` scatterplot:
 
 ```{r}
 line_draws = result$pglmm_fit$draws(format = 'data.frame') |> 
@@ -280,7 +280,6 @@ result$model_input |>
 ```
 
 You can see that there's a bit more uncertainty in the slope and intercept than you might expect. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component is free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
-
 
 ### `loo` interpretation
 
