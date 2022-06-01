@@ -293,7 +293,7 @@ PGLMM models are very flexible because they have a parameter for every leaf. In 
 
 The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
 
-We only got 1 non-good Pareto k value here, so in this case the model comparison should be fine.
+We only got a small number of non-good Pareto k value here (and none that were bad), so in this case the model comparison should be fine.
 
 Let's look at the model comparison:
 
