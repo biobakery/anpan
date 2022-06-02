@@ -199,10 +199,10 @@ anpan_pglmm = function(meta_file,
 
   if (family == "binomial" && is.factor(model_input[[outcome]])) {
     message("family == \"binomial\" and outcome variable is a factor. Converting to 0/1 with the following mapping:")
-    map_df = data.frame(input_levels = levels(model_input[[outcome]]),
+    mapping_df = data.frame(input_levels = levels(model_input[[outcome]]),
                         mapped_values = as.numeric(unique(sort(model_input[[outcome]]))) - 1)
 
-    message(paste0(capture.output(map_df),
+    message(paste0(capture.output(mapping_df),
                    sep = "\n"))
 
     model_input[[outcome]] = as.numeric(model_input[[outcome]]) - 1
