@@ -189,6 +189,26 @@ anpan_pglmm = function(meta_file,
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
 
+  if (family == "binomial" && dplyr::n_distinct(model_input[[outcome]]) != 2) {
+    stop('family == "binomial" but couldn\'t find 2 distinct outcomes in the outcome variable.')
+  }
+
+  if (family == "binomial" && is.character(model_input[[outcome]])) {
+    stop('family == "binomial" but the type of the outcome variable is character. Please change to either 0/1, FALSE/TRUE, or an appropriately ordered factor.')
+  }
+
+  if (family == "binomial" && is.factor(model_input[[outcome]])) {
+    message("family == \"binomial\" and outcome variable is a factor. Converting to 0/1 with the following mapping:")
+    map_df = data.frame(input_levels = levels(model_input[[outcome]]),
+                        mapped_values = as.numeric(unique(sort(model_input[[outcome]]))) - 1)
+
+    message(paste0(capture.output(map_df),
+                   sep = "\n"))
+
+    model_input[[outcome]] = as.numeric(model_input[[outcome]]) - 1
+
+  }
+
   if (!omit_na && nrow(na.omit(model_input)) < nrow(model_input)) {
     stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
   }
@@ -433,7 +453,8 @@ anpan_pglmm = function(meta_file,
                         max_i = nrow(draw_df),
                         effect_means = effect_means,
                         cor_mat = cor_mat,
-                        Xc = Xc, Y = data_list$Y,
+                        Xc = Xc,
+                        Y = data_list$Y,
                         family = family,
                         verbose = verbose)
 
