@@ -135,6 +135,10 @@ safely_chol = purrr::safely(chol)
 #'
 #'   This function tries to get the \code{bug_name} argument from the tree file,
 #'   but if it's not provided you may need to set it yourself.
+#'
+#'   If using \code{beta_sd} with a categorical predictor with >2 levels, only
+#'   specify a single element in beta_sd. This appropriate element will get
+#'   repeated as necessary.
 #' @inheritParams anpan
 #' @seealso [loo::loo()], [cmdstanr::sample()]
 #' @export
@@ -370,7 +374,7 @@ anpan_pglmm = function(meta_file,
       data_list$beta_sd = numeric()
     }
   } else {
-    data_list$beta_sd = beta_sd
+    data_list$beta_sd = beta_sd[as.vector(attr(model_mat, "assign")[-1])]
   }
 
   if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))

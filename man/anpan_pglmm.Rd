@@ -104,6 +104,10 @@ vector is inf".
 
 This function tries to get the \code{bug_name} argument from the tree file,
 but if it's not provided you may need to set it yourself.
+
+If using \code{beta_sd} with a categorical predictor with >2 levels, only
+specify a single element in beta_sd. This appropriate element will get
+repeated as necessary.
 }
 \seealso{
 \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
