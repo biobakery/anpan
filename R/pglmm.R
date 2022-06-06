@@ -370,7 +370,7 @@ anpan_pglmm = function(meta_file,
       data_list$beta_sd = numeric()
     }
   } else {
-    data_list$beta_sd = array(beta_sd, dim = 1)
+    data_list$beta_sd = beta_sd
   }
 
   if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))
