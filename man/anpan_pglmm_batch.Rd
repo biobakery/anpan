@@ -21,6 +21,8 @@ anpan_pglmm_batch(
   reg_noise = TRUE,
   plot_ext = "pdf",
   show_yrep = TRUE,
+  reg_gamma_params = c(1, 2),
+  beta_sd = NULL,
   seed = 123,
   ...
 )
@@ -63,6 +65,12 @@ sigma_phylo to sigma_resid with a Gamma prior}
 
 \item{show_yrep}{logical indicating whether to also plot the posterior
 predictive distribution for each observation if plotting the tree}
+
+\item{reg_gamma_params}{the shape and rate parameters of the Gamma prior on
+the noise term ratio. Default: c(1,2)}
+
+\item{beta_sd}{prior standard deviation parameters on the normal distribution
+for each covariate in the GLM component}
 
 \item{seed}{random seed to pass to furrr_options()}
 
