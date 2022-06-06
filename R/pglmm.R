@@ -356,7 +356,7 @@ anpan_pglmm = function(meta_file,
     }
   }
 
-  if (!is.null(beta_sd) && length(beta_sd) != data_list$K) stop("The number of covariates provided doesn't match the length of the provided beta_sd argument.")
+  if (!is.null(beta_sd) && length(beta_sd) != (data_list$K - 1)) stop("The number of covariates provided doesn't match the length of the provided beta_sd argument.")
 
   if (is.null(beta_sd)) {
     # TODO write this to a log file...
