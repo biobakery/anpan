@@ -686,9 +686,9 @@ plot_outcome_tree = function(tree_file,
                              verbose = TRUE,
                              return_tree_df = FALSE) {
 
-  if (length(covariates) > 2) {
-    stop("more than two covariates is currently not supported")
-  }
+  # if (length(covariates) > 2) {
+  #   stop("more than two covariates is currently not supported")
+  # }
 
   olap_list = olap_tree_and_meta(tree_file,
                                  meta_file,
