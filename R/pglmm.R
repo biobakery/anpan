@@ -176,8 +176,6 @@ anpan_pglmm = function(meta_file,
     reg_noise = FALSE
   }
 
-  if (!is.null(beta_sd) && length(beta_sd) != length(covariates)) stop("The number of covariates provided doesn't match the length of the provided beta_sd argument.")
-
   olap_list = olap_tree_and_meta(tree_file,
                                  meta_file,
                                  covariates,
@@ -354,12 +352,17 @@ anpan_pglmm = function(meta_file,
     }
   }
 
+  if (!is.null(beta_sd) && length(beta_sd) != data_list$K) stop("The number of covariates provided doesn't match the length of the provided beta_sd argument.")
+
   if (is.null(beta_sd)) {
     # TODO write this to a log file...
     if (length(covariates) > 0) {
-      message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n\n",
-              paste(round(apply(Xc, 2, sd), digits = 4), collapse = ", "),
-              "\n\nIt would be better to set these based on scientific background knowledge.")
+      prior_df = data.table(linear_term = colnames(data_list$X)[-1],
+                            prior_sd = round(apply(Xc, 2, sd), digits = 3))
+      message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n")
+      message(paste0(capture.output(prior_df),
+                     sep = "\n"))
+      message("\n\nIt would be better to set these based on scientific background knowledge.")
     }
     if (ncol(Xc) > 0) {
       data_list$beta_sd = apply(Xc, 2, sd)
