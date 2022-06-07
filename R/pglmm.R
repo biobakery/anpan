@@ -139,6 +139,15 @@ safely_chol = purrr::safely(chol)
 #'   If using \code{beta_sd} with a categorical predictor with >2 levels, only
 #'   specify a single element in beta_sd. This appropriate element will get
 #'   repeated as necessary.
+#' @examples
+#' meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
+#' tr = ape::rtree(100)
+#' anpan_pglmm(meta, tr,
+#' outcome = "x",
+#' iter_sampling = 10,
+#' iter_warmup = 10,
+#' show_plot_cor_mat = FALSE,
+#' show_plot_tree = FALSE)
 #' @inheritParams anpan
 #' @seealso [loo::loo()], [cmdstanr::sample()]
 #' @export
