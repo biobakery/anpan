@@ -58,6 +58,8 @@ We'll cover the last point first in the section on phylogenetic generalized line
 
 # Libraries
 
+If you need installation instructions, please see [the readme on Github](https://github.com/biobakery/anpan#dependencies). 
+
 We'll start by loading the library in this code chunk:
 
 ```{r}
