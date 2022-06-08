@@ -112,12 +112,7 @@ You can try `plot(tr)` if you want to take a quick look at your tree, but we'll 
 
 The chunk below derives the correlation matrix implied by the tree:
 ```{r}
-cov_mat = ape::vcv.phylo(tr)
-s       = sqrt(diag(cov_mat))
-cor_mat = diag(1/s) %*% cov_mat %*% diag(1/s) 
-
-rownames(cor_mat) = rownames(cov_mat)
-colnames(cor_mat) = colnames(cov_mat)
+cor_mat = ape::vcv.phylo(tr, corr = TRUE)
 
 cor_mat[1:5,1:5]
 ```
@@ -133,7 +128,7 @@ linear_term = rnorm(n, mean = 1 * covariate, sd = sigma_resid)
 
 true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_mat)
 
-metadata = tibble(sample_id = colnames(cov_mat),
+metadata = tibble(sample_id = colnames(cor_mat),
                   covariate = covariate,
                   outcome   = linear_term + true_phylo_effects)
 
