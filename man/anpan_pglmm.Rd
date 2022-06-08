@@ -120,5 +120,5 @@ show_plot_cor_mat = FALSE,
 show_plot_tree = FALSE)
 }
 \seealso{
-\code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
+\code{\link[=anpan_pglmm_batch]{anpan_pglmm_batch()}}, \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
 }

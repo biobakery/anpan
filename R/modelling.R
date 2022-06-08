@@ -252,6 +252,7 @@ fit_horseshoe = function(model_input,
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
 #' @details The specified metadata file must contain columns matching
 #'   "sample_id" and the specified covariates and outcome variables.
+#' @seealso [anpan_batch()]
 #' @export
 anpan = function(bug_file,
                  meta_file,

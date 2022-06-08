@@ -149,7 +149,7 @@ safely_chol = purrr::safely(chol)
 #' show_plot_cor_mat = FALSE,
 #' show_plot_tree = FALSE)
 #' @inheritParams anpan
-#' @seealso [loo::loo()], [cmdstanr::sample()]
+#' @seealso [anpan_pglmm_batch()], [loo::loo()], [cmdstanr::sample()]
 #' @export
 anpan_pglmm = function(meta_file,
                        tree_file,

@@ -69,3 +69,6 @@ Run the anpan model on a single bug
 The specified metadata file must contain columns matching
   "sample_id" and the specified covariates and outcome variables.
 }
+\seealso{
+[anpan_batch()]
+}
