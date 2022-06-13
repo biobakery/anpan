@@ -325,7 +325,7 @@ anpan_pglmm = function(meta_file,
     Lcov = t(chol_res$result)
   }
 
-  if (!(class(tree_file) == "phylo") && is.null(bug_name)) {
+  if (!(class(tree_file) == "phylo") && is.null(bug_name) && !is.null(tree_file)) {
     bug_name = get_bug_name(tree_file,
                             remove_pattern = ".tre$|.tree$")
   } else {
