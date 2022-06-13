@@ -1,3 +1,64 @@
+olap_cor_mat_and_meta = function(cor_mat,
+                                 meta_file,
+                                 covariates,
+                                 outcome,
+                                 omit_na = FALSE,
+                                 trim_pattern,
+                                 verbose = TRUE) {
+
+  if (is.data.frame(meta_file)) {
+
+    meta = meta_file %>%
+      dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
+
+    if (omit_na) meta = na.omit(meta)
+
+  } else {
+    meta = read_meta(meta_file,
+                     select_cols = c("sample_id", covariates, outcome),
+                     omit_na = omit_na)
+  }
+
+  if (!is.null(trim_pattern)) {
+    rownames(cor_mat) = gsub(trim_pattern, "", rownames(cor_mat))
+    colnames(cor_mat) = gsub(trim_pattern, "", colnames(cor_mat))
+  }
+
+  overlapping_samples = intersect(rownames(cor_mat),
+                                  meta$sample_id)
+
+  if (!all(rownames(cor_mat) %in% overlapping_samples)) {
+
+    n_tree_olap = sum(rownames(cor_mat) %in% overlapping_samples)
+
+    if (verbose) message(paste0("Dropping ",
+                                sum(!(rownames(cor_mat) %in% overlapping_samples)),
+                                " tips from the correlation matrix (out of ",
+                                length(rownames(cor_mat)),
+                                ") not present in the metadata."))
+    cor_mat = cor_mat[overlapping_samples,
+                      overlapping_samples]
+
+  }
+
+  model_input = meta %>%
+    dplyr::filter(sample_id %in% overlapping_samples)
+
+  if (nrow(model_input) < nrow(meta) & verbose) {
+    message(paste0("Dropping ",
+                   nrow(meta) - nrow(model_input),
+                   ' samples from the metadata (out of ',
+                   nrow(meta),
+                   ' in total) not present in the tree.' ))
+  }
+
+  res = list(cor_mat,
+             model_input)
+
+  return(res)
+
+}
+
 #' Overlap a tree and metadata
 #' @description Overlap a tree's leaves with the observations in metadata,
 #'   returning an intersected tree and metadata data.table.
@@ -12,6 +73,7 @@ olap_tree_and_meta = function(tree_file,
                               omit_na = FALSE,
                               trim_pattern,
                               verbose = TRUE) {
+
 
   if (class(tree_file) == "phylo") {
     bug_tree = tree_file
@@ -74,11 +136,11 @@ olap_tree_and_meta = function(tree_file,
 #' @seealso [ape::read.tree()]
 #' @export
 get_cor_mat = function(bug_tree) {
-  cov_mat = ape::vcv.phylo(bug_tree)
+  cor_mat = ape::vcv.phylo(bug_tree, corr = TRUE)
 
-  d = sqrt(diag(cov_mat))
-  cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
-  dimnames(cor_mat) = dimnames(cov_mat)
+  # d = sqrt(diag(cov_mat))
+  # cor_mat = diag(1/d) %*% cov_mat %*% diag(1/d)
+  # dimnames(cor_mat) = dimnames(cov_mat)
   return(cor_mat)
 }
 
@@ -87,9 +149,11 @@ safely_chol = purrr::safely(chol)
 #' @title Run a phylogenetic generalized linear mixed model
 #' @md
 #' @param tree_file either a path to a tree file readable by [ape::read.tree()]
-#'   or an object of class "phylo" that is already read into R
+#'   or an object of class "phylo" that is already read into R. Ignored if
+#'   \code{cor_mat} is supplied.
 #' @param meta_file either a data frame of metadata or a path to file containing
 #'   the metadata
+#' @param cor_mat a correlation matrix provided as an alternative to a tree.
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param family string giving the name of the distribution of the outcome
 #'   variable (usually "gaussian" or "binomial")
@@ -152,7 +216,8 @@ safely_chol = purrr::safely(chol)
 #' @seealso [anpan_pglmm_batch()], [loo::loo()], [cmdstanr::sample()]
 #' @export
 anpan_pglmm = function(meta_file,
-                       tree_file,
+                       tree_file = NULL,
+                       cor_mat = NULL,
                        outcome,
                        covariates = NULL,
                        out_dir = NULL,
@@ -189,16 +254,34 @@ anpan_pglmm = function(meta_file,
     reg_noise = FALSE
   }
 
-  olap_list = olap_tree_and_meta(tree_file,
-                                 meta_file,
-                                 covariates,
-                                 outcome,
-                                 omit_na,
-                                 trim_pattern,
-                                 verbose)
+  if (is.null(cor_mat)) {
+    cor_mat_provided = FALSE
+  } else {
+    cor_mat_provided = TRUE
+  }
 
-  bug_tree = olap_list[[1]]
-  model_input = olap_list[[2]]
+  if (is.null(cor_mat)) {
+    olap_list = olap_tree_and_meta(tree_file,
+                                   meta_file,
+                                   covariates,
+                                   outcome,
+                                   omit_na,
+                                   trim_pattern,
+                                   verbose)
+
+    bug_tree = olap_list[[1]]
+    model_input = olap_list[[2]]
+  } else {
+    olap_list = olap_cor_mat_and_meta(cor_mat,
+                                      meta_file,
+                                      covariates,
+                                      outcome,
+                                      omit_na,
+                                      trim_pattern,
+                                      verbose)
+    cor_mat = olap_list[[1]]
+    model_input = olap_list[[2]]
+  }
 
   if (family == "binomial" && dplyr::n_distinct(model_input[[outcome]]) != 2) {
     stop('family == "binomial" but couldn\'t find 2 distinct outcomes in the outcome variable.')
@@ -224,13 +307,23 @@ anpan_pglmm = function(meta_file,
     stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
   }
 
-  cor_mat = get_cor_mat(bug_tree)
+  if (cor_mat_provided) {
 
-  chol_res = safely_chol(cor_mat)
+    chol_res = safely_chol(cor_mat)
 
-  if (!is.null(chol_res$error)) stop("Could not compute the Cholesky factorization of the correlation matrix. It's probably not positive definite up to numerical precision. Try olap_tree_and_meta() and get_cor_mat() to examine the correlation matrix directly.")
+    if (!is.null(chol_res$error)) stop("Could not compute the Cholesky factorization of the correlation matrix. It's probably not positive definite up to numerical precision. Try olap_tree_and_meta() and get_cor_mat() to examine the correlation matrix directly.")
 
-  Lcov = t(chol_res$result)
+    Lcov = t(chol_res$result)
+
+  } else {
+    cor_mat = get_cor_mat(bug_tree)
+
+    chol_res = safely_chol(cor_mat)
+
+    if (!is.null(chol_res$error)) stop("Could not compute the Cholesky factorization of the correlation matrix. It's probably not positive definite up to numerical precision. Try olap_tree_and_meta() and get_cor_mat() to examine the correlation matrix directly.")
+
+    Lcov = t(chol_res$result)
+  }
 
   if (!(class(tree_file) == "phylo") && is.null(bug_name)) {
     bug_name = get_bug_name(tree_file,
@@ -241,7 +334,7 @@ anpan_pglmm = function(meta_file,
 
   if (show_plot_cor_mat) {
     p = plot_cor_mat(cor_mat,
-                          bug_name)
+                     bug_name)
     if (verbose) message("Plotting correlation matrix...")
 
     if (verbose) print(p)
@@ -401,6 +494,11 @@ anpan_pglmm = function(meta_file,
                                  init = base_init,
                                  output_dir = base_dir,
                                  ...)
+  }
+
+  if (cor_mat_provided && is.null(tree_file) && show_plot_tree) {
+    message("show_plot_tree = TRUE but no tree_file was supplied. Setting show_plot_tree = FALSE")
+    show_plot_tree = FALSE
   }
 
   if (show_plot_tree) {
