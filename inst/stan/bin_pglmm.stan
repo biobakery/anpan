@@ -5,6 +5,7 @@ data {
   matrix[N, K] X;  // population-level design matrix
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
   vector<lower=0>[K-1] beta_sd;
+  real<lower=0> sigma_phylo_scale;
 }
 transformed data {
   int Kc = K - 1;
@@ -35,7 +36,9 @@ model {
 
   target += normal_lpdf(beta | 0, beta_sd);
 
-  target += std_normal_lpdf(sigma_phylo) - std_normal_lccdf(0);
+  target += normal_lpdf(sigma_phylo | 0, sigma_phylo_scale) - normal_lccdf(0 | 0, sigma_phylo_scale);
+
+  // target += std_normal_lpdf(sigma_phylo) - std_normal_lccdf(0);
 
   target += std_normal_lpdf(std_phylo_effect);
 }

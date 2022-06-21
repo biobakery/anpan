@@ -6,7 +6,8 @@
 \usage{
 anpan_pglmm(
   meta_file,
-  tree_file,
+  tree_file = NULL,
+  cor_mat = NULL,
   outcome,
   covariates = NULL,
   out_dir = NULL,
@@ -24,6 +25,7 @@ anpan_pglmm(
   reg_gamma_params = c(1, 2),
   plot_ext = "pdf",
   beta_sd = NULL,
+  sigma_phylo_scale = 1,
   ...
 )
 }
@@ -32,7 +34,10 @@ anpan_pglmm(
 the metadata}
 
 \item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}}
-or an object of class "phylo" that is already read into R}
+or an object of class "phylo" that is already read into R. Ignored if
+\code{cor_mat} is supplied.}
+
+\item{cor_mat}{a correlation matrix provided as an alternative to a tree.}
 
 \item{outcome}{the name of the outcome variable}
 
@@ -73,6 +78,9 @@ the noise term ratio. Default: c(1,2)}
 \item{beta_sd}{prior standard deviation parameters on the normal distribution
 for each covariate in the GLM component}
 
+\item{sigma_phylo_scale}{standard deviation of half-normal prior on
+\code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}}
+
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
 \value{
@@ -108,6 +116,12 @@ but if it's not provided you may need to set it yourself.
 If using \code{beta_sd} with a categorical predictor with >2 levels, only
 specify a single element in beta_sd. This appropriate element will get
 repeated as necessary.
+
+Common cmdstanr options that one might want to pass in via ... include
+\code{refresh = 500} (show fewer MCMC progress updates), \code{adapt_delta
+  = .98} (avoid divergences at the cost of possibly needing more iterations
+to get convergence) and \code{parallel_chains = 4} (run the MCMC chains in
+parallel).
 }
 \examples{
 meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))

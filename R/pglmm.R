@@ -176,6 +176,8 @@ safely_chol = purrr::safely(chol)
 #' @param loo_comparison logical indicating whether to compare the phylogenetic
 #'   model against a base model (without the phylogenetic term) using
 #'   [loo::loo_compare()]
+#' @param sigma_phylo_scale standard deviation of half-normal prior on
+#'   \code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}
 #' @return A list containing the model input (in the order passed to the model),
 #'   estimated correlation matrix, the pglmm fit object, and (if
 #'   \code{loo_comparison} is on) the base fit object and the associated loo
@@ -203,6 +205,12 @@ safely_chol = purrr::safely(chol)
 #'   If using \code{beta_sd} with a categorical predictor with >2 levels, only
 #'   specify a single element in beta_sd. This appropriate element will get
 #'   repeated as necessary.
+#'
+#'   Common cmdstanr options that one might want to pass in via ... include
+#'   \code{refresh = 500} (show fewer MCMC progress updates), \code{adapt_delta
+#'   = .98} (avoid divergences at the cost of possibly needing more iterations
+#'   to get convergence) and \code{parallel_chains = 4} (run the MCMC chains in
+#'   parallel).
 #' @examples
 #' meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
 #' tr = ape::rtree(100)
@@ -235,6 +243,7 @@ anpan_pglmm = function(meta_file,
                        reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
                        beta_sd = NULL,
+                       sigma_phylo_scale = 1,
                        ...) {
 
   n_steps = ifelse(loo_comparison,
@@ -443,7 +452,8 @@ anpan_pglmm = function(meta_file,
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
-                     Lcov = Lcov)
+                     Lcov = Lcov,
+                     sigma_phylo_scale = sigma_phylo_scale)
   }
 
   Xc = matrix(nrow = data_list$N,
@@ -644,6 +654,14 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'
 #'   If any trees cause an error while fitting, these are saved into a data
 #'   frame in a file \code{pglmm_errors.RData} in the output directory.
+#'
+#'   The Stan model fitting can't be parallelized via futures, so the most
+#'   effective way to parallelize the model fitting AND the importance weight
+#'   calculations is a nested future topology (e.g. \code{plan(list(sequential,
+#'   tweak(multisession, workers = 4)))} ) and set parallel_chains = 4 . This
+#'   will run sequentially over the trees, running the model fits with parallel
+#'   chains for each tree, then compute the importance weights in the future
+#'   multisession for each tree.
 #' @returns a data frame for each file in input directory that fit successfully.
 #'   Columns give the PGLMM results, "base" model results, and loo comparisons
 #'   in list columns.
@@ -667,6 +685,7 @@ anpan_pglmm_batch = function(meta_file,
                              show_yrep = TRUE,
                              reg_gamma_params = c(1,2),
                              beta_sd = NULL,
+                             sigma_phylo_scale = 1,
                              seed = 123,
                              ...) {
 
@@ -781,6 +800,7 @@ anpan_pglmm_batch = function(meta_file,
                                                               reg_gamma_params = reg_gamma_params,
                                                               plot_ext = plot_ext,
                                                               show_yrep = show_yrep,
+                                                              sigma_phylo_scale = sigma_phylo_scale,
                                                               refresh = 0,
                                                               ...)
                                      p()

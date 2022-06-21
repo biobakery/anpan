@@ -23,6 +23,7 @@ anpan_pglmm_batch(
   show_yrep = TRUE,
   reg_gamma_params = c(1, 2),
   beta_sd = NULL,
+  sigma_phylo_scale = 1,
   seed = 123,
   ...
 )
@@ -72,6 +73,9 @@ the noise term ratio. Default: c(1,2)}
 \item{beta_sd}{prior standard deviation parameters on the normal distribution
 for each covariate in the GLM component}
 
+\item{sigma_phylo_scale}{standard deviation of half-normal prior on
+\code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}}
+
 \item{seed}{random seed to pass to furrr_options()}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
@@ -91,4 +95,12 @@ This function fits phylogenetic generalized linear mixed models
 
   If any trees cause an error while fitting, these are saved into a data
   frame in a file \code{pglmm_errors.RData} in the output directory.
+
+  The Stan model fitting can't be parallelized via futures, so the most
+  effective way to parallelize the model fitting AND the importance weight
+  calculations is a nested future topology (e.g. \code{plan(list(sequential,
+  tweak(multisession, workers = 4)))} ) and set parallel_chains = 4 . This
+  will run sequentially over the trees, running the model fits with parallel
+  chains for each tree, then compute the importance weights in the future
+  multisession for each tree.
 }
