@@ -81,12 +81,12 @@ This will run an anpan batch analysis for each functional profile
 present in `bug_dir` (there should be one input file per bug). For each
 bug, `anpan`:
 
-1.  reads in the metadata (containing the specified outcome and
+1)  reads in the metadata (containing the specified outcome and
     covariates) and the functional profile
-2.  applies adaptive filtering to discard samples where the species was
+2)  applies adaptive filtering to discard samples where the species was
     likely not present (based on low abundance and few non-zero
     observations) based on the sample’s functional profile.
-3.  fits a model to the filtered data:
+3)  fits a model to the filtered data:
     -   `model_type = "fastglm"` or `model_type = "glm"` will fit
         regressions to each gene in the input file separately (using the
         specified outcome distribution), then apply FDR correction to
@@ -102,7 +102,7 @@ bug, `anpan`:
         `outcome ~ covariate1 + covariate2 + ... + gene1_presence + gene2_presence + gene3_presence + ...`
         including all of the specified covariates and (typically
         thousands of) genes detected in the bug.
-4.  then writes results to the output directory, including tables of
+4)  then writes results to the output directory, including tables of
     regression coefficients, per-bug plots of the top hits, and filter
     statistics.
 
