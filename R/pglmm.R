@@ -177,7 +177,8 @@ safely_chol = purrr::safely(chol)
 #'   model against a base model (without the phylogenetic term) using
 #'   [loo::loo_compare()]
 #' @param sigma_phylo_scale standard deviation of half-normal prior on
-#'   \code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}
+#'   \code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}.
+#'   Increasing this value can easily lead to overfitting.
 #' @return A list containing the model input (in the order passed to the model),
 #'   estimated correlation matrix, the pglmm fit object, and (if
 #'   \code{loo_comparison} is on) the base fit object and the associated loo
@@ -243,7 +244,7 @@ anpan_pglmm = function(meta_file,
                        reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
                        beta_sd = NULL,
-                       sigma_phylo_scale = 1,
+                       sigma_phylo_scale = 0.333,
                        ...) {
 
   n_steps = ifelse(loo_comparison,
@@ -685,7 +686,7 @@ anpan_pglmm_batch = function(meta_file,
                              show_yrep = TRUE,
                              reg_gamma_params = c(1,2),
                              beta_sd = NULL,
-                             sigma_phylo_scale = 1,
+                             sigma_phylo_scale = 0.333,
                              seed = 123,
                              ...) {
 

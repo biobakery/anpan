@@ -23,7 +23,7 @@ anpan_pglmm_batch(
   show_yrep = TRUE,
   reg_gamma_params = c(1, 2),
   beta_sd = NULL,
-  sigma_phylo_scale = 1,
+  sigma_phylo_scale = 0.333,
   seed = 123,
   ...
 )
@@ -74,7 +74,8 @@ the noise term ratio. Default: c(1,2)}
 for each covariate in the GLM component}
 
 \item{sigma_phylo_scale}{standard deviation of half-normal prior on
-\code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}}
+\code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}.
+Increasing this value can easily lead to overfitting.}
 
 \item{seed}{random seed to pass to furrr_options()}
 
