@@ -795,7 +795,9 @@ plot_tree_with_post = function(tree_file,
 
   post_df = fit$summary(NULL, "mean", ~quantile(., probs = c(.05, .25, .75, .95))) |>
     filter(grepl("^phylo_effect", variable)) |>
-    bind_cols(tree_plot$terminal_seg_df) |>
+    mutate(label = labels)
+
+  post_df = right_join(x = tree_plot$terminal_seg_df, y = post_df, by = 'label') |>
     mutate(variable_i = 1:(nrow(tree_plot$terminal_seg_df)))
 
   post_plot = post_df |>
@@ -876,8 +878,9 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_df = yrep_draws  |>
       posterior::summarise_draws(mean) |>
       mutate(sample_id = labels) |>
-      dplyr::rename(`y_rep` = mean) |>
-      left_join(tree_plot$terminal_seg_df, by = c("sample_id" = "label")) |>
+      dplyr::rename(`y_rep` = mean)
+
+    yrep_df = left_join(tree_plot$terminal_seg_df, yrep_df, by = c("label" = "sample_id")) |>
       mutate(variable = factor(variable,
                             levels = variable)) |>
       select(variable, y_rep, all_of(outcome), sample_id) |>
@@ -911,8 +914,9 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_df = yrep_draws |>
       posterior::summarise_draws(posterior::default_summary_measures(),
                                  q = ~quantile(.x, probs = c(.25, .75))) |>
-      mutate(sample_id = labels) |>
-      left_join(tree_plot$terminal_seg_df, by = c("sample_id" = 'label')) |>
+      mutate(sample_id = labels)
+
+    yrep_df = left_join(tree_plot$terminal_seg_df, yrep_df, by = c("label" = "sample_id")) |>
       mutate(variable = factor(variable,
                                levels = variable)) |>
       arrange(variable) |>
