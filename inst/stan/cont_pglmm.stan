@@ -49,6 +49,10 @@ generated quantities {
   // actual population-level intercept
   real intercept = centered_cov_intercept - dot_product(means_X, beta);
   array[N] real yrep;
+  vector[N] lin_pred;
+
+  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect;
+
   for (i in 1:N){
     yrep[i] = normal_rng(centered_cov_intercept + phylo_effect[i] + Xc[i]*beta, sigma_resid);
   }

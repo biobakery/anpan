@@ -36,6 +36,10 @@ generated quantities {
   // actual population-level intercept
   real intercept = centered_cov_intercept - dot_product(means_X, beta);
   vector[N] log_lik;
+  vector[N] lin_pred;
+
+  lin_pred = Xc * beta + centered_cov_intercept;
+
   for (i in 1:N){
     log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept, beta, sigma_resid);
   }

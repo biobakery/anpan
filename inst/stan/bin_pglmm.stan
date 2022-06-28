@@ -47,6 +47,10 @@ generated quantities {
   real intercept = centered_cov_intercept - dot_product(means_X, beta);
   array[N] int yrep;
   vector[N] log_lik;
+  vector[N] lin_pred;
+
+  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect;
+
   for (i in 1:N){
     log_lik[i] = bernoulli_logit_glm_lpmf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept + phylo_effect[i], beta);
     yrep[i] = bernoulli_logit_rng(centered_cov_intercept + phylo_effect[i] + Xc[i]*beta);
