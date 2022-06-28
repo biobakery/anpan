@@ -479,7 +479,7 @@ anpan_pglmm = function(meta_file,
       message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n")
       message(paste0(capture.output(prior_df),
                      sep = "\n"))
-      message("\n\nIt would be better to set these based on scientific background knowledge.")
+      message("\n\nIt would be better to set the beta_sd argument based on scientific background knowledge.")
     }
     if (ncol(Xc) > 0) {
       data_list$beta_sd = apply(Xc, 2, sd)
