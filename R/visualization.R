@@ -884,8 +884,8 @@ plot_tree_with_post_pred = function(tree_file,
       dplyr::rename('sample_id' = label) |>
       mutate(variable = factor(variable,
                             levels = variable)) |>
-      select(variable, y_rep, all_of(outcome), sample_id) |>
-      dplyr::rename(y = outcome)
+      select(variable, y_rep, all_of(outcome), sample_id, x) |>
+      dplyr::rename(y = all_of(outcome))
 
     # V plot_outcome_tree() made the outcome a factor, need it to be a numeric
     # so we can have it on a continuous scale with the y / y_rep legend.
@@ -899,10 +899,11 @@ plot_tree_with_post_pred = function(tree_file,
                              levels = c("y_rep", "y")))
 
     yrep_plot = ggplot(yrep_df,
-                       aes(x = variable)) +
+                       aes(x = x)) +
       geom_point(aes(y = value,
                      alpha = y_type)) +
-      scale_x_discrete(labels = tree_plot$terminal_seg_df$label) +
+      scale_x_continuous(labels = tree_plot$terminal_seg_df$label,
+                         breaks = tree_plot$terminal_seg_df$x) +
       scale_alpha_discrete(range = c(.25, 1)) +
       theme(axis.title = element_blank(),
             axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1,
