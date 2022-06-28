@@ -881,6 +881,7 @@ plot_tree_with_post_pred = function(tree_file,
       dplyr::rename(`y_rep` = mean)
 
     yrep_df = left_join(tree_plot$terminal_seg_df, yrep_df, by = c("label" = "sample_id")) |>
+      dplyr::rename('sample_id' = label) |>
       mutate(variable = factor(variable,
                             levels = variable)) |>
       select(variable, y_rep, all_of(outcome), sample_id) |>
