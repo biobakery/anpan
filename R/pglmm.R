@@ -605,7 +605,13 @@ anpan_pglmm = function(meta_file,
       p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
     }
 
-    message(paste0(p1, p2))
+    if (abs(comparison[2,1] / comparison[2,2]) > 2 && abs(comparison[2,1]) < 4) {
+      p3 = " However the ELPD difference is less than 4, so the difference is small."
+    } else {
+      p3 = NULL
+    }
+
+    message(paste0(p1, p2, p3))
 
   } else {
     # outcome_signal = NULL
