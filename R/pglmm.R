@@ -514,14 +514,12 @@ anpan_pglmm = function(meta_file,
 
   if (show_plot_tree) {
 
-    p = plot_tree_with_post_pred(tree_file,
-                                 meta_file,
-                                 covariates = covariates,
-                                 outcome = outcome,
-                                 omit_na = omit_na,
-                                 verbose = FALSE,
-                                 fit = pglmm_fit,
-                                 labels = levels(model_input$sample_id))
+    p = plot_outcome_tree(tree_file,
+                          meta_file,
+                          covariates = covariates,
+                          outcome = outcome,
+                          omit_na = omit_na,
+                          verbose = FALSE)
 
     if (!is.null(out_dir)) {
       ggsave(p, filename = file.path(out_dir, paste0(bug_name, "_posterior_tree.", plot_ext)),
@@ -531,12 +529,14 @@ anpan_pglmm = function(meta_file,
     if (verbose) print(p)
 
     if (show_yrep) {
-      p_post_pred = plot_outcome_tree(tree_file,
-                                      meta_file,
-                                      covariates = covariates,
-                                      outcome = outcome,
-                                      omit_na = omit_na,
-                                      verbose = FALSE)
+      p_post_pred = plot_tree_with_post_pred(tree_file,
+                                             meta_file,
+                                             covariates = covariates,
+                                             outcome = outcome,
+                                             omit_na = omit_na,
+                                             verbose = FALSE,
+                                             fit = pglmm_fit,
+                                             labels = levels(model_input$sample_id))
 
       if (!is.null(out_dir)) {
         ggsave(p_post_pred, filename = file.path(out_dir, paste0(bug_name, "_posterior_predictive_tree.", plot_ext)),
