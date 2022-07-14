@@ -7,10 +7,11 @@
 anpan_latent_outcome(
   model_mat,
   dist_mat,
-  iter_sampling = 1500,
+  iter_sampling = 1000,
   iter_warmup = 1000,
   sigma_factor = 5,
   verbose = TRUE,
+  algorithm = "mcmc",
   ...
 )
 }
@@ -27,15 +28,23 @@ anpan_latent_outcome(
 
 \item{verbose}{verbose setting}
 
+\item{algorithm}{either "mcmc" or "variational"}
+
 \item{...}{other parameters to pass to cmdstanr::sample()}
 }
 \value{
-a named list. draw_df is set of MCMC draws of each parameter. summary_df is
-  the posterior summary. sample_order is a tibble containing the sample order
-  used by the model. y_scale is the empirically estimated prior scale of the
-  latent y values and residiuals.
+a named list. draw_df is set of MCMC draws of each parameter.
+  summary_df is the posterior summary. sample_order is a tibble containing
+  the sample order used by the model. y_scale is the empirically estimated
+  prior scale of the latent y values and residiuals. term calls is a data
+  frame of ANOVA-like "calls" for each term in the model formula, indicating
+  whether any of its associated coefficients are non-zero by 90% interval
+  excluding 0.
 }
 \description{
 Run a latent outcome model on a distance matrix and a model
   matrix.
+}
+\details{
+The variational fit is faster but biased.
 }

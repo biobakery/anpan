@@ -6,18 +6,25 @@
 #' @param iter_sampling the number of post-warmup draws to take
 #' @param iter_warmup the number of warmup draws
 #' @param sigma_factor higher --> lower prior spread on lm residuals
+#' @param algorithm either "mcmc" or "variational"
 #' @param verbose verbose setting
 #' @param ... other parameters to pass to cmdstanr::sample()
-#' @return a named list. draw_df is set of MCMC draws of each parameter. summary_df is
-#'   the posterior summary. sample_order is a tibble containing the sample order
-#'   used by the model. y_scale is the empirically estimated prior scale of the
-#'   latent y values and residiuals.
+#' @details The variational fit is faster but biased.
+#' @return a named list. draw_df is set of MCMC draws of each parameter.
+#'   summary_df is the posterior summary. sample_order is a tibble containing
+#'   the sample order used by the model. y_scale is the empirically estimated
+#'   prior scale of the latent y values and residiuals. term calls is a data
+#'   frame of ANOVA-like "calls" for each term in the model formula, indicating
+#'   whether any of its associated coefficients are non-zero by 90% interval
+#'   excluding 0.
 #' @export
 anpan_latent_outcome = function(model_mat, dist_mat,
                                 iter_sampling = 1000,
                                 iter_warmup = 1000,
                                 sigma_factor = 5,
-                                verbose = TRUE, ...) {
+                                verbose = TRUE,
+                                algorithm = 'mcmc',
+                                ...) {
 
   message("\nThis function is experimental and might be removed!\n")
 
@@ -67,43 +74,82 @@ anpan_latent_outcome = function(model_mat, dist_mat,
 
   refresh_setting = if (verbose) 100 else 0
 
-  latent_y_fit = latent_y_model$sample(data = data_list,
-                                       init = init_list,
-                                       parallel_chains = 4,
-                                       max_treedepth = 12,
-                                       adapt_delta = .80,
-                                       iter_warmup = iter_warmup,
-                                       iter_sampling = iter_sampling,
-                                       refresh = refresh_setting,
-                                       ...)
+  if (algorithm == "mcmc") {
+    latent_y_fit = latent_y_model$sample(data = data_list,
+                                         init = init_list,
+                                         parallel_chains = 4,
+                                         max_treedepth = 12,
+                                         adapt_delta = .80,
+                                         iter_warmup = iter_warmup,
+                                         iter_sampling = iter_sampling,
+                                         refresh = refresh_setting,
+                                         ...)
+  } else {
+    init_list = replicate(1,
+                          list(y = y_init + rnorm(n, sd = .1)),
+                          simplify = FALSE)
+    latent_y_fit = latent_y_model$variational(data = data_list,
+                                              init = init_list,
+                                              refresh = refresh_setting,
+                                              ...)
+  }
 
   draw_df = latent_y_fit$draws(format = 'data.frame')
   summ_df = latent_y_fit$summary()
 
-  sign_df = draw_df |>
-    select(`y[1]`, `.chain`) |> # TODO: make this select a y near one end of the spectrum
-    group_by(`.chain`) |>
-    summarise(orig_sign_y = mean(sign(`y[1]`)))
+  if (algorithm == "mcmc") {
+    sign_df = draw_df |>
+      select(`y[1]`, `.chain`) |> # TODO: make this select a y near one end of the spectrum
+      group_by(`.chain`) |>
+      summarise(orig_sign_y = mean(sign(`y[1]`)))
 
-  if (n_distinct(sign_df$orig_sign_y) > 1) {
+    if (n_distinct(sign_df$orig_sign_y) > 1) {
 
-    if (!all(sign_df$orig_sign_y %in% c(-1,1))) {
-      warning("Detected inconsistent sign among chains AND within chain. The model likely doesn't fit your data well.")
+      if (!all(sign_df$orig_sign_y %in% c(-1,1))) {
+        warning("Detected inconsistent sign among chains AND within chain. The model likely doesn't fit your data well.")
+      }
+
+      message("Detected inconsistent sign among chains. Manually adjusting sign of affected chains.")
+
+      Sys.sleep(2)
+      joined = draw_df |>
+        left_join(sign_df, by = '.chain')
+
+      draw_df = joined |> mutate(across(matches("beta|y"), ~.x * sign(joined$orig_sign_y)))
     }
 
-    message("Detected inconsistent sign among chains. Manually adjusting sign of affected chains.")
+    summ_df = posterior::summarise_draws(draw_df)
+  }
 
-    Sys.sleep(2)
-    joined = draw_df |>
-      left_join(sign_df, by = '.chain')
+  # Needs better handling of distinct contrast groups rather than treating every
+  # column of model_mat as separate
 
-    draw_df = joined |> mutate(across(matches("beta|y"), ~.x * sign(joined$orig_sign_y)))
+  if (!is.null(attr(model_mat, "contrasts"))) {
+    contrast_df = tibble(contrast_i = attr(model_mat, 'assign'),
+                         term = names(attr(model_mat, "contrasts"))[contrast_i]) |>
+      unique()
+
+    term_calls = summ_df |>
+      filter(grepl("beta", variable)) |>
+      mutate(contrast_i = attr(model_mat, 'assign')) |>
+      right_join(contrast_df, by = 'contrast_i') |>
+      group_by(term) |>
+      summarise(influential = any(!(q5 < 0 & q95 > 0)))
+
+  } else {
+
+    term_calls = summ_df |>
+      filter(grepl("beta", variable)) |>
+      mutate(term = colnames(model_mat)) |>
+      group_by(term) |>
+      summarise(influential = !(q5 < 0 & q95 > 0))
   }
 
   res = list(draw_df = draw_df,
              sample_order = tibble(sample_id = rownames(model_mat)),
              y_scale = y_scale,
-             summary_df = posterior::summarise_draws(draw_df))
+             summary_df = summ_df,
+             term_calls = term_calls)
 
   return(res)
 }
