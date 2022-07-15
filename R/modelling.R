@@ -1,5 +1,5 @@
 get_bug_name = function(bug_file,
-                        remove_pattern = ".genefamilies.tsv|.genefamilies.tsv.gz") {
+                        remove_pattern = ".genefamilies.tsv$|.genefamilies.tsv.gz$|.tsv$|.tsv.gz$") {
   # TODO make this function smarter.
   gsub(remove_pattern, "", basename(bug_file))
 }
@@ -50,6 +50,8 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   # V Find the data.table way to unnest. tidyr is slow.
   all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, function(.x) .x$result))],
                             cols = c(glm_res))
+
+  # TODO add a check here if ^ is empty and exit gracefully. Necessary for anpan().
 
   write_tsv_no_progress(all_terms,
                    file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
