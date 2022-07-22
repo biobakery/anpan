@@ -555,9 +555,14 @@ anpan_batch = function(bug_dir,
   if (!is.null(annotation_file)) {
     anno = fread(annotation_file)
 
-    all_bug_terms = anno[all_bug_terms, on = 'gene'] %>%
-      dplyr::relocate(bug_name, gene) %>%
-      dplyr::relocate(annotation, .after = dplyr::last_col())
+    if (!(gene %in% colnames(anno))) {
+      warning('No "gene" column in annotation file.')
+
+    } else {
+      all_bug_terms = anno[all_bug_terms, on = 'gene'] %>%
+        dplyr::relocate(bug_name, gene) %>%
+        dplyr::relocate(annotation, .after = dplyr::last_col())
+    }
   }
 
   write_tsv_no_progress(all_bug_terms,
