@@ -74,7 +74,7 @@ plot_genome_intersections = function(unistrain_file,
                                      width = 10,
                                      height = 8) {
 
-  file_id = basename(unistrain_file) |> gsub(".tsv$|.tsv.gz$", "", x = _)
+  file_id = gsub(".tsv$|.tsv.gz$", "", x = basename(unistrain_file))
 
   genome_intersect_counts = get_genome_intersect_counts(unistrain_file)
 
@@ -126,7 +126,7 @@ plot_genome_intersection_histograms = function(unistrain_file,
                                                width = 10,
                                                height = 5) {
 
-  file_id = basename(unistrain_file) |> gsub(".tsv$|.tsv.gz$", "", x = _)
+  file_id = gsub(".tsv$|.tsv.gz$", "", x = basename(unistrain_file))
 
   genome_intersect_counts = get_genome_intersect_counts(unistrain_file)
 
