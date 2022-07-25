@@ -32,8 +32,9 @@ Imports:
     stringr,
     phylogram,
     posterior,
-    tidyselect
-RoxygenNote: 7.2.0
+    tidyselect,
+    shadowtext
+RoxygenNote: 7.2.1
 Suggests: 
     rmarkdown,
     knitr,
