@@ -555,7 +555,7 @@ anpan_batch = function(bug_dir,
   if (!is.null(annotation_file)) {
     anno = fread(annotation_file)
 
-    if (!(gene %in% colnames(anno))) {
+    if (!("gene" %in% colnames(anno))) {
       warning('No "gene" column in annotation file.')
 
     } else {
