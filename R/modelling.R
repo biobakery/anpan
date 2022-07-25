@@ -315,6 +315,10 @@ anpan = function(bug_file,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
 
+  if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
+    stop("The specified outcome variable in the metadata is neither numeric nor logical.")
+  }
+
 # Filtering ---------------------------------------------------------------
 
   if (!discretize_inputs) {
@@ -447,7 +451,7 @@ safely_anpan = purrr::safely(anpan)
 #'   earlier run to skip the filtering step
 #' @param discard_absent_samples logical indicating whether to discard samples
 #'   when a bug is labelled as completely absent
-#' @param annotation_file a path to file giving annotations for each gene
+#' @param annotation_file a path to a file giving annotations for each gene
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
 #' @details \code{bug_dir} should be a directory of gene (or SNV or pathway)
 #'   abundance files, one for each bug.
@@ -542,10 +546,14 @@ anpan_batch = function(bug_dir,
          file = file.path(out_dir, 'errors.RData'))
   }
 
-  all_bug_terms = worked$result %>%
-    dplyr::bind_rows() %>%
-    dplyr::relocate(bug_name, gene) %>%
-    data.table::as.data.table()
+  if (nrow(worked) > 0) {
+    all_bug_terms = worked$result %>%
+      dplyr::bind_rows() %>%
+      dplyr::relocate(bug_name, gene) %>%
+      data.table::as.data.table()
+  } else {
+    stop("No models fit successfully, see errors.RData")
+  }
 
   if (model_type %in% c("glm", "fastglm")) {
     all_bug_terms$q_global = p.adjust(all_bug_terms$p.value, method = "fdr")

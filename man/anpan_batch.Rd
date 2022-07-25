@@ -64,7 +64,7 @@ Only used when model_type = "horseshoe".}
 \item{save_fit}{logical indicating whether to save horseshoe fit objects.
 Only used when model_type = "horseshoe".}
 
-\item{annotation_file}{a path to file giving annotations for each gene}
+\item{annotation_file}{a path to a file giving annotations for each gene}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
