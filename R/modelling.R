@@ -504,6 +504,14 @@ anpan_batch = function(bug_dir,
 
   bug_files = get_file_list(bug_dir)
 
+  metadata = read_meta(meta_file,
+                       select_cols = c("sample_id", outcome, covariates),
+                       omit_na = omit_na)
+
+  if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
+    stop("The specified outcome variable in the metadata is neither numeric nor logical.")
+  }
+
   p = progressr::progressor(along = bug_files)
 
   anpan_results = purrr::map(.x = bug_files,
