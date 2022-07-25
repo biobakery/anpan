@@ -64,7 +64,7 @@ Only used when model_type = "horseshoe".}
 \item{save_fit}{logical indicating whether to save horseshoe fit objects.
 Only used when model_type = "horseshoe".}
 
-\item{annotation_file}{optional path file giving annotations}
+\item{annotation_file}{a path to file giving annotations for each gene}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
@@ -88,6 +88,8 @@ This function calls anpan() on each gene family file in the
   each.
 }
 \details{
-\code{bug_dir} should be a directory of gene (or SNVs or pathways)
+\code{bug_dir} should be a directory of gene (or SNV or pathway)
   abundance files, one for each bug.
+
+  \code{annotation} file must have two columns named "gene" and "annotation"
 }

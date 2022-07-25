@@ -447,9 +447,12 @@ safely_anpan = purrr::safely(anpan)
 #'   earlier run to skip the filtering step
 #' @param discard_absent_samples logical indicating whether to discard samples
 #'   when a bug is labelled as completely absent
+#' @param annotation_file a path to file giving annotations for each gene
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
-#' @details \code{bug_dir} should be a directory of gene (or SNVs or pathways)
+#' @details \code{bug_dir} should be a directory of gene (or SNV or pathway)
 #'   abundance files, one for each bug.
+#'
+#'   \code{annotation} file must have two columns named "gene" and "annotation"
 #' @inheritParams plot_results
 #' @inheritParams anpan
 #' @export
