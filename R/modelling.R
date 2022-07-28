@@ -316,7 +316,9 @@ anpan = function(bug_file,
                        omit_na = omit_na)
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
-    stop("The specified outcome variable in the metadata is neither numeric nor logical.")
+    error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
+                       class(meta[[outcome]])[1])
+    stop(error_msg)
   }
 
 # Filtering ---------------------------------------------------------------
@@ -509,7 +511,9 @@ anpan_batch = function(bug_dir,
                        omit_na = omit_na)
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
-    stop("The specified outcome variable in the metadata is neither numeric nor logical.")
+    error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
+                       class(meta[[outcome]])[1])
+    stop(error_msg)
   }
 
   p = progressr::progressor(along = bug_files)
