@@ -20,7 +20,8 @@ anpan_pglmm_batch(
   loo_comparison = TRUE,
   reg_noise = TRUE,
   plot_ext = "pdf",
-  show_yrep = TRUE,
+  show_yrep = FALSE,
+  show_post = TRUE,
   reg_gamma_params = c(1, 2),
   beta_sd = NULL,
   sigma_phylo_scale = 0.333,
@@ -65,6 +66,9 @@ sigma_phylo to sigma_resid with a Gamma prior}
 
 \item{show_yrep}{show a plot of the tree overlaid with the outcome and the posterior
 predictive distribution for each observation if plotting the tree}
+
+\item{show_post}{show a plot of the tree overlaid with the outcome and
+posterior distribution on phylogenetic effects.}
 
 \item{reg_gamma_params}{the shape and rate parameters of the Gamma prior on
 the noise term ratio. Default: c(1,2)}

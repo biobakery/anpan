@@ -17,6 +17,7 @@ anpan_pglmm(
   family = "gaussian",
   show_plot_cor_mat = TRUE,
   show_plot_tree = TRUE,
+  show_post = TRUE,
   show_yrep = FALSE,
   save_object = TRUE,
   verbose = TRUE,
@@ -57,6 +58,9 @@ the tree}
 
 \item{show_plot_tree}{show a plot of the tree overlaid with the outcome.}
 
+\item{show_post}{show a plot of the tree overlaid with the outcome and
+posterior distribution on phylogenetic effects.}
+
 \item{show_yrep}{show a plot of the tree overlaid with the outcome and the posterior
 predictive distribution for each observation if plotting the tree}
 
@@ -82,9 +86,6 @@ for each covariate in the GLM component}
 Increasing this value can easily lead to overfitting.}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
-
-\item{show_post}{show a plot of the tree overlaid with the outcome and
-posterior distribution on phylogenetic effects.}
 }
 \value{
 A list containing the model input (in the order passed to the model),
