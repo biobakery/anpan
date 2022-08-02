@@ -3,7 +3,7 @@ olap_cor_mat_and_meta = function(cor_mat,
                                  covariates,
                                  outcome,
                                  omit_na = FALSE,
-                                 trim_pattern,
+                                 trim_pattern = NULL,
                                  verbose = TRUE) {
 
   if (is.data.frame(meta_file)) {
