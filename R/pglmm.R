@@ -212,7 +212,7 @@ safely_chol = purrr::safely(chol)
 #' tr = ape::rtree(100)
 #' anpan_pglmm(meta, tr,
 #' outcome = "x",
-#' iter_sampling = 10,
+#' iter_sampling = 10, # Use more in practice!
 #' iter_warmup = 10,
 #' show_plot_cor_mat = FALSE,
 #' show_plot_tree = FALSE)
