@@ -30,8 +30,7 @@ anpan_pglmm_batch(
 )
 }
 \arguments{
-\item{meta_file}{either a data frame of metadata or a path to file containing
-the metadata}
+\item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
 \item{tree_dir}{string giving the path to a directory of tree files}
 
@@ -45,40 +44,38 @@ the metadata}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
-\item{family}{string giving the name of the distribution of the outcome
-variable (usually "gaussian" or "binomial")}
+\item{family}{string giving the name of the distribution of the outcome variable (usually
+"gaussian" or "binomial")}
 
-\item{show_plot_cor_mat}{show a plot of the correlation matrix derived from
-the tree}
+\item{show_plot_cor_mat}{show a plot of the correlation matrix derived from the tree}
 
 \item{show_plot_tree}{show a plot of the tree overlaid with the outcome.}
 
 \item{save_object}{logical indicating whether to save the model fit object}
 
-\item{loo_comparison}{logical indicating whether to compare the phylogenetic
-model against a base model (without the phylogenetic term) using
-\code{\link[loo:loo_compare]{loo::loo_compare()}}}
+\item{loo_comparison}{logical indicating whether to compare the phylogenetic model against a base
+model (without the phylogenetic term) using \code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
-\item{reg_noise}{logical indicating whether to regularize the ratio of
-sigma_phylo to sigma_resid with a Gamma prior}
+\item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid
+with a Gamma prior}
 
 \item{plot_ext}{extension to use when saving plots}
 
-\item{show_yrep}{show a plot of the tree overlaid with the outcome and the posterior
-predictive distribution for each observation if plotting the tree}
+\item{show_yrep}{show a plot of the tree overlaid with the outcome and the posterior predictive
+distribution for each observation if plotting the tree}
 
-\item{show_post}{show a plot of the tree overlaid with the outcome and
-posterior distribution on phylogenetic effects.}
+\item{show_post}{show a plot of the tree overlaid with the outcome and posterior distribution on
+phylogenetic effects.}
 
-\item{reg_gamma_params}{the shape and rate parameters of the Gamma prior on
-the noise term ratio. Default: c(1,2)}
+\item{reg_gamma_params}{the shape and rate parameters of the Gamma prior on the noise term ratio.
+Default: c(1,2)}
 
-\item{beta_sd}{prior standard deviation parameters on the normal distribution
-for each covariate in the GLM component}
+\item{beta_sd}{prior standard deviation parameters on the normal distribution for each covariate
+in the GLM component}
 
-\item{sigma_phylo_scale}{standard deviation of half-normal prior on
-\code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}.
-Increasing this value can easily lead to overfitting.}
+\item{sigma_phylo_scale}{standard deviation of half-normal prior on \code{sigma_phylo} for
+logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
+overfitting.}
 
 \item{seed}{random seed to pass to furrr_options()}
 

@@ -17,12 +17,10 @@ plot_tree_with_post(
 )
 }
 \arguments{
-\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}}
-or an object of class "phylo" that is already read into R. Ignored if
-\code{cor_mat} is supplied.}
+\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}} or an object of
+class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied.}
 
-\item{meta_file}{either a data frame of metadata or a path to file containing
-the metadata}
+\item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
 \item{fit}{a pglmm fit from \code{anpan_pglmm()}}
 
