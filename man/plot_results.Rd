@@ -24,7 +24,8 @@ plot_results(
 )
 }
 \arguments{
-\item{res}{a data frame of model results (from \code{anpan}) for a single bug}
+\item{res}{a data frame of model results (from \code{anpan}) for the genes of a single bug (i.e.
+the output written to *gene_terms.tsv.gz)}
 
 \item{covariates}{character string of the covariates to show}
 
@@ -34,8 +35,7 @@ plot_results(
 
 \item{plot_dir}{directory to write output to}
 
-\item{bug_name}{character string giving the name to use in the title/output
-file}
+\item{bug_name}{character string giving the name to use in the title/output file}
 
 \item{annotation_file}{optional path file giving annotations}
 
@@ -54,20 +54,19 @@ file}
 \item{plot_ext}{extension to use for plots}
 }
 \description{
-This funciton makes a tile plot of the top results of a fit
-  alongside another tile plot showing the covariates included. Optional
-  annotations can be included.
+This funciton makes a tile plot of the top results of a fit alongside another tile
+  plot showing the covariates included. Optional annotations can be included.
 }
 \details{
-If included, \code{annotation_file} must be a tsv with two columns:
-  "gene" and "annotation".
+If included, \code{annotation_file} must be a tsv with two columns: "gene" and
+  "annotation".
 
   \code{n_top} is ignored if \code{q_threshold} is specified.
 
-  When \code{cluster = "none"}, the samples are ordered by metadata and the
-  genes are ordered by statistical significance.
+  When \code{cluster = "none"}, the samples are ordered by metadata and the genes are ordered by
+  statistical significance.
 
-  When signficance stars are shown, they encode the following (fairly
-  standard) signficance thresholds: p.value < .001 ~ ***, p.value < .01  ~
-  **, p.value < .05  ~ *, p.value < .1   ~ ., p.value < 1    ~ " "
+  When signficance stars are shown, they encode the following (fairly standard) signficance
+  thresholds: p.value < .001 ~ ***, p.value < .01  ~ **, p.value < .05  ~ *, p.value < .1   ~ .,
+  p.value < 1    ~ " "
 }

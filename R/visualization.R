@@ -124,7 +124,7 @@ get_cov_color_map = function(unique_covs) {
   covs = names(unique_covs)
 
   cov_types = unique_covs %>%
-    imap_dfr(function(.x, .y){tibble(covariate = .y,
+    purrr::imap_dfr(function(.x, .y){tibble(covariate = .y,
                                      is_num = is.numeric(.x),
                                      n_uniq = dplyr::n_distinct(.x))}) %>%
     mutate(cov_type = c('discrete', 'continuous')[((n_uniq >= 5 & (is_num)) + 1)]) %>%
@@ -199,16 +199,15 @@ plot_color_bars = function(color_bars, model_input,
 
 #' Plot the data for top results
 #'
-#' @description This funciton makes a tile plot of the top results of a fit
-#'   alongside another tile plot showing the covariates included. Optional
-#'   annotations can be included.
-#' @param res a data frame of model results (from \code{anpan}) for a single bug
+#' @description This funciton makes a tile plot of the top results of a fit alongside another tile
+#'   plot showing the covariates included. Optional annotations can be included.
+#' @param res a data frame of model results (from \code{anpan}) for the genes of a single bug (i.e.
+#'   the output written to *gene_terms.tsv.gz)
 #' @param covariates character string of the covariates to show
 #' @param outcome character string of the outcome variable
 #' @param model_input data frame of the model input
 #' @param plot_dir directory to write output to
-#' @param bug_name character string giving the name to use in the title/output
-#'   file
+#' @param bug_name character string giving the name to use in the title/output file
 #' @param annotation_file optional path file giving annotations
 #' @param plot_ext extension to use for plots
 #' @param n_top number of top elements to show from the results
@@ -217,17 +216,17 @@ plot_color_bars = function(color_bars, model_input,
 #' @param show_trees logical to show the trees for the samples (if clustered)
 #' @param width width of saved plot in inches
 #' @param height height of saved plot in inches
-#' @details If included, \code{annotation_file} must be a tsv with two columns:
-#'   "gene" and "annotation".
+#' @details If included, \code{annotation_file} must be a tsv with two columns: "gene" and
+#'   "annotation".
 #'
 #'   \code{n_top} is ignored if \code{q_threshold} is specified.
 #'
-#'   When \code{cluster = "none"}, the samples are ordered by metadata and the
-#'   genes are ordered by statistical significance.
+#'   When \code{cluster = "none"}, the samples are ordered by metadata and the genes are ordered by
+#'   statistical significance.
 #'
-#'   When signficance stars are shown, they encode the following (fairly
-#'   standard) signficance thresholds: p.value < .001 ~ ***, p.value < .01  ~
-#'   **, p.value < .05  ~ *, p.value < .1   ~ ., p.value < 1    ~ " "
+#'   When signficance stars are shown, they encode the following (fairly standard) signficance
+#'   thresholds: p.value < .001 ~ ***, p.value < .01  ~ **, p.value < .05  ~ *, p.value < .1   ~ .,
+#'   p.value < 1    ~ " "
 #' @export
 plot_results = function(res, covariates, outcome, model_input,
                         discretize_inputs = TRUE,
