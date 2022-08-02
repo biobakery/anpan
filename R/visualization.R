@@ -689,12 +689,13 @@ plot_outcome_tree = function(tree_file,
   #   stop("more than two covariates is currently not supported")
   # }
 
-  olap_list = olap_tree_and_meta(tree_file,
-                                 meta_file,
-                                 covariates,
-                                 outcome,
-                                 omit_na,
-                                 verbose)
+  olap_list = olap_tree_and_meta(tree_file = tree_file,
+                                 meta_file = meta_file,
+                                 covariates = covariates,
+                                 outcome = outcome,
+                                 omit_na = omit_na,
+                                 verbose = verbose,
+                                 trim_pattern = NULL)
 
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]

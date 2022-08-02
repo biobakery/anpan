@@ -10,7 +10,7 @@ olap_tree_and_meta(
   covariates,
   outcome,
   omit_na = FALSE,
-  trim_pattern,
+  trim_pattern = NULL,
   verbose = TRUE
 )
 }

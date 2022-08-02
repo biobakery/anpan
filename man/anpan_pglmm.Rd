@@ -18,7 +18,7 @@ anpan_pglmm(
   show_plot_cor_mat = TRUE,
   show_plot_tree = TRUE,
   show_yrep = FALSE,
-  save_object = FALSE,
+  save_object = TRUE,
   verbose = TRUE,
   loo_comparison = TRUE,
   reg_noise = TRUE,

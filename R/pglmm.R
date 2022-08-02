@@ -71,7 +71,7 @@ olap_tree_and_meta = function(tree_file,
                               covariates,
                               outcome,
                               omit_na = FALSE,
-                              trim_pattern,
+                              trim_pattern = NULL,
                               verbose = TRUE) {
 
 
