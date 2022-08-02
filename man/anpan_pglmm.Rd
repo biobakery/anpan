@@ -55,10 +55,9 @@ variable (usually "gaussian" or "binomial")}
 \item{show_plot_cor_mat}{show a plot of the correlation matrix derived from
 the tree}
 
-\item{show_plot_tree}{show a plot of the tree overlaid with the outcome and
-posterior distribution on phylogenetic effects.}
+\item{show_plot_tree}{show a plot of the tree overlaid with the outcome.}
 
-\item{show_yrep}{logical indicating whether to also plot the posterior
+\item{show_yrep}{show a plot of the tree overlaid with the outcome and the posterior
 predictive distribution for each observation if plotting the tree}
 
 \item{save_object}{logical indicating whether to save the model fit object}
@@ -83,6 +82,9 @@ for each covariate in the GLM component}
 Increasing this value can easily lead to overfitting.}
 
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
+
+\item{show_post}{show a plot of the tree overlaid with the outcome and
+posterior distribution on phylogenetic effects.}
 }
 \value{
 A list containing the model input (in the order passed to the model),
