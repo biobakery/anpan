@@ -438,6 +438,8 @@ anpan_pglmm = function(meta_file,
   model_input = model_input %>%
     arrange(sample_id)
 
+  # data_list preparation section ----
+
   model_mat = model.matrix(base_formula, data = model_input)
 
   if (family == "gaussian") {
@@ -492,6 +494,7 @@ anpan_pglmm = function(meta_file,
     data_list$beta_sd = beta_sd[as.vector(attr(model_mat, "assign")[-1])]
   }
 
+  # model fitting section ----
   if (verbose) message(paste0("(2/", n_steps, ") Fitting model(s)."))
 
   pglmm_fit = pglmm_model$sample(data = data_list,
@@ -508,6 +511,7 @@ anpan_pglmm = function(meta_file,
                                  ...)
   }
 
+  # plotting section ----
   if (cor_mat_provided && is.null(tree_file) && show_plot_tree) {
     message("show_plot_tree = TRUE but no tree_file was supplied. Setting show_plot_tree = FALSE")
     show_plot_tree = FALSE
@@ -528,44 +532,45 @@ anpan_pglmm = function(meta_file,
     }
 
     if (verbose) print(p)
-
-    if (show_post) {
-      p_post = plot_tree_with_post(tree_file,
-                                   meta_file,
-                                   covariates = covariates,
-                                   outcome = outcome,
-                                   omit_na = omit_na,
-                                   verbose = FALSE,
-                                   fit = pglmm_fit,
-                                   labels = levels(model_input$sample_id))
-
-      if (!is.null(out_dir)) {
-        ggsave(p_post, filename = file.path(out_dir, paste0(bug_name, "_posterior_tree.", plot_ext)),
-               width = 12, height = 8)
-      }
-
-      if (verbose) print(p_post)
-    }
-
-    if (show_yrep) {
-      p_post_pred = plot_tree_with_post_pred(tree_file,
-                                             meta_file,
-                                             covariates = covariates,
-                                             outcome = outcome,
-                                             omit_na = omit_na,
-                                             verbose = FALSE,
-                                             fit = pglmm_fit,
-                                             labels = levels(model_input$sample_id))
-
-      if (!is.null(out_dir)) {
-        ggsave(p_post_pred, filename = file.path(out_dir, paste0(bug_name, "_posterior_predictive_tree.", plot_ext)),
-               width = 12, height = 8)
-      }
-
-      if (verbose) print(p_post_pred)
-    }
   }
 
+  if (show_post) {
+    p_post = plot_tree_with_post(tree_file,
+                                 meta_file,
+                                 covariates = covariates,
+                                 outcome = outcome,
+                                 omit_na = omit_na,
+                                 verbose = FALSE,
+                                 fit = pglmm_fit,
+                                 labels = levels(model_input$sample_id))
+
+    if (!is.null(out_dir)) {
+      ggsave(p_post, filename = file.path(out_dir, paste0(bug_name, "_posterior_tree.", plot_ext)),
+             width = 12, height = 8)
+    }
+
+    if (verbose) print(p_post)
+  }
+
+  if (show_yrep) {
+    p_post_pred = plot_tree_with_post_pred(tree_file,
+                                           meta_file,
+                                           covariates = covariates,
+                                           outcome = outcome,
+                                           omit_na = omit_na,
+                                           verbose = FALSE,
+                                           fit = pglmm_fit,
+                                           labels = levels(model_input$sample_id))
+
+    if (!is.null(out_dir)) {
+      ggsave(p_post_pred, filename = file.path(out_dir, paste0(bug_name, "_posterior_predictive_tree.", plot_ext)),
+             width = 12, height = 8)
+    }
+
+    if (verbose) print(p_post_pred)
+  }
+
+  # loo section ----
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
 
