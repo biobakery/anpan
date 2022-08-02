@@ -148,71 +148,65 @@ safely_chol = purrr::safely(chol)
 
 #' @title Run a phylogenetic generalized linear mixed model
 #' @md
-#' @param tree_file either a path to a tree file readable by [ape::read.tree()]
-#'   or an object of class "phylo" that is already read into R. Ignored if
-#'   \code{cor_mat} is supplied.
-#' @param meta_file either a data frame of metadata or a path to file containing
-#'   the metadata
+#' @param tree_file either a path to a tree file readable by [ape::read.tree()] or an object of
+#'   class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied.
+#' @param meta_file either a data frame of metadata or a path to file containing the metadata
 #' @param cor_mat a correlation matrix provided as an alternative to a tree.
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
-#' @param family string giving the name of the distribution of the outcome
-#'   variable (usually "gaussian" or "binomial")
-#' @param beta_sd prior standard deviation parameters on the normal distribution
-#'   for each covariate in the GLM component
+#' @param family string giving the name of the distribution of the outcome variable (usually
+#'   "gaussian" or "binomial")
+#' @param beta_sd prior standard deviation parameters on the normal distribution for each covariate
+#'   in the GLM component
 #' @param save_object logical indicating whether to save the model fit object
 #' @param out_dir if saving, directory where to save
-#' @param reg_noise logical indicating whether to regularize the ratio of
-#'   sigma_phylo to sigma_resid with a Gamma prior
-#' @param reg_gamma_params the shape and rate parameters of the Gamma prior on
-#'   the noise term ratio. Default: c(1,2)
+#' @param reg_noise logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid
+#'   with a Gamma prior
+#' @param reg_gamma_params the shape and rate parameters of the Gamma prior on the noise term ratio.
+#'   Default: c(1,2)
 #' @param plot_ext extension to use when saving plots
-#' @param show_plot_cor_mat show a plot of the correlation matrix derived from
-#'   the tree
+#' @param show_plot_cor_mat show a plot of the correlation matrix derived from the tree
 #' @param show_plot_tree show a plot of the tree overlaid with the outcome.
-#' @param show_post show a plot of the tree overlaid with the outcome and
-#' posterior distribution on phylogenetic effects.
-#' @param show_yrep show a plot of the tree overlaid with the outcome and the posterior
-#' predictive distribution for each observation if plotting the tree
+#' @param show_post show a plot of the tree overlaid with the outcome and posterior distribution on
+#'   phylogenetic effects.
+#' @param show_yrep show a plot of the tree overlaid with the outcome and the posterior predictive
+#'   distribution for each observation if plotting the tree
 #' @param ... other arguments to pass to [cmdstanr::sample()]
-#' @param loo_comparison logical indicating whether to compare the phylogenetic
-#'   model against a base model (without the phylogenetic term) using
-#'   [loo::loo_compare()]
-#' @param sigma_phylo_scale standard deviation of half-normal prior on
-#'   \code{sigma_phylo} for logistic PGLMMs when \code{family = 'binomial'}.
-#'   Increasing this value can easily lead to overfitting.
-#' @return A list containing the model input (in the order passed to the model),
-#'   estimated correlation matrix, the pglmm fit object, and (if
-#'   \code{loo_comparison} is on) the base fit object and the associated loo
-#'   objects.
-#' @details the tip labels of the tree must be the sample ids from the metadata.
-#'   You can use the \code{trim_pattern} argument to automatically trim off any
-#'   consistent pattern from the tip labels if necessary.
+#' @param loo_comparison logical indicating whether to compare the phylogenetic model against a base
+#'   model (without the phylogenetic term) using [loo::loo_compare()]
+#' @param sigma_phylo_scale standard deviation of half-normal prior on \code{sigma_phylo} for
+#'   logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
+#'   overfitting.
+#' @return A list containing the model input (in the order passed to the model), estimated
+#'   correlation matrix, the pglmm fit object, and (if \code{loo_comparison} is on) the base fit
+#'   object and the associated loo objects.
+#' @details the tip labels of the tree must be the sample ids from the metadata. You can use the
+#'   \code{trim_pattern} argument to automatically trim off any consistent pattern from the tip
+#'   labels if necessary.
 #'
-#'   The dots can be used to pass e.g. parallel_chains=4 to make the chains run
-#'   in parallel.
+#'   The dots can be used to pass e.g. parallel_chains=4 to make the chains run in parallel.
 #'
-#'   The prior for the intercept is a normal distribution centered on the mean
-#'   of the outcome variable with a standard deviation of 3*sd(outcome variable)
+#'   The prior for the intercept is a normal distribution centered on the mean of the outcome
+#'   variable with a standard deviation of 3*sd(outcome variable)
 #'
-#'   The default error distribution for the outcome is "gaussian". You could
-#'   change this to a phylogenetic logistic regression by changing \code{family}
-#'   to "binomial" for example.
+#'   The default error distribution for the outcome is "gaussian". You could change this to a
+#'   phylogenetic logistic regression by changing \code{family} to "binomial" for example.
 #'
-#'   It's normal to see some warnings during warmup, particularly about "Scale
-#'   vector is inf".
+#'   It's normal to see some warnings during warmup, particularly about "Scale vector is inf".
 #'
-#'   This function tries to get the \code{bug_name} argument from the tree file,
-#'   but if it's not provided you may need to set it yourself.
+#'   This function tries to get the \code{bug_name} argument from the tree file, but if it's not
+#'   provided you may need to set it yourself.
 #'
-#'   If using \code{beta_sd} with a categorical predictor with >2 levels, only
-#'   specify a single element in beta_sd. This appropriate element will get
-#'   repeated as necessary.
+#'   If using \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
+#'   element in beta_sd. This appropriate element will get repeated as necessary.
 #'
-#'   Common cmdstanr options that one might want to pass in via ... include
-#'   \code{refresh = 500} (show fewer MCMC progress updates), \code{adapt_delta
-#'   = .98} (avoid divergences at the cost of possibly needing more iterations
-#'   to get convergence) and \code{parallel_chains = 4} (run the MCMC chains in
-#'   parallel).
+#'   Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
+#'   (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
+#'   possibly needing more iterations to get convergence) and \code{parallel_chains = 4} (run the
+#'   MCMC chains in parallel).
+#'
+#'   If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
+#'   package, you'll need to convert it to a matrix with \code{as.matrix()}. It's converted to a
+#'   tibble internally so that it prints nicely.
 #' @examples
 #' meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
 #' tr = ape::rtree(100)
@@ -669,7 +663,7 @@ anpan_pglmm = function(meta_file,
        pglmm_fit   = pglmm_fit,
        base_fit    = base_fit,
        loo         = list(pglmm_loo    = pglmm_loo,
-                          pglmm_ll_mat = ll_mat,
+                          pglmm_ll_df  = tibble::as_tibble(ll_mat),
                           base_loo     = base_loo,
                           comparison   = comparison))
 
