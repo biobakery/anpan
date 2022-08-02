@@ -668,6 +668,35 @@ plot_cor_mat = function(cor_mat,
     coord_equal()
 }
 
+check_meta = function(model_input,
+                      covariates,
+                      outcome) {
+
+  if (outcome == "y") {
+    outcome = "outcome_y" # the tree df uses y as a variable already
+    model_input = dplyr::rename(model_input, "outcome_y" = "y")
+  }
+
+  if (outcome == "x") {
+    outcome = "outcome_x" # the tree df uses x as a variable already
+    model_input = dplyr::rename(model_input, "outcome_x" = "x")
+  }
+
+  if ("x" %in% covariates) {
+    covariates[covariates == "x"] = 'covariate_x'
+    model_input = dplyr::rename(model_input, 'covariate_x' = 'x')
+  }
+
+  if ("y" %in% covariates) {
+    covariates[covariates == "y"] = 'covariate_y'
+    model_input = dplyr::rename(model_input, 'covariate_y' = 'y')
+  }
+
+  return(list(model_input = model_input,
+              covariates  = covariates,
+              outcome     = outcome))
+}
+
 #' Plot a tree file showing the outcome variable
 #' @description Plot a tree file, and show the outcome variable as a colored dot
 #'   on the end of each tip.
@@ -700,16 +729,15 @@ plot_outcome_tree = function(tree_file,
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
 
-  if (outcome == "y") {
-    outcome = "outcome_y" # the tree df uses y as a variable already
-    model_input = dplyr::rename(model_input, "outcome_y" = "y")
-  }
+  orig_model_input = model_input
 
-  if ("x" %in% covariates) {
-    covariates[covariates == "x"] = 'covariate_x'
-    model_input = dplyr::rename(model_input, 'covariate_x' = 'x')
-  }
+  meta_check_result = check_meta(model_input,
+                                 covariates,
+                                 outcome)
 
+  model_input = meta_check_result$model_input
+  covariates = meta_check_result$covariates
+  outcome = meta_check_result$outcome
 
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     outcome_color_values = c('#abd9e9', '#d73027')
@@ -760,7 +788,8 @@ plot_outcome_tree = function(tree_file,
   if (return_tree_df) {
     return(list(tree_plot = p,
                 seg_df = seg_df,
-                terminal_seg_df = terminal_seg_df))
+                terminal_seg_df = terminal_seg_df,
+                orig_model_input = orig_model_input))
   } else {
     return(p)
   }
@@ -865,6 +894,16 @@ plot_tree_with_post_pred = function(tree_file,
                                 omit_na = omit_na,
                                 verbose = verbose,
                                 return_tree_df = TRUE)
+
+  model_input = tree_plot$orig_model_input
+
+  meta_check_result = check_meta(model_input,
+                                 covariates,
+                                 outcome)
+
+  model_input = meta_check_result$model_input
+  covariates = meta_check_result$covariates
+  outcome = meta_check_result$outcome
 
   # if (!all(labels == tree_plot$terminal_seg_df$label)) {
   #   stop('Mismatch between yrep ordering and tree label ordering. This should never happen.')
