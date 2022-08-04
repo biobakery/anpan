@@ -18,7 +18,7 @@ compute_clade_effects = function(clade_members,
            param_name = paste("phylo_effect[", 1:n, "]", sep = "")) |>
     tibble::as_tibble()
 
-  phy_effect_df = ap_res$pglmm_fit$draws(format = 'draws_df',
+  phy_effect_df = anpan_pglmm_result$pglmm_fit$draws(format = 'draws_df',
                                          variables = "phylo_effect") |>
     tibble::as_tibble() |>
     tidyr::pivot_longer(matches("phylo_effect"),
