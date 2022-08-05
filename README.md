@@ -115,7 +115,7 @@ phylogenetic tree. Right now the only usable outcome distributions are
 `family = "gaussian"`, the `reg_noise` parameter can be used to
 regularize the ratio of the noise parameters with the following prior
 distribution:
-![(\\sigma\_{phylo} / \\sigma\_{resid}) \\sim Gamma(1,2)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%28%5Csigma_%7Bphylo%7D%20%2F%20%5Csigma_%7Bresid%7D%29%20%5Csim%20Gamma%281%2C2%29 "(\sigma_{phylo} / \sigma_{resid}) \sim Gamma(1,2)")
+![(\sigma\_{phylo} / \sigma\_{resid}) \sim Gamma(1,2)](https://latex.codecogs.com/png.image?%5Cdpi%7B110%7D&space;%5Cbg_white&space;%28%5Csigma_%7Bphylo%7D%20%2F%20%5Csigma_%7Bresid%7D%29%20%5Csim%20Gamma%281%2C2%29 "(\sigma_{phylo} / \sigma_{resid}) \sim Gamma(1,2)")
 
 ``` r
 meta_file = "/path/to/metadata.tsv" 
@@ -135,6 +135,10 @@ There is a corresponding `anpan_pglmm_batch()` function that can be
 pointed to a directory of .tree files with the `tree_dir` parameter.
 
 ## FAQ
+
+> I have questions, where can I get help?
+
+You can ask on the biobakery help forum: <https://forum.biobakery.org/>
 
 > What’s with the name?
 

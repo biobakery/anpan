@@ -116,6 +116,10 @@ There is a corresponding `anpan_pglmm_batch()` function that can be pointed to a
 
 ## FAQ
 
+> I have questions, where can I get help?
+
+You can ask on the biobakery help forum: [https://forum.biobakery.org/](https://forum.biobakery.org/)
+
 > What's with the name?
 
 * The name "anpan" was chosen to fit into the [biobakery](https://huttenhower.sph.harvard.edu/tools/) bread theme and because it's short and easy to pronounce and remember. 
