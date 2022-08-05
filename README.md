@@ -57,6 +57,11 @@ Once you have the dependencies, you can install anpan from github with:
 devtools::install_github("biobakery/anpan")
 ```
 
+If you would like to read the walkthrough vignette, you will need to set
+the `build_vignettes = TRUE` argument in the `install_github()` command,
+at which point you can view the vignette with
+`vignette("anpan_tutorial", package = 'anpan')`.
+
 ## Example - element testing
 
 You can filter large uniref tables and look for associations with
