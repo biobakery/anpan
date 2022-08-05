@@ -39,7 +39,10 @@ transformed parameters {
             - 1 * student_t_lccdf(0 | 5, 0, 2.5);
 
   // half std_normal on case effects
-  lprior += normal_lpdf(sd_pwy_effects | 0, .333) - 1 * normal_lccdf(0 | 0, .333);
+  // lprior += normal_lpdf(sd_pwy_effects | 0, .333) - 1 * normal_lccdf(0 | 0, .333);
+  lprior += exponential_lpdf(sd_pwy_effects | 3);
+  // lprior += gamma_lpdf(sd_pwy_effects | .5, 1);
+
 }
 model {
   // likelihood
