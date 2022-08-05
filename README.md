@@ -60,7 +60,9 @@ devtools::install_github("biobakery/anpan")
 If you would like to read the walkthrough vignette, you will need to set
 the `build_vignettes = TRUE` argument in the `install_github()` command,
 at which point you can view the vignette with
-`vignette("anpan_tutorial", package = 'anpan')`.
+`vignette("anpan_tutorial", package = 'anpan')`. There is also a static
+version of the tutorial available on [the biobakery wiki GitHub
+page](https://github.com/biobakery/biobakery/wiki/anpan-tutorial).
 
 ## Example - element testing
 
