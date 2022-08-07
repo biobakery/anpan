@@ -18,7 +18,7 @@
 #' @param group_ind a character giving the name of the column for the 0/1 group indicator variable
 #'   in \code{bug_pwy_dat}
 #' @param ... other arguments to pass to cmdstanr::sample()
-#' @returns a list containing the CmdStanMCMC object of the model fit and the pwy-index map
+#' @returns a list containing the CmdStanMCMC object of the model fit and a summary data frame.
 #' @seealso [cmdstanr::CmdStanMCMC()]
 #' @export
 anpan_pwy_ranef = function(bug_pwy_dat,
@@ -49,12 +49,27 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                    group_ind = bug_pwy_dat[[group_ind]])
 
   pwy_ind_map = tibble(index = 1:data_list$N_pwy,
-                       variable = paste("pwy_effects[", index, "]", sep = ""),
-                       pwy = levels(factor(bug_pwy_dat$pwy)))
+                       pwy_group_effect = paste("pwy_effects[", index, "]", sep = ""),
+                       pwy_intercept = paste("pwy_intercepts[", index, "]", sep = ""),
+                       pwy = levels(factor(bug_pwy_dat$pwy))) |>
+    tidyr::pivot_longer(matches("pwy_"),
+                        names_to = 'var_names',
+                        values_to = 'variable') |>
+    dplyr::select(-var_names) |>
+    data.table::as.data.table()
 
   mod_fit = pwy_ranef_model$sample(data = data_list, ...)
 
-  return(tibble(model_fit = list(mod_fit), pwy_index_map = list(pwy_ind_map)))
+  summary_df = mod_fit$draws() |>
+    posterior::summarise_draws(posterior::default_summary_measures(),
+                               wide = ~purrr::set_names(quantile(.x, probs = c(.01, .99)), c("q1", "q99")),
+                               posterior::default_convergence_measures()) |>
+    filter(grepl("^pwy|global|sigma|sd_|species_beta", variable)) |>  # Discard variables most users won't be interested in like lp, lprior
+    dplyr::left_join(pwy_ind_map, by = 'variable') |>
+    select(pwy, variable:ess_tail)
+
+  return(tibble(model_fit = list(mod_fit),
+                summary_df = list(summary_df)))
 }
 
 #' Fit the pathway random effects model for multiple bugs
@@ -81,14 +96,27 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
   p = progressr::progressor(steps = dplyr::n_distinct(bug_pwy_dat$bug))
 
-  res = bug_pwy_dat |>
-    dplyr::group_split(bug) |>
+  if (!is.data.table(bug_pwy_dat)) {
+    message("Converting input to data.table")
+    bug_pwy_dat = data.table::as.data.table(bug_pwy_dat)
+  }
+
+  if (!is.factor(bug_pwy_dat$bug)) {
+    message("Converting bug column to factor")
+
+    bug_pwy_dat = bug_pwy_dat |>
+      mutate(bug = factor(bug))
+  }
+
+
+  res = split(x = bug_pwy_dat, by = "bug") |>
     furrr::future_map_dfr(function(.x) {bug_res = anpan_pwy_ranef(bug_pwy_dat = .x,
                                                                   group_ind = group_ind,
                                                                   ...)
                                         p()
                                         return(bug_res)},
-                          .options = furrr::furrr_options(seed = 123))
+                          .options = furrr::furrr_options(seed = 123),
+                          .id = "bug")
 
   return(res)
 }
