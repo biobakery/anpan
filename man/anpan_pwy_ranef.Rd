@@ -17,7 +17,7 @@ in \code{bug_pwy_dat}}
 \item{...}{other arguments to pass to cmdstanr::sample()}
 }
 \value{
-a list containing the CmdStanMCMC object of the model fit and the pwy-index map
+a list containing the CmdStanMCMC object of the model fit and a summary data frame.
 }
 \description{
 Fit a model of the form pwy_abd ~ species_abd + (1|pwy) + (0+group|pwy) for a single
