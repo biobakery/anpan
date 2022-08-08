@@ -4,7 +4,12 @@
 \alias{anpan_pwy_ranef}
 \title{Estimate a species-pathway abundance random effects model}
 \usage{
-anpan_pwy_ranef(bug_pwy_dat, group_ind = "crc", ...)
+anpan_pwy_ranef(
+  bug_pwy_dat,
+  group_ind = "crc",
+  effect_size_threshold = log10(1.5),
+  ...
+)
 }
 \arguments{
 \item{bug_pwy_dat}{a data frame with a row for each observation and columns "pwy",
@@ -13,6 +18,8 @@ anpan_pwy_ranef(bug_pwy_dat, group_ind = "crc", ...)
 
 \item{group_ind}{a character giving the name of the column for the 0/1 group indicator variable
 in \code{bug_pwy_dat}}
+
+\item{effect_size_threshold}{effect size threshold for hit-calling pathway:group effects}
 
 \item{...}{other arguments to pass to cmdstanr::sample()}
 }
@@ -34,7 +41,10 @@ The priors are as follows: A) student_t(3, mean(pwy_abd), 2.5) on the intercept 
 
   The group_ind column should be numeric with values in {0,1}
 
-  The main parameter of interest is the \code{pwy_effects} vector. When
+  The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
+  column is defined by by selecting the bug:pwy combinations where 98% posterior intervals for
+  the pwy:group effect exclude 0 and the absolute posterior mean exceeds the specified effect
+  size threshold.
 }
 \seealso{
 [cmdstanr::CmdStanMCMC()]

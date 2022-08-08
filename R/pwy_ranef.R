@@ -11,18 +11,23 @@
 #'
 #'   The group_ind column should be numeric with values in {0,1}
 #'
-#'   The main parameter of interest is the \code{pwy_effects} vector. When
+#'   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
+#'   column is defined by by selecting the bug:pwy combinations where 98% posterior intervals for
+#'   the pwy:group effect exclude 0 and the absolute posterior mean exceeds the specified effect
+#'   size threshold.
 #' @param bug_pwy_dat a data frame with a row for each observation and columns "pwy",
 #'   "log10_species_abd", "log10_pwy_abd", and a group indicator column named according to the
 #'   \code{group_ind} argument
 #' @param group_ind a character giving the name of the column for the 0/1 group indicator variable
 #'   in \code{bug_pwy_dat}
+#' @param effect_size_threshold effect size threshold for hit-calling pathway:group effects
 #' @param ... other arguments to pass to cmdstanr::sample()
 #' @returns a list containing the CmdStanMCMC object of the model fit and a summary data frame.
 #' @seealso [cmdstanr::CmdStanMCMC()]
 #' @export
 anpan_pwy_ranef = function(bug_pwy_dat,
                            group_ind = "crc",
+                           effect_size_threshold = log10(1.5),
                            ...) {
 
   if (!all(c("pwy", "log10_species_abd", "log10_pwy_abd", group_ind) %in% names(bug_pwy_dat))) {
@@ -66,7 +71,10 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                                posterior::default_convergence_measures()) |>
     filter(grepl("^pwy|global|sigma|sd_|species_beta", variable)) |>  # Discard variables most users won't be interested in like lp, lprior
     dplyr::left_join(pwy_ind_map, by = 'variable') |>
-    select(pwy, variable:ess_tail)
+    mutate(hit = (!(q1 < 0 & q99 > 0)) & (abs(mean) > effect_size_threshold)) |>
+    select(pwy, hit, variable:ess_tail)
+
+  summary_df$hit[!grepl("^pwy_eff", summary_df$variable)] = NA
 
   return(tibble(model_fit = list(mod_fit),
                 summary_df = list(summary_df)))
