@@ -29,7 +29,8 @@ In addition to the column requirements of \code{anpan_pwy_ranef()}, the input da
 }
 \examples{
 \dontrun{
-
+library(tidyverse)
+library(anpan)
 input_dat = tibble(bug = rep(paste0("bug", 1:5), each = 200),
             pwy = rep(paste0('pwy', 1:5), times = 200),
             log10_species_abd = rnorm(1000),
@@ -39,12 +40,16 @@ input_dat = tibble(bug = rep(paste0("bug", 1:5), each = 200),
 
 res = anpan_pwy_ranef_batch(input_dat, group_ind = "group_ind")
 
-
-res |>
+# Examine the summary
+pwy_group_res = res |>
   select(bug, summary_df) |>             # select the two main columns
   unnest(c(summary_df)) |>               # unnest
   filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
   arrange(-abs(mean))                    # sort by decreasing effect size
+
+print(pwy_group_res)
+
+pwy_group_res |> filter(hit)
 # ^ Here, there are no hits because we simulated with no dependence
 }
 }
