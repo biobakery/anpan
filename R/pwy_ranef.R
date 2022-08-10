@@ -154,3 +154,150 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
   return(res)
 }
+
+#' Plot a pathway random effects result
+#' @inheritParams anpan_pwy_ranef
+#' @param ncol The number of columns to use if faceting multiple bugs.
+#' @export
+plot_pwy_ranef_intervals = function(pwy_ranef_res,
+                                    group_ind = 'crc',
+                                    ncol = 1) {
+
+  if ("bug" %in% names(pwy_ranef_res)){
+    # It's a batch result
+    plot_input = pwy_ranef_res |>
+      select(bug, summary_df) |>             # select the two main columns
+      unnest(c(summary_df)) |>               # unnest
+      filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
+      arrange(-abs(mean)) |>                    # sort by decreasing effect size
+      mutate(hit_lab = c("non-hit", "hit")[hit + 1])
+
+    facets = facet_wrap("bug", scales = "free", ncol = ncol)
+
+  } else {
+    plot_input = pwy_ranef_res |>
+      select(summary_df) |>
+      unnest(c(summary_df)) |>
+      filter(grepl("^pwy_eff", variable)) |>
+      arrange(-abs(mean)) |>
+      mutate(hit_lab = c("non-hit", "hit")[hit + 1])
+
+    facets = NULL
+  }
+
+  p = plot_input |>
+    ggplot(aes(mean, pwy)) +
+    geom_vline(xintercept = 0,
+               lty = 2, color = 'grey50') +
+    geom_segment(aes(x = q1, xend = q99,
+                     yend = pwy)) +
+    geom_point(aes(color = hit_lab)) +
+    labs(color = NULL,
+         y = NULL,
+         x = "pwy:group value") +
+    scale_color_brewer(palette = "Set1") +
+    facets
+
+  return(p)
+}
+
+#' Plot a pathway random effects result
+#' @inheritParams anpan_pwy_ranef
+#' @param max_pwy the maximum number of bug:pwy facets to include
+#' @details If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from
+#'   that bug.
+plot_pwy_ranef = function(bug_pwy_dat,
+                               pwy_ranef_res,
+                               group_ind = 'crc',
+                               group_labels = c("ctrl", "case"),
+                               bug_name = NULL,
+                               max_pwy = 20,
+                               post_draws = 40) {
+
+
+  if (is.null(bug_name) && !("bug" %in% colnames(pwy_ranef_res))) {
+    stop("If using a model fit to a single bug, you need to specify the bug_name parameter")
+  } else if (!is.null(bug_name)) {
+    if (verbose) message("Filtering bug_pwy_dat to the specified bug.")
+
+    bug_pwy_dat = bug_pwy_dat |>
+      filter(bug == bug_name)
+  }
+
+  top_pwys = bug_pwy_dat |>
+    select(bug, pwy) |>
+    unique()
+
+  if (nrow(top_pwys) > max_pwy) {
+    warning(paste0("Choosing the first ", max_pwy, " bug:pwy combinations in bug_pwy_dat. Subset that input if you'd like to show different bug:pwy combinations."))
+
+    top_pwys = top_pwys |>
+      head(n = max_pwy)
+  }
+
+  plot_data = bug_pwy_dat |>
+    inner_join(top_pwys, by = c("bug", "pwy"))
+
+  plot_data = plot_data |>
+    mutate(group_labels = group_labels[plot_data[[group_ind]] + 1])
+
+  get_post_draws = function(cmdstan_fit, post_draws = post_draws) {
+    cmdstan_fit$draws(format = 'data.frame') |>
+      as_tibble() |>
+      dplyr::slice_sample(n = post_draws) |>
+      tidyr::pivot_longer(-c(`.chain`, `.iteration`, `.draw`),
+                          names_to = 'variable',
+                          values_to = 'value') |>
+      dplyr::filter(grepl("^pwy_eff|beta|glob|^pwy_interc", variable))
+  }
+
+  line_from_iter = function(iter_df) {
+    iter_df$slope = iter_df$value[iter_df$variable == "species_beta[1]"]
+    iter_df$glob_int = iter_df$value[iter_df$variable == 'global_intercept']
+    iter_df |>
+      filter(!is.na(pwy)) |>
+      group_by(pwy) |>
+      summarise(pwy = pwy[1],
+                slope = slope[1],
+                ctrl = glob_int[1] + value[effects == "pwy_int"],
+                case = glob_int[1] + value[effects == "pwy_int"] + value[effects == "pwy_eff"])
+  }
+
+  combine_summ_with_draws = function(summary_df, rdraws) {
+    summary_df |> select(pwy, variable) |>
+      filter(!grepl("sd_|sigma", variable)) |>
+      full_join(rdraws, by = 'variable') |>
+      mutate(effects = str_extract(variable, "pwy_eff|pwy_int")) |>
+      group_split(`.draw`) |>
+      map_dfr(line_from_iter) |>
+      pivot_longer(cols = case:ctrl,
+                   names_to = 'group_lablels',
+                   values_to = "int")
+  }
+
+  if (!("bug" %in% colnames(pwy_ranef_res))) {
+    pwy_ranef_res$bug = bug_name
+  }
+
+  draw_df = pwy_ranef_res |>
+    filter(bug %in% unique(plot_data$bug)) |>
+    mutate(rdraws = lapply(model_fit,
+                           get_post_draws,
+                           post_draws = post_draws),
+           line_draws = map2(summary_df, rdraws,
+                             combine_summ_with_draws)) |>
+    select(bug, line_draws) |>
+    unnest(c(line_draws))
+
+  plot_data |>
+    ggplot(aes(log10_species_abd, log10_pwy_abd)) +
+    geom_abline(data = draw_df,
+                aes(slope = slope,
+                    intercept = int,
+                    color = group_labels),
+                inherit.aes = FALSE) +
+    geom_point(aes(color = group_labels)) +
+    facet_wrap(c("bug", "pwy"), scales = 'free') +
+    scale_color_manual(values = c("#1F78C8", "#ff0000")) # pals::cols25(2) |> dput()
+
+}
