@@ -11,7 +11,8 @@ plot_pwy_ranef(
   group_labels = c("ctrl", "case"),
   bug_name = NULL,
   max_pwy = 20,
-  post_draws = 40
+  post_draws = 30,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -22,7 +23,15 @@ plot_pwy_ranef(
 \item{group_ind}{a character giving the name of the column for the 0/1 group indicator variable
 in \code{bug_pwy_dat}}
 
+\item{group_labels}{labels for the 0/1 indicator to use on the plots}
+
+\item{bug_name}{name of the bug (if using a result from \code{anpan_pwy_ranef()})}
+
 \item{max_pwy}{the maximum number of bug:pwy facets to include}
+
+\item{post_draws}{number of post draws to draw in each facet}
+
+\item{verbose}{logical for verbosity}
 }
 \description{
 Plot a pathway random effects result
@@ -30,4 +39,7 @@ Plot a pathway random effects result
 \details{
 If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from
   that bug.
+
+  If specified, \code{bug_name} must exactly match the corresponding entries in
+  \code{bug_pwy_dat}.
 }

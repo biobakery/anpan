@@ -204,24 +204,37 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
 #' Plot a pathway random effects result
 #' @inheritParams anpan_pwy_ranef
 #' @param max_pwy the maximum number of bug:pwy facets to include
+#' @param bug_name name of the bug (if using a result from \code{anpan_pwy_ranef()})
+#' @param post_draws number of post draws to draw in each facet
+#' @param group_labels labels for the 0/1 indicator to use on the plots
+#' @param verbose logical for verbosity
 #' @details If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from
 #'   that bug.
+#'
+#'   If specified, \code{bug_name} must exactly match the corresponding entries in
+#'   \code{bug_pwy_dat}.
+#' @export
 plot_pwy_ranef = function(bug_pwy_dat,
-                               pwy_ranef_res,
-                               group_ind = 'crc',
-                               group_labels = c("ctrl", "case"),
-                               bug_name = NULL,
-                               max_pwy = 20,
-                               post_draws = 40) {
+                          pwy_ranef_res,
+                          group_ind = 'crc',
+                          group_labels = c("ctrl", "case"),
+                          bug_name = NULL,
+                          max_pwy = 20,
+                          post_draws = 30,
+                          verbose = TRUE) {
 
 
   if (is.null(bug_name) && !("bug" %in% colnames(pwy_ranef_res))) {
     stop("If using a model fit to a single bug, you need to specify the bug_name parameter")
-  } else if (!is.null(bug_name)) {
+  } else if (!is.null(bug_name) && ("bug" %in% colnames(pwy_ranef_res))) {
     if (verbose) message("Filtering bug_pwy_dat to the specified bug.")
 
     bug_pwy_dat = bug_pwy_dat |>
       filter(bug == bug_name)
+  }
+
+  if (!("bug" %in% colnames(pwy_ranef_res))) {
+    pwy_ranef_res$bug = bug_name
   }
 
   top_pwys = bug_pwy_dat |>
@@ -229,7 +242,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     unique()
 
   if (nrow(top_pwys) > max_pwy) {
-    warning(paste0("Choosing the first ", max_pwy, " bug:pwy combinations in bug_pwy_dat. Subset that input if you'd like to show different bug:pwy combinations."))
+    if (verbose) message(paste0("Choosing the first ", max_pwy, " bug:pwy combinations in bug_pwy_dat. Subset that input if you'd like to show different bug:pwy combinations."))
 
     top_pwys = top_pwys |>
       head(n = max_pwy)
@@ -271,12 +284,8 @@ plot_pwy_ranef = function(bug_pwy_dat,
       group_split(`.draw`) |>
       map_dfr(line_from_iter) |>
       pivot_longer(cols = case:ctrl,
-                   names_to = 'group_lablels',
+                   names_to = 'group_labels',
                    values_to = "int")
-  }
-
-  if (!("bug" %in% colnames(pwy_ranef_res))) {
-    pwy_ranef_res$bug = bug_name
   }
 
   draw_df = pwy_ranef_res |>
@@ -287,7 +296,8 @@ plot_pwy_ranef = function(bug_pwy_dat,
            line_draws = map2(summary_df, rdraws,
                              combine_summ_with_draws)) |>
     select(bug, line_draws) |>
-    unnest(c(line_draws))
+    unnest(c(line_draws)) |>
+    inner_join(top_pwys, by = c("bug", "pwy"))
 
   plot_data |>
     ggplot(aes(log10_species_abd, log10_pwy_abd)) +
@@ -295,9 +305,12 @@ plot_pwy_ranef = function(bug_pwy_dat,
                 aes(slope = slope,
                     intercept = int,
                     color = group_labels),
-                inherit.aes = FALSE) +
+                alpha = .33) +
     geom_point(aes(color = group_labels)) +
     facet_wrap(c("bug", "pwy"), scales = 'free') +
-    scale_color_manual(values = c("#1F78C8", "#ff0000")) # pals::cols25(2) |> dput()
+    scale_color_manual(values = c("#1F78C8", "#ff0000")) +  # pals::cols25(2) |> dput()
+    theme_light() +
+    theme(strip.text = element_text(color = 'grey20')) +
+    labs(color = NULL)
 
 }
