@@ -208,8 +208,12 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
 #' @param post_draws number of post draws to draw in each facet
 #' @param group_labels labels for the 0/1 indicator to use on the plots
 #' @param verbose logical for verbosity
-#' @details If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from
-#'   that bug.
+#' @details This function plots bug:pwy data alongside posterior draws. If there's a strong group
+#'   effect in a particular bug:pwy combination, you will see wide separation of the red and blue
+#'   posterior lines.
+#'
+#'   If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from that
+#'   bug.
 #'
 #'   If specified, \code{bug_name} must exactly match the corresponding entries in
 #'   \code{bug_pwy_dat}.

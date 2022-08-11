@@ -37,8 +37,12 @@ in \code{bug_pwy_dat}}
 Plot a pathway random effects result
 }
 \details{
-If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from
-  that bug.
+This function plots bug:pwy data alongside posterior draws. If there's a strong group
+  effect in a particular bug:pwy combination, you will see wide separation of the red and blue
+  posterior lines.
+
+  If \code{bug_name} is specified, \code{bug_pwy_dat} is first filtered to just data from that
+  bug.
 
   If specified, \code{bug_name} must exactly match the corresponding entries in
   \code{bug_pwy_dat}.
