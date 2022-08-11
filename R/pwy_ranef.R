@@ -292,6 +292,8 @@ plot_pwy_ranef = function(bug_pwy_dat,
                    values_to = "int")
   }
 
+  wrap_char = 40 # Expose to user?
+
   draw_df = pwy_ranef_res |>
     filter(bug %in% unique(plot_data$bug)) |>
     mutate(rdraws = lapply(model_fit,
@@ -301,9 +303,16 @@ plot_pwy_ranef = function(bug_pwy_dat,
                              combine_summ_with_draws)) |>
     select(bug, line_draws) |>
     unnest(c(line_draws)) |>
-    inner_join(top_pwys, by = c("bug", "pwy"))
+    inner_join(top_pwys, by = c("bug", "pwy")) |>
+    mutate(pwy = stringr::str_wrap(pwy, width = wrap_char))
+
+  replace_vector = group_labels
+  names(replace_vector) = c("ctrl", "case")
+
+  draw_df$group_labels = replace_vector[draw_df$group_labels]
 
   plot_data |>
+    mutate(pwy = stringr::str_wrap(pwy, width = wrap_char)) |>
     ggplot(aes(log10_species_abd, log10_pwy_abd)) +
     geom_abline(data = draw_df,
                 aes(slope = slope,
@@ -314,7 +323,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     facet_wrap(c("bug", "pwy"), scales = 'free') +
     scale_color_manual(values = c("#1F78C8", "#ff0000")) +  # pals::cols25(2) |> dput()
     theme_light() +
-    theme(strip.text = element_text(color = 'grey20')) +
+    theme(strip.text = element_text(color = 'grey20', margin = margin(.1,.1,.1,.1, unit = 'pt'),
+                                    size = 6.5)) +
     labs(color = NULL)
-
 }
