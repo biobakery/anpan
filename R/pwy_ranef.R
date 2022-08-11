@@ -226,7 +226,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
 
   if (is.null(bug_name) && !("bug" %in% colnames(pwy_ranef_res))) {
     stop("If using a model fit to a single bug, you need to specify the bug_name parameter")
-  } else if (!is.null(bug_name) && ("bug" %in% colnames(pwy_ranef_res))) {
+  } else if (!is.null(bug_name)) {
     if (verbose) message("Filtering bug_pwy_dat to the specified bug.")
 
     bug_pwy_dat = bug_pwy_dat |>
@@ -242,7 +242,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     unique()
 
   if (nrow(top_pwys) > max_pwy) {
-    if (verbose) message(paste0("Choosing the first ", max_pwy, " bug:pwy combinations in bug_pwy_dat. Subset that input if you'd like to show different bug:pwy combinations."))
+    if (verbose) message(paste0("Choosing the first ", max_pwy, " bug:pwy combinations in bug_pwy_dat. Subset bug_pwy_dat before calling this function if you'd like to show different bug:pwy combinations."))
 
     top_pwys = top_pwys |>
       head(n = max_pwy)
