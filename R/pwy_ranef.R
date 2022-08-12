@@ -200,7 +200,7 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
     geom_point(aes(color = hit_lab)) +
     labs(color = NULL,
          y = NULL,
-         x = "pwy:group value") +
+         x = "pwy:group value and 98% posterior intervals") +
     scale_color_manual(values = c("hit" = "#E41A1C", # brewer set1 but reversed
                                   "non-hit" = "#377EB8")) +
     facets +
