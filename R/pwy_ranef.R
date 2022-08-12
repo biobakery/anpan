@@ -265,7 +265,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     inner_join(top_pwys, by = c("bug", "pwy"))
 
   plot_data = plot_data |>
-    mutate(group_labels = group_labels[plot_data[[group_ind]] + 1])
+    mutate(group_var = group_labels[plot_data[[group_ind]] + 1])
 
   get_post_draws = function(cmdstan_fit, post_draws = post_draws) {
     cmdstan_fit$draws(format = 'data.frame') |>
@@ -297,7 +297,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
       group_split(`.draw`) |>
       map_dfr(line_from_iter) |>
       pivot_longer(cols = case:ctrl,
-                   names_to = 'group_labels',
+                   names_to = 'group_var',
                    values_to = "int")
   }
 
@@ -318,17 +318,21 @@ plot_pwy_ranef = function(bug_pwy_dat,
   replace_vector = group_labels
   names(replace_vector) = c("ctrl", "case")
 
-  draw_df$group_labels = replace_vector[draw_df$group_labels]
+  draw_df$group_var = replace_vector[draw_df$group_var]
+  draw_df = draw_df |> mutate(group_var = factor(group_var,
+                                                 levels = group_labels))
 
   plot_data |>
-    mutate(pwy = stringr::str_wrap(pwy, width = wrap_char)) |>
+    mutate(pwy = stringr::str_wrap(pwy, width = wrap_char),
+           group_var = factor(group_var,
+                              levels = group_labels)) |>
     ggplot(aes(log10_species_abd, log10_pwy_abd)) +
     geom_abline(data = draw_df,
                 aes(slope = slope,
                     intercept = int,
-                    color = group_labels),
+                    color = group_var),
                 alpha = .33) +
-    geom_point(aes(color = group_labels)) +
+    geom_point(aes(color = group_var)) +
     facet_wrap(c("bug", "pwy"), scales = 'free') +
     scale_color_manual(values = c("#1F78C8", "#ff0000")) +  # pals::cols25(2) |> dput()
     theme_light() +
