@@ -23,7 +23,7 @@
 #' @param effect_size_threshold effect size threshold for hit-calling pathway:group effects
 #' @param ... other arguments to pass to cmdstanr::sample()
 #' @returns a list containing the CmdStanMCMC object of the model fit and a summary data frame.
-#' @seealso [cmdstanr::CmdStanMCMC()]
+#' @seealso [plot_pwy_ranef()] , [plot_pwy_ranef_intervals()], [cmdstanr::CmdStanMCMC()]
 #' @export
 anpan_pwy_ranef = function(bug_pwy_dat,
                            group_ind = "crc",
@@ -112,6 +112,8 @@ anpan_pwy_ranef = function(bug_pwy_dat,
 #' pwy_group_res |> filter(hit)
 #' # ^ Here, there are no hits because we simulated with no dependence
 #' }
+#'
+#' @seealso [plot_pwy_ranef()] , [plot_pwy_ranef_intervals()]
 #' @export
 anpan_pwy_ranef_batch = function(bug_pwy_dat,
                                  group_ind = "crc", ...) {

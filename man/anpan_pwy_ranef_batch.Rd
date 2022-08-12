@@ -54,4 +54,8 @@ print(pwy_group_res)
 pwy_group_res |> filter(hit)
 # ^ Here, there are no hits because we simulated with no dependence
 }
+
+}
+\seealso{
+[plot_pwy_ranef()] , [plot_pwy_ranef_intervals()]
 }
