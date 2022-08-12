@@ -47,5 +47,5 @@ The priors are as follows: A) student_t(3, mean(pwy_abd), 2.5) on the intercept 
   size threshold.
 }
 \seealso{
-[plot_pwy_ranef()] , [plot_pwy_ranef_intervals()], [cmdstanr::CmdStanMCMC()]
+\code{\link[=plot_pwy_ranef]{plot_pwy_ranef()}} , \code{\link[=plot_pwy_ranef_intervals]{plot_pwy_ranef_intervals()}}, \code{\link[cmdstanr:CmdStanMCMC]{cmdstanr::CmdStanMCMC}}
 }

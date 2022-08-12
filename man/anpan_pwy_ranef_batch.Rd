@@ -57,5 +57,5 @@ pwy_group_res |> filter(hit)
 
 }
 \seealso{
-[plot_pwy_ranef()] , [plot_pwy_ranef_intervals()]
+\code{\link[=plot_pwy_ranef]{plot_pwy_ranef()}} , \code{\link[=plot_pwy_ranef_intervals]{plot_pwy_ranef_intervals()}}, \code{\link[cmdstanr:CmdStanMCMC]{cmdstanr::CmdStanMCMC}}
 }
