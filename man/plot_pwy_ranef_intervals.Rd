@@ -7,6 +7,9 @@
 plot_pwy_ranef_intervals(pwy_ranef_res, group_ind = "crc", ncol = 1)
 }
 \arguments{
+\item{pwy_ranef_res}{a result from \code{\link[=anpan_pwy_ranef]{anpan_pwy_ranef()}} or
+\code{\link[=anpan_pwy_ranef_batch]{anpan_pwy_ranef_batch()}}}
+
 \item{group_ind}{a character giving the name of the column for the 0/1 group indicator variable
 in \code{bug_pwy_dat}}
 

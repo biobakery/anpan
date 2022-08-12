@@ -159,6 +159,8 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
 #' Plot a pathway random effects result
 #' @inheritParams anpan_pwy_ranef
+#' @param pwy_ranef_res a result from \code{\link[=anpan_pwy_ranef]{anpan_pwy_ranef()}} or
+#'   \code{\link[=anpan_pwy_ranef_batch]{anpan_pwy_ranef_batch()}}
 #' @param ncol The number of columns to use if faceting multiple bugs.
 #' @export
 plot_pwy_ranef_intervals = function(pwy_ranef_res,
@@ -172,7 +174,8 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
       unnest(c(summary_df)) |>               # unnest
       filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
       arrange(-abs(mean)) |>                    # sort by decreasing effect size
-      mutate(hit_lab = c("non-hit", "hit")[hit + 1])
+      mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
+                              levels = c("hit", "non-hit")))
 
     facets = facet_wrap("bug", scales = "free", ncol = ncol)
 
@@ -182,7 +185,8 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
       unnest(c(summary_df)) |>
       filter(grepl("^pwy_eff", variable)) |>
       arrange(-abs(mean)) |>
-      mutate(hit_lab = c("non-hit", "hit")[hit + 1])
+      mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
+                              levels = c("hit", "non-hit")))
 
     facets = NULL
   }
@@ -197,8 +201,11 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
     labs(color = NULL,
          y = NULL,
          x = "pwy:group value") +
-    scale_color_brewer(palette = "Set1") +
-    facets
+    scale_color_manual(values = c("hit" = "#E41A1C", # brewer set1 but reversed
+                                  "non-hit" = "#377EB8")) +
+    facets +
+    theme_light() +
+    theme(strip.text = element_text(color = 'grey20'))
 
   return(p)
 }
