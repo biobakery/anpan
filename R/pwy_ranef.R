@@ -151,7 +151,8 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
                                                                   ...)
                                         p()
                                         return(bug_res)},
-                          .options = furrr::furrr_options(seed = 123),
+                          .options = furrr::furrr_options(seed = 123,
+                                                          scheduling = Inf),
                           .id = "bug")
 
   return(res)
