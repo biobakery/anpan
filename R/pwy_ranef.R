@@ -12,9 +12,9 @@
 #'   The group_ind column should be numeric with values in {0,1}
 #'
 #'   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
-#'   column is defined by by selecting the bug:pwy combinations where 98% posterior intervals for
-#'   the pwy:group effect exclude 0 and the absolute posterior mean exceeds the specified effect
-#'   size threshold.
+#'   column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
+#'   the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
+#'   size threshold, and 3) the estimated fixed effect of species_abd on pwy_abd is positive.
 #' @param bug_pwy_dat a data frame with a row for each observation and columns "pwy",
 #'   "log10_species_abd", "log10_pwy_abd", and a group indicator column named according to the
 #'   \code{group_ind} argument
@@ -71,7 +71,9 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                                posterior::default_convergence_measures()) |>
     filter(grepl("^pwy|global|sigma|sd_|species_beta", variable)) |>  # Discard variables most users won't be interested in like lp, lprior
     dplyr::left_join(pwy_ind_map, by = 'variable') |>
-    mutate(hit = (!(q1 < 0 & q99 > 0)) & (abs(mean) > effect_size_threshold)) |>
+    mutate(hit = (!(q1 < 0 & q99 > 0)) &
+             (abs(mean) > effect_size_threshold) &
+             mean[grepl("species_beta", variable)] > 0) |>
     select(pwy, hit, variable:ess_tail)
 
   summary_df$hit[!grepl("^pwy_eff", summary_df$variable)] = NA
