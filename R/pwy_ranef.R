@@ -175,6 +175,10 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
     if (is.null(out_dir)) {
       warning("Output directory not provided. Errors not saved.")
     } else {
+      if (!dir.exists(out_dir)) {
+        message("Creating output directory.")
+        dir.create(out_dir)
+      }
       save(errors,
            file = file.path(out_dir, "errors.RData"))
     }
@@ -188,6 +192,11 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
   if (!is.null(out_dir)) {
     message("Saving results to pwy_ranef_batch_res.RData in the specified output directory.")
+
+    if (!dir.exists(out_dir)) {
+      message("Creating output directory.")
+      dir.create(out_dir)
+    }
 
     save(pwy_ranef_batch_res,
          file = file.path(out_dir, "pwy_ranef_batch_res.RData"))
