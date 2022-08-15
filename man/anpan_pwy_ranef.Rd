@@ -42,9 +42,9 @@ The priors are as follows: A) student_t(3, mean(pwy_abd), 2.5) on the intercept 
   The group_ind column should be numeric with values in {0,1}
 
   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
-  column is defined by by selecting the bug:pwy combinations where 98% posterior intervals for
-  the pwy:group effect exclude 0 and the absolute posterior mean exceeds the specified effect
-  size threshold.
+  column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
+  the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
+  size threshold, and 3) the estimated fixed effect of species_abd on pwy_abd is positive.
 }
 \seealso{
 \code{\link[=plot_pwy_ranef]{plot_pwy_ranef()}} , \code{\link[=plot_pwy_ranef_intervals]{plot_pwy_ranef_intervals()}}, \code{\link[cmdstanr:CmdStanMCMC]{cmdstanr::CmdStanMCMC}}

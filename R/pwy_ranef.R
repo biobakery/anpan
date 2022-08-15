@@ -83,10 +83,13 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                 summary_df = list(summary_df)))
 }
 
+safely_anpan_pwy_ranef = purrr::safely(anpan_pwy_ranef)
+
 #' Fit the pathway random effects model for multiple bugs
 #' @details In addition to the column requirements of \code{anpan_pwy_ranef()}, the input data frame
 #'   \code{bug_pwy_dat} here must also contain a variable called "bug" which gives a unique
 #'   identifier for each bug.
+#' @param out_dir output directory
 #' @returns a tibble of row-binded anpan_pwy_ranef results
 #' @inheritParams anpan_pwy_ranef
 #' @examples \dontrun{
@@ -119,7 +122,9 @@ anpan_pwy_ranef = function(bug_pwy_dat,
 #' @seealso \code{\link[=plot_pwy_ranef]{plot_pwy_ranef()}} , \code{\link[=plot_pwy_ranef_intervals]{plot_pwy_ranef_intervals()}}, \code{\link[cmdstanr:CmdStanMCMC]{cmdstanr::CmdStanMCMC}}
 #' @export
 anpan_pwy_ranef_batch = function(bug_pwy_dat,
-                                 group_ind = "crc", ...) {
+                                 group_ind = "crc",
+                                 out_dir = NULL,
+                                 ...) {
 
   if (!all(c("bug", "pwy", "log10_species_abd", "log10_pwy_abd", group_ind) %in% names(bug_pwy_dat))) {
     stop("The necessary variables are not present in bug_pwy_dat. See ?anpan_pwy_ranef for what the columns should be called.")
@@ -150,16 +155,45 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
 
   res = split(x = bug_pwy_dat, by = "bug") |>
-    furrr::future_map_dfr(function(.x) {bug_res = anpan_pwy_ranef(bug_pwy_dat = .x,
-                                                                  group_ind = group_ind,
-                                                                  ...)
-                                        p()
-                                        return(bug_res)},
-                          .options = furrr::furrr_options(seed = 123,
-                                                          scheduling = Inf),
-                          .id = "bug")
+    furrr::future_map(function(.x) {bug_res = safely_anpan_pwy_ranef(bug_pwy_dat = .x,
+                                                                     group_ind = group_ind,
+                                                                     ...)
+                                    p()
+                                    return(bug_res)},
+                      .options = furrr::furrr_options(seed = 123,
+                                    scheduling = Inf))
 
-  return(res)
+  res_df = purrr::transpose(res) |>
+    as_tibble()
+
+  errors = res_df |>
+    filter(map_lgl(result, is.null))
+
+  if (nrow(errors) > 0) {
+    warning("Some bugs failed to fit. See errors.RData in the output directory.")
+
+    if (is.null(out_dir)) {
+      warning("Output directory not provided. Errors not saved.")
+    } else {
+      save(errors,
+           file = file.path(out_dir, "errors.RData"))
+    }
+  }
+
+  pwy_ranef_batch_res = res_df |>
+    filter(map_lgl(error, is.null)) |>
+    pull(result) |>
+    data.table::rbindlist() |>
+    as_tibble()
+
+  if (!is.null(out_dir)) {
+    message("Saving results to pwy_ranef_batch_res.RData in the specified output directory.")
+
+    save(pwy_ranef_batch_res,
+         file = file.path(out_dir, "pwy_ranef_batch_res.RData"))
+  }
+
+  return(pwy_ranef_batch_res)
 }
 
 #' Plot a pathway random effects result
