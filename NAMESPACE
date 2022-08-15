@@ -2,7 +2,6 @@
 
 export(anpan)
 export(anpan_batch)
-export(anpan_latent_outcome)
 export(anpan_pglmm)
 export(anpan_pglmm_batch)
 export(anpan_pwy_ranef)
