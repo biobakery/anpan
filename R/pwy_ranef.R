@@ -43,7 +43,8 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                            mustWork = TRUE)
 
   pwy_ranef_model = cmdstanr::cmdstan_model(stan_file = model_path,
-                                            quiet = TRUE)
+                                            quiet = TRUE,
+                                            stanc_options = list("O1"))
 
   data_list = list(N = nrow(bug_pwy_dat),
                    pwy_abd = bug_pwy_dat$log10_pwy_abd,
@@ -130,7 +131,8 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
   # Compile it once ahead of time
   pwy_ranef_model = cmdstanr::cmdstan_model(stan_file = model_path,
-                                            quiet = TRUE)
+                                            quiet = TRUE,
+                                            stanc_options = list("O1"))
 
   p = progressr::progressor(steps = dplyr::n_distinct(bug_pwy_dat$bug))
 

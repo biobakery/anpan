@@ -421,11 +421,13 @@ anpan_pglmm = function(meta_file,
   }
 
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
-                                        quiet = TRUE)
+                                        quiet = TRUE,
+                                        stanc_options = list("O1"))
 
   if (loo_comparison) {
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
-                                         quiet = TRUE)
+                                         quiet = TRUE,
+                                         stanc_options = list("O1"))
   }
 
   model_input$sample_id = factor(model_input$sample_id,
@@ -779,11 +781,13 @@ anpan_pglmm_batch = function(meta_file,
 
   # Compile them once here so that they don't get compiled inside future_map()
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
-                                        quiet = TRUE)
+                                        quiet = TRUE,
+                                        stanc_options = list("O1"))
 
   if (loo_comparison) {
     base_model = cmdstanr::cmdstan_model(stan_file = base_path,
-                                         quiet = TRUE)
+                                         quiet = TRUE,
+                                         stanc_options = list("O1"))
   }
 
 

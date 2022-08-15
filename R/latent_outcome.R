@@ -70,7 +70,8 @@ anpan_latent_outcome = function(model_mat, dist_mat,
                         list(y = y_init + rnorm(n, sd = .1)),
                         simplify = FALSE)
 
-  latent_y_model = cmdstanr::cmdstan_model('inst/stan/latent_y_glm.stan')
+  latent_y_model = cmdstanr::cmdstan_model('inst/stan/latent_y_glm.stan',
+                                           stanc_options = list("O1"))
 
   refresh_setting = if (verbose) 100 else 0
 
