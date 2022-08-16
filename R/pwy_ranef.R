@@ -155,13 +155,15 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
 
 
   res = split(x = bug_pwy_dat, by = "bug") |>
-    furrr::future_map(function(.x) {bug_res = safely_anpan_pwy_ranef(bug_pwy_dat = .x,
-                                                                     group_ind = group_ind,
-                                                                     ...)
-                                    p()
-                                    return(bug_res)},
-                      .options = furrr::furrr_options(seed = 123,
-                                    scheduling = Inf))
+    furrr::future_imap(function(.x, .y) {bug_res = safely_anpan_pwy_ranef(bug_pwy_dat = .x,
+                                                                          group_ind = group_ind,
+                                                                          ...)
+                                         p()
+                                         bug_res$bug = .y
+                                         bug_res = dplyr::relocate(bug_res, bug)
+                                         return(bug_res)},
+                       .options = furrr::furrr_options(seed = 123,
+                                                       scheduling = Inf))
 
   res_df = purrr::transpose(res) |>
     as_tibble()
