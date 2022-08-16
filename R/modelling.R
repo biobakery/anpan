@@ -393,9 +393,13 @@ anpan = function(bug_file,
                              sep = "") %>%
         as.formula()
 
-      wide_dat = dcast(model_input,
-                       formula = spread_formula,
-                       value.var = bug_covariate)
+      if (model_type == "horseshoe") {
+        wide_dat = model_input
+      } else {
+        wide_dat = dcast(model_input,
+                         formula = spread_formula,
+                         value.var = bug_covariate)
+      }
 
       write_tsv_no_progress(wide_dat,
                             file = file.path(filter_stats_dir, paste0("filtered_", bug_name, ".tsv.gz")))
