@@ -33,6 +33,8 @@ transformed parameters {
   pwy_effects = sd_pwy_effects * z_pwy_effects;
 
   lprior += student_t_lpdf(centered_intercept | 3, pwy_mean, 2.5);
+  lprior += normal_lpdf(species_beta[1] | 1, 1);
+
   lprior += student_t_lpdf(sigma | 3, 0, 2.5)
             - 1 * student_t_lccdf(0 | 3, 0, 2.5);
   lprior += student_t_lpdf(sd_pwy_int | 5, 0, 2.5)
