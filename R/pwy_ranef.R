@@ -159,8 +159,10 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
                                                                           group_ind = group_ind,
                                                                           ...)
                                          p()
-                                         bug_res$bug = .y
-                                         bug_res = dplyr::relocate(bug_res, bug)
+                                         if (is.null(bug_res$error)) {
+                                           bug_res$result$bug = .y
+                                           bug_res$result = dplyr::relocate(bug_res$result, bug)
+                                         }
                                          return(bug_res)},
                        .options = furrr::furrr_options(seed = 123,
                                                        scheduling = Inf))
