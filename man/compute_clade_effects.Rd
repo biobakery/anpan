@@ -15,8 +15,8 @@ compute_clade_effects(
 
 \item{anpan_pglmm_result}{a result list from \code{anpan_pglmm()}}
 
-\item{plot_difference}{logical indicating whether to plot 90% posterior intervals for the three
-computed variables}
+\item{plot_difference}{logical indicating whether to plot 50% and 98% posterior intervals for the
+three computed variables}
 }
 \value{
 a list of two tibbles

@@ -3,8 +3,8 @@
 #'   clade against that of all non-members.
 #' @param clade_members a character vector listing members of the clade of interest
 #' @param anpan_pglmm_result a result list from \code{anpan_pglmm()}
-#' @param plot_difference logical indicating whether to plot 90% posterior intervals for the three
-#'   computed variables
+#' @param plot_difference logical indicating whether to plot 50% and 98% posterior intervals for the
+#'   three computed variables
 #' @returns a list of two tibbles
 #' @export
 compute_clade_effects = function(clade_members,
@@ -38,7 +38,9 @@ compute_clade_effects = function(clade_members,
 
   clade_summary = clade_draws |>
     posterior::as_draws_df() |>
-    posterior::summarise_draws()
+    posterior::summarise_draws(posterior::default_summary_measures(),
+                               wide = ~purrr::set_names(quantile(.x, probs = c(.01, .25, .75, .99)), c("q1", "q25", "q75", "q99")),
+                               posterior::default_convergence_measures())
 
   if (plot_difference) {
     p = clade_summary |>
@@ -46,10 +48,15 @@ compute_clade_effects = function(clade_members,
       geom_vline(xintercept = 0,
                  lty = 2,
                  color = 'grey50') +
-      geom_point() +
-      geom_segment(aes(x = q5,
-                       xend = q95,
+      geom_segment(aes(x = q1,
+                       xend = q99,
                        yend = variable)) +
+      geom_segment(aes(x = q25,
+                       xend = q75,
+                       yend = variable),
+                   lwd = 2,
+                   color = "#9b4a60") +
+      geom_point(size = 2.5) +
       theme_light() +
       labs(x = "phylogenetic effect",
            y = NULL)
