@@ -169,14 +169,12 @@ fit_horseshoe = function(model_input,
     model_path = system.file("stan", "logistic_ushoe.stan",
                              package = 'anpan',
                              mustWork = TRUE)
-    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE,
-                                          stanc_options = list("O1"))
+    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   } else {
     model_path = system.file("stan", "gaussian_ushoe.stan",
                              package = 'anpan',
                              mustWork = TRUE)
-    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE,
-                                          stanc_options = list("O1"))
+    ushoe_model = cmdstanr::cmdstan_model(stan_file = model_path, quiet = TRUE)
   }
 
   if (skip_large && ncol(model_input) > (10002 + length(covariates))) {
