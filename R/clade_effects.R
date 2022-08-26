@@ -55,8 +55,9 @@ compute_clade_effects = function(clade_members,
                        xend = q75,
                        yend = variable),
                    lwd = 2,
-                   color = "#9b4a60") +
+                   color = "#9b4a60") + # lighter red bean paste color from the logo lol
       geom_point(size = 2.5) +
+      geom_point(size = 1.5, color = 'white') +
       theme_light() +
       labs(x = "phylogenetic effect",
            y = NULL)
