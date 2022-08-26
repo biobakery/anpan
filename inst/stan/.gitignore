@@ -1,2 +1,4 @@
 bin_pglmm
 bin_no_phylo_term
+cont_no_phylo_term
+cont_pglmm_noise_reg
