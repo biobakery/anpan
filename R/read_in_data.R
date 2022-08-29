@@ -19,7 +19,7 @@ read_meta = function(meta_file,
     }
   }
 
-  metadata = meta %>% dplyr::select(dplyr::all_of(select_cols))
+  metadata = meta |> dplyr::select(dplyr::all_of(select_cols))
 
   if (omit_na) {
     metadata = na.omit(metadata)
@@ -33,15 +33,14 @@ read_meta = function(meta_file,
 #' @export
 read_bug = function(bug_file, meta = NULL,
                     remove_pattern = "_Abundance-RPKs") {
-  nc = readLines(bug_file,
-                 n = 1) %>%
-    strsplit('\t') %>%
-    .[[1]] %>%
-    length
+
+  nc = strsplit(readLines(bug_file,
+                          n = 1), '\t')[[1]] |>
+    length()
 
   gf = fread(bug_file,
              colClasses = list(character = 1, numeric = 2:nc),
-             showProgress = FALSE) %>%
+             showProgress = FALSE) |>
     dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
 
   names(gf)[1] = "gene"
@@ -50,7 +49,7 @@ read_bug = function(bug_file, meta = NULL,
   # ^ This removes the |species_id part of the identifier to make it easier to read
 
   if (!is.null(meta)){
-    gf = gf %>% dplyr::select(gene, any_of(unique(meta$sample_id)))
+    gf = gf |> dplyr::select(gene, any_of(unique(meta$sample_id)))
   }
 
   melt(gf, id.vars = "gene", variable.name = 'sample_id', value.name = "abd")
