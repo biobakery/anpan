@@ -63,10 +63,10 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     bug_term_name = "presentTRUE"
   }
 
-  bug_terms = all_terms %>%
-    dplyr::filter(term == bug_term_name) %>%
-    dplyr::arrange(p.value) %>%
-    dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) %>%
+  bug_terms = all_terms |>
+    dplyr::filter(term == bug_term_name) |>
+    dplyr::arrange(p.value) |>
+    dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) |>
     dplyr::select(-term)
 
   write_tsv_no_progress(bug_terms,
@@ -93,12 +93,11 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
   x = model.matrix(glm_formula,
                    data = gene_dat)
 
-  res = fastglm::fastglm(x = x, y = y,
-                         family = mod_family,
-                         method = fastglm_method) %>% summary %>%
-    .[['coefficients']] %>%
-    as.data.frame() %>%
-    tibble::rownames_to_column("term") %>%
+  res = summary(fastglm::fastglm(x = x, y = y,
+                                 family = mod_family,
+                                 method = fastglm_method))[['coefficients']] |>
+    as.data.frame() |>
+    tibble::rownames_to_column("term") |>
     data.table::as.data.table()
 
   names(res) = c("term", "estimate", "std.error", "statistic", "p.value")
@@ -112,7 +111,7 @@ clean_ushoe_summary = function(ushoe_fit,
                                cov_names,
                                gene_names) {
 
-  res = ushoe_fit$summary() %>%
+  res = ushoe_fit$summary() |>
     as.data.table()
 
   res$variable["b_covariates_Intercept" == res$variable] = "intercept"
@@ -123,7 +122,7 @@ clean_ushoe_summary = function(ushoe_fit,
 
   res$gene = gene_names[res$index]
 
-  res = res %>%
+  res = res |>
     dplyr::select(param = variable, gene, mean:ess_tail)
 
   return(res)
@@ -164,8 +163,8 @@ fit_horseshoe = function(model_input,
 
   cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
 
-  X_genes = model_input %>%
-    dplyr::select(-dplyr::all_of(c('sample_id', outcome, covariates))) %>%
+  X_genes = model_input |>
+    dplyr::select(-dplyr::all_of(c('sample_id', outcome, covariates))) |>
     as.matrix()
   X_genes = 0+X_genes # convert to 0/1
   X_covariates = model.matrix(cov_formula, data = model_input)
@@ -371,7 +370,7 @@ anpan = function(bug_file,
       if (verbose) message("* Saving filtered data in wide format. ")
 
       spread_formula = paste(paste(covariates, collapse = " + "), " + sample_id + ", outcome,  " ~ gene",
-                             sep = "") %>%
+                             sep = "") |>
         as.formula()
 
       if (model_type == "horseshoe") {
@@ -541,9 +540,9 @@ anpan_batch = function(bug_dir,
   }
 
   if (nrow(worked) > 0) {
-    all_bug_terms = worked$result %>%
-      dplyr::bind_rows() %>%
-      dplyr::relocate(bug_name, gene) %>%
+    all_bug_terms = worked$result |>
+      dplyr::bind_rows() |>
+      dplyr::relocate(bug_name, gene) |>
       data.table::as.data.table()
   } else {
     stop("No models fit successfully, see errors.RData")
@@ -564,8 +563,8 @@ anpan_batch = function(bug_dir,
       warning('No "gene" column in annotation file.')
 
     } else {
-      all_bug_terms = anno[all_bug_terms, on = 'gene'] %>%
-        dplyr::relocate(bug_name, gene) %>%
+      all_bug_terms = anno[all_bug_terms, on = 'gene'] |>
+        dplyr::relocate(bug_name, gene) |>
         dplyr::relocate(annotation, .after = dplyr::last_col())
     }
   }
