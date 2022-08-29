@@ -33,7 +33,6 @@ through CRAN (the exception being cmdstanr):
                        "progressr",
                        "purrr", 
                        "R.utils",
-                       "readr",
                        "stringr",
                        "tibble", 
                        "tidyr",
