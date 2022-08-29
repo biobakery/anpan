@@ -24,7 +24,6 @@ Imports:
     ape,
     ggplot2,
     R.utils,
-    broom,
     loo,
     fastglm,
     ggdendro,
