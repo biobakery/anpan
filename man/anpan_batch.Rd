@@ -40,7 +40,7 @@ anpan_batch(
 \item{prefiltered_dir}{an optional directory to pre-filtered data from an
 earlier run to skip the filtering step}
 
-\item{model_type}{either "horseshoe", "glm", or "fastglm"}
+\item{model_type}{either "horseshoe" or "fastglm"}
 
 \item{covariates}{character vector of covariates to include in the model}
 
