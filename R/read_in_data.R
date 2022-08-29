@@ -63,15 +63,21 @@ get_file_list = function(file_dir) {
 # The readr progress messes up the progressr bar
 write_tsv_no_progress = function(x, file, append = FALSE) {
 
-  old = options("readr.show_progress")$readr.show_progress
+  # old = options("readr.show_progress")$readr.show_progress
+  #
+  # options(readr.show_progress = FALSE)
+  #
+  # readr::write_tsv(x = x,
+  #                  file = file,
+  #                  append = append)
+  #
+  # options(readr.show_progress = old)
 
-  options(readr.show_progress = FALSE)
-
-  readr::write_tsv(x = x,
-                   file = file,
-                   append = append)
-
-  options(readr.show_progress = old)
+  data.table::fwrite(x = x,
+                     file = file,
+                     append = append,
+                     sep = "\t",
+                     showProgress = FALSE)
 
   return(invisible(x))
 }
