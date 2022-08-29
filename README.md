@@ -17,7 +17,6 @@ anpan depends on the following R packages, most of which are available
 through CRAN (the exception being cmdstanr):
 
     install.packages(c("ape", 
-                       "broom",
                        "data.table", 
                        "devtools",
                        "dplyr", 

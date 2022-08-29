@@ -26,7 +26,6 @@ anpan depends on the following R packages, most of which are available through C
 
 ```
 install.packages(c("ape", 
-                   "broom",
                    "data.table", 
                    "devtools",
                    "dplyr", 

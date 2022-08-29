@@ -20,7 +20,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
   # p <- progressr::progressor(along = glm_fits$data_subset)
-  # ^ That goes right here, then activate the p() calls commented out in fit_glm()
+  # ^ That goes right here, then activate the p() calls commented out in fit_fastglm()
   glm_fits$glm_res = furrr::future_map(.x = glm_fits$data_subset,
                                        .f = glm_fun,
                                        covariates = covariates,
@@ -34,7 +34,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
 
   failed = glm_fits[sapply(glm_fits$glm_res,
                            function(.x) !is.null(.x$error))]
-  #TODO ^ detect failures better. Sometimes glm or fastglm "fails" but just returns NAs instead of erroring.
+  #TODO ^ detect failures better. Sometimes fastglm "fails" but just returns NAs instead of erroring.
 
   if (nrow(failed) > 0) {
     # TODO Write out the failures to a warning file with a message
@@ -75,31 +75,6 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   return(bug_terms)
 }
 
-#' Fit a GLM to one gene
-fit_glm = function(gene_dat, covariates, outcome, out_dir,
-                   discretized_inputs = TRUE,
-                   mod_family,
-                   fastglm_method = NULL) {
-  # fastglm_method is NOT used in this function. It's an argument here to make
-  # calling a varying function easier inside fit_glms().
-
-  if (!discretized_inputs) {
-    bug_covariate = "abd"
-  } else {
-    bug_covariate = "present"
-  }
-
-  glm_formula = as.formula(paste0(outcome, " ~ ", paste(covariates, collapse = " + "), " + ", bug_covariate))
-
-  res = glm(glm_formula,
-            data = gene_dat,
-            family = mod_family) %>%
-    broom::tidy() %>% # Only place I use broom, maybe do it manually
-    as.data.table()
-
-  return(res)
-}
-
 fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
                        discretized_inputs = TRUE,
                        mod_family, fastglm_method = 1) {
@@ -131,7 +106,6 @@ fit_fastglm = function(gene_dat, covariates, outcome, out_dir,
   return(res)
 }
 
-safely_fit_glm = purrr::safely(fit_glm)
 safely_fit_fastglm = purrr::safely(fit_fastglm)
 
 clean_ushoe_summary = function(ushoe_fit,
@@ -238,7 +212,7 @@ fit_horseshoe = function(model_input,
 #' @param out_dir path to the desired output directory
 #' @param prefiltered_dir an optional directory to pre-filtered data from an
 #'   earlier run to skip the filtering step
-#' @param model_type either "horseshoe", "glm", or "fastglm"
+#' @param model_type either "horseshoe" or "fastglm"
 #' @param outcome the name of the outcome variable
 #' @param covariates covariates to account for (as a vector of strings)
 #' @param skip_large logical indicating whether to skip bugs with over 5k genes.
@@ -282,7 +256,7 @@ anpan = function(bug_file,
   # TODO separate the checks out to a distinct function.
   if (verbose) message(paste0("\n(1/", n_steps, ") Preparing the mise en place (checking inputs)..."))
 
-  if (!(model_type %in% c("horseshoe", "glm", "fastglm"))) stop('model_type must be either "horseshoe", "glm", or "fastglm"')
+  if (!(model_type %in% c("horseshoe", "fastglm"))) stop('model_type must be either "horseshoe" or "fastglm"')
 
   bug_name = get_bug_name(bug_file)
 
@@ -350,7 +324,7 @@ anpan = function(bug_file,
 
     model_input = fread(prefiltered_bug)
 
-    if (model_type %in% c("glm", "fastglm")) {
+    if (model_type %in% c("fastglm")) {
       model_input = data.table::melt(model_input,
                                      id.vars = c(covariates, outcome, "sample_id"),
                                      variable.name = "gene",
@@ -426,12 +400,6 @@ anpan = function(bug_file,
                                          skip_large = skip_large,
                                          save_fit = save_fit,
                                          ...),
-               glm   =   fit_glms(model_input, out_dir,
-                                  covariates = covariates,
-                                  outcome = outcome,
-                                  bug_name = bug_name,
-                                  discretized_inputs = discretize_inputs,
-                                  glm_fun = safely_fit_glm),
                fastglm = fit_glms(model_input, out_dir,
                                   covariates = covariates,
                                   outcome = outcome,
@@ -581,7 +549,7 @@ anpan_batch = function(bug_dir,
     stop("No models fit successfully, see errors.RData")
   }
 
-  if (model_type %in% c("glm", "fastglm")) {
+  if (model_type %in% c("fastglm")) {
     all_bug_terms$q_global = p.adjust(all_bug_terms$p.value, method = "fdr")
 
     plot_p_value_histogram(all_bug_terms,
