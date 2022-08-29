@@ -2,11 +2,10 @@ get_samp_stats_large = function(gf_file) {
   # If the gene family file is large (e.g. E coli), we have to get the quantiles in chunks
   # TODO Test this function specifically
 
-  nc = readLines(gf_file,
-                 n = 1) %>%
-    strsplit('\t') %>%
-    .[[1]] %>%
-    length
+  nc = strsplit(readLines(gf_file,
+                          n = 1),
+                '\t')[[1]] |>
+    length()
 
   chunks = ceiling(10*((2:nc) / nc))
 
@@ -14,18 +13,18 @@ get_samp_stats_large = function(gf_file) {
     gf = fread(gf_file,
                colClasses = list(character = 1, numeric = 2:nc),
                select = c(1, (2:nc)[chunks == i]),
-               showProgress = FALSE) %>%
+               showProgress = FALSE) |>
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
     names(gf)[1] = "gene"
-    gf = gf %>%
+    gf = gf |>
       tidyr::separate(gene,
                       into = c("u", "s"),
                       sep = "\\|")
 
     s_ids = names(gf)[-c(1, 2)]
 
-    gf = gf %>%
+    gf = gf |>
       melt(id.vars = c("u", "s"),
            variable.name = 'sample_id',
            value.name = "abd")
@@ -34,22 +33,26 @@ get_samp_stats_large = function(gf_file) {
                          levels = s_ids)
 
     if (i == 1){
-      chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
-                                               n_nz = sum(abd > 0),
-                                               qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
-        data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-        .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
-        .[]
+      dcast_input = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
+                                                 n_nz = sum(abd > 0),
+                                                 qs = get_qs_and_n_hi_lo(labd[abd > 0]),
+                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id]
+
+      chunk_set = data.table::dcast(data = dcast_input,
+                                    formula = sample_id + n_z + n_nz ~ quantile, value.var = 'qs')[, n_diff := (n_lo - n_hi), by = sample_id][]
+
     } else {
+      dcast_input = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
+                                                 n_nz = sum(abd > 0),
+                                                 qs = get_qs_and_n_hi_lo(labd[abd > 0]),
+                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id]
+
+      dcast_res = data.table::dcast(data = dcast_input,
+                                    formula = sample_id + n_z + n_nz ~ quantile,
+                                    value.var = 'qs')[, n_diff := (n_lo - n_hi), by = sample_id][]
+
       chunk_set = rbind(chunk_set,
-                        chunk_set = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
-                                                                 n_nz = sum(abd > 0),
-                                                                 qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                                                                 quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
-                          data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-                          .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
-                          .[])
+                        dcast_res)
     }
   }
 
@@ -66,13 +69,15 @@ get_qs_and_n_hi_lo = function(.x){
 }
 
 get_samp_stats = function(gf){
-  gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
-                               n_nz = sum(abd > 0),
-                               qs = get_qs_and_n_hi_lo(labd[abd > 0]),
-                               quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id] %>%
-    data.table::dcast(sample_id + n_z + n_nz ~ quantile, value.var = 'qs') %>%
-    .[, n_diff := (n_lo - n_hi), by = sample_id] %>%
-    .[]
+  dcast_input = gf[, labd := log10(abd)][, .(n_z = sum(abd == 0),
+                                             n_nz = sum(abd > 0),
+                                             qs = get_qs_and_n_hi_lo(labd[abd > 0]),
+                                             quantile = c('q10', 'q50', 'q90', 'n_hi', 'n_lo')), by = sample_id]
+
+  res = data.table::dcast(data = dcast_input,
+                          formula = sample_id + n_z + n_nz ~ quantile,
+                          value.var = 'qs')[, n_diff := (n_lo - n_hi), by = sample_id][]
+  return(res)
 }
 
 filter_with_kmeans = function(gf,
@@ -359,7 +364,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                                         minmax_thresh = minmax_thresh,
                                         filter_stats_dir = filter_stats_dir,
                                         bn = bug_name,
-                                        verbose = verbose) %>%
+                                        verbose = verbose) |>
     dplyr::select(-dplyr::all_of(outcome))
 
   if (!discretize_inputs) {
@@ -375,10 +380,10 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   }
 
   if (!is.null(metadata)) {
-    joined = filtered_gf[metadata, on = 'sample_id', nomatch = 0] %>%
+    joined = filtered_gf[metadata, on = 'sample_id', nomatch = 0] |>
       dplyr::select(dplyr::all_of(select_cols))
   } else {
-    joined = filtered_gf %>%
+    joined = filtered_gf |>
       dplyr::select(dplyr::all_of(select_cols))
   }
 

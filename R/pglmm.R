@@ -8,7 +8,7 @@ olap_cor_mat_and_meta = function(cor_mat,
 
   if (is.data.frame(meta_file)) {
 
-    meta = meta_file %>%
+    meta = meta_file |>
       dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
 
     if (omit_na) meta = na.omit(meta)
@@ -41,7 +41,7 @@ olap_cor_mat_and_meta = function(cor_mat,
 
   }
 
-  model_input = meta %>%
+  model_input = meta |>
     dplyr::filter(sample_id %in% overlapping_samples)
 
   if (nrow(model_input) < nrow(meta) & verbose) {
@@ -83,7 +83,7 @@ olap_tree_and_meta = function(tree_file,
 
   if (is.data.frame(meta_file)) {
 
-    meta = meta_file %>%
+    meta = meta_file |>
       dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
 
     if (omit_na) meta = na.omit(meta)
@@ -114,7 +114,7 @@ olap_tree_and_meta = function(tree_file,
 
   }
 
-  model_input = meta %>%
+  model_input = meta |>
     dplyr::filter(sample_id %in% overlapping_samples)
 
   if (nrow(model_input) < nrow(meta) & verbose) {
@@ -430,7 +430,7 @@ anpan_pglmm = function(meta_file,
 
   model_input$sample_id = factor(model_input$sample_id,
                                  levels = rownames(Lcov))
-  model_input = model_input %>%
+  model_input = model_input |>
     arrange(sample_id)
 
   # data_list preparation section ----
@@ -837,12 +837,12 @@ anpan_pglmm_batch = function(meta_file,
                                      return(res)},
                                    .options = furrr::furrr_options(seed = seed))
 
-  safe_res_df = purrr::transpose(safe_results) %>%
-    as_tibble() %>%
-    mutate(input_file = basename(tree_files)) %>%
+  safe_res_df = purrr::transpose(safe_results) |>
+    as_tibble() |>
+    mutate(input_file = basename(tree_files)) |>
     relocate(input_file)
 
-  errors = safe_res_df %>%
+  errors = safe_res_df |>
     dplyr::filter(purrr::map_lgl(error, ~!is.null(.x)))
 
   if (nrow(errors) > 0) {
@@ -852,7 +852,7 @@ anpan_pglmm_batch = function(meta_file,
     if (verbose) message(paste0("* There were ", nrow(errors), " tree files that failed to fit. You can see the error messages they produced in pglmm_errors.RData in the output directory."))
   }
 
-  worked = safe_res_df %>%
+  worked = safe_res_df |>
     dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
 
   res_df = dplyr::bind_cols(worked["input_file"],

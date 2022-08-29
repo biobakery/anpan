@@ -56,7 +56,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
 
   p = progressr::progressor(along = 1:max_i)
 
-  draw_split = draw_df[1:max_i,] %>%
+  draw_split = draw_df[1:max_i,] |>
     dplyr::group_split(`.draw`)
 
   # future map over posterior iterations
