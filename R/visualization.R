@@ -38,7 +38,7 @@ plot_lines = function(bug_file = NULL,
     # bug_name = gsub(".genefamilies.tsv", "", basename(bug_file))
   }
 
-  plot_df = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] %>%
+  plot_df = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] |>
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
                                        levels = c("present", "absent")))
 
@@ -46,7 +46,7 @@ plot_lines = function(bug_file = NULL,
     plot_df = plot_df[,.SD[unique(floor(seq(1, nrow(.SD), length.out = subset_line)))], by = sample_id]
   }
 
-  p = plot_df %>%
+  p = plot_df |>
     ggplot(aes(i, labd)) +
     geom_line(aes(group = sample_id,
                   color = labelled_as),
@@ -78,10 +78,10 @@ plot_kmeans_dots = function(samp_stats,
   } else {
     scale_x = scale_x_continuous()
   }
-  p = samp_stats %>%
-    na.omit %>%
+  p = samp_stats |>
+    na.omit() |>
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
-                                       levels = c("present", "absent"))) %>%
+                                       levels = c("present", "absent"))) |>
     ggplot(aes(n_nz, q50)) +
     geom_point(aes(color = labelled_as),
                alpha = .5) +
@@ -123,14 +123,14 @@ get_cov_color_map = function(unique_covs) {
 
   covs = names(unique_covs)
 
-  cov_types = unique_covs %>%
+  cov_types = unique_covs |>
     purrr::imap_dfr(function(.x, .y){tibble(covariate = .y,
                                      is_num = is.numeric(.x),
-                                     n_uniq = dplyr::n_distinct(.x))}) %>%
-    mutate(cov_type = c('discrete', 'continuous')[((n_uniq >= 5 & (is_num)) + 1)]) %>%
-    group_by(cov_type) %>%
-    mutate(cov_i = 1:n()) %>%
-    ungroup %>%
+                                     n_uniq = dplyr::n_distinct(.x))}) |>
+    mutate(cov_type = c('discrete', 'continuous')[((n_uniq >= 5 & (is_num)) + 1)]) |>
+    group_by(cov_type) |>
+    mutate(cov_i = 1:n()) |>
+    ungroup() |>
     mutate(color_scales = map2(cov_type, cov_i,
                                function(.x, .y){col_scales[[.x]][[.y]]}),
            y = 2:(n()+1))
@@ -161,13 +161,13 @@ plot_color_bars = function(color_bars, model_input,
                     panel.border = element_blank())
 
   if (length(covariates) > 0) {
-    unique_covs = model_input %>%
-      dplyr::select(dplyr::all_of(covariates)) %>%
-      unique
+    unique_covs = model_input |>
+      dplyr::select(dplyr::all_of(covariates)) |>
+      unique()
     covariate_color_map = get_cov_color_map(unique_covs)
   }
 
-  base_plot = color_bars %>%
+  base_plot = color_bars |>
     ggplot(aes(x = sample_id)) +
     geom_tile(aes_string(y = 1, fill = outcome)) +
     outcome_fill_scale +
@@ -275,8 +275,8 @@ plot_results = function(res, covariates, outcome, model_input,
     subtitle_str = paste0("Top ", n_top, " hits")
   }
 
-  input_mat = model_input %>% dplyr::select('sample_id', all_of(gene_levels)) %>%
-    tibble::column_to_rownames("sample_id") %>%
+  input_mat = model_input |> dplyr::select('sample_id', all_of(gene_levels)) |>
+    tibble::column_to_rownames("sample_id") |>
     as.matrix()
 
   input_mat = 1*input_mat # convert to numeric
@@ -290,9 +290,9 @@ plot_results = function(res, covariates, outcome, model_input,
   select_cols = c("sample_id", covariates, outcome)
 
   if (cluster %in% c('samples', 'both') && nrow(input_mat) > 2) {
-    color_bars = model_input %>%
-      dplyr::select(dplyr::all_of(select_cols)) %>%
-      unique
+    color_bars = model_input |>
+      dplyr::select(dplyr::all_of(select_cols)) |>
+      unique()
 
     if (binary_outcome) {
       ctls = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[1]])
@@ -320,9 +320,9 @@ plot_results = function(res, covariates, outcome, model_input,
   } else {
     order_cols = c(outcome, rev(covariates))
 
-    color_bars = model_input %>%
-      dplyr::select(dplyr::all_of(select_cols)) %>%
-      unique %>%
+    color_bars = model_input |>
+      dplyr::select(dplyr::all_of(select_cols)) |>
+      unique() |>
       setorderv(cols = order_cols, na.last = TRUE)
 
     color_bars$sample_id = factor(color_bars$sample_id,
@@ -337,12 +337,12 @@ plot_results = function(res, covariates, outcome, model_input,
     fill_scale = scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse"))
   }
 
-  model_input = data.table::melt(model_input %>% dplyr::select(all_of(select_cols), all_of(gene_levels)),
+  model_input = data.table::melt(model_input |> dplyr::select(all_of(select_cols), all_of(gene_levels)),
                                  id.vars = c(covariates, outcome, "sample_id"),
                                  variable.name = "gene",
                                  value.name = bug_covariate)
 
-  plot_data = model_input %>%
+  plot_data = model_input |>
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
                              levels = levels(color_bars$sample_id)))
@@ -375,8 +375,8 @@ plot_results = function(res, covariates, outcome, model_input,
     no_annotation = is.na(plot_data$annotation)
     plot_data$g_lab[no_annotation] = as.character(plot_data$gene[no_annotation])
 
-    lab_df = plot_data[,.(gene, g_lab)] %>%
-      unique
+    lab_df = plot_data[,.(gene, g_lab)] |>
+      unique()
 
     y_scale = scale_y_discrete(breaks = lab_df$gene,
                                labels = lab_df$g_lab,
@@ -386,7 +386,7 @@ plot_results = function(res, covariates, outcome, model_input,
                      12, 8)
     }
   } else {
-    lab_df = plot_data[,.(gene)] %>% unique
+    lab_df = plot_data[,.(gene)] |> unique()
     y_scale = scale_y_discrete(breaks = lab_df$gene,
                                position = 'right')
     if (is.null(width)) {
@@ -416,7 +416,7 @@ plot_results = function(res, covariates, outcome, model_input,
       plot_data$abd[!is.finite(plot_data$abd)] = NA
       threshold_warning_string = paste0(threshold_warning_string, " Abundance color shown on log scale.")
     }
-    heatmap_tile = plot_data %>%
+    heatmap_tile = plot_data |>
       ggplot(aes(y = gene, x = sample_id)) +
       geom_tile(aes(fill = abd)) +
       black_vline +
@@ -430,8 +430,8 @@ plot_results = function(res, covariates, outcome, model_input,
             axis.text.y = element_text(size = ggplot2::rel(glab_frac))) +
       coord_cartesian(expand = FALSE)
   } else {
-    heatmap_tile = plot_data %>%
-      mutate(present = as.logical(present)) %>%
+    heatmap_tile = plot_data |>
+      mutate(present = as.logical(present)) |>
       ggplot(aes(y = gene, x = sample_id)) +
       geom_tile(aes(fill = present)) +
       black_vline +
@@ -446,7 +446,7 @@ plot_results = function(res, covariates, outcome, model_input,
       coord_cartesian(expand = FALSE)
   }
 
-  int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] %>% unique %>%
+  int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] |> unique() |>
     dplyr::mutate(max_val = estimate + 1.96*std.error,
                   min_val = estimate - 1.96*std.error,
                   p_group = dplyr::case_when(p.value < .001 ~ "***",
@@ -459,7 +459,7 @@ plot_results = function(res, covariates, outcome, model_input,
 
   star_loc = min(int_plot_df$min_val) - .25*est_range
 
-  int_plot = int_plot_df %>%
+  int_plot = int_plot_df |>
     ggplot(aes(estimate, gene)) +
     geom_segment(aes(y = gene,
                      yend = gene,
@@ -615,7 +615,7 @@ plot_p_value_histogram = function(all_bug_terms,
                                   out_dir = NULL,
                                   plot_ext = "pdf",
                                   n_bins = 50) {
-  p = all_bug_terms %>%
+  p = all_bug_terms |>
     ggplot(aes(`p.value`)) +
     geom_histogram(breaks = seq(0, 1, length.out = n_bins)) +
     labs(title = "p-value histogram for all bug:gene glm fits",
@@ -644,17 +644,17 @@ plot_cor_mat = function(cor_mat,
     title_str = NULL
   }
 
-  cor_mat %>%
-    as.data.frame %>%
-    tibble::rownames_to_column('rn') %>%
-    tibble::as_tibble() %>%
+  cor_mat |>
+    as.data.frame() |>
+    tibble::rownames_to_column('rn') |>
+    tibble::as_tibble() |>
     dplyr::mutate(rn = factor(rn,
-                       levels = unique(rn))) %>%
+                       levels = unique(rn))) |>
     tidyr::pivot_longer(-rn,
                  names_to = 'V2',
-                 values_to = 'cor') %>%
+                 values_to = 'cor') |>
     dplyr::mutate(V2 = factor(V2,
-                       levels = rev(levels(rn)))) %>%
+                       levels = rev(levels(rn)))) |>
     ggplot(aes(rn, V2)) +
     geom_tile(aes(fill = cor,
                   color = cor)) +
@@ -749,21 +749,21 @@ plot_outcome_tree = function(tree_file,
     outcome_color_scale = scale_color_viridis_c()
   }
 
-  dend_df = ggdendro::dendro_data(bug_tree %>% phylogram::as.dendrogram())
+  dend_df = ggdendro::dendro_data(bug_tree |> phylogram::as.dendrogram())
 
-  seg_df = dend_df$segments %>%
-    as_tibble
+  seg_df = dend_df$segments |>
+    as_tibble()
 
-  tip_df = dend_df$labels %>%
-    as_tibble() %>%
+  tip_df = dend_df$labels |>
+    as_tibble() |>
     dplyr::select("x", "label")
 
-  terminal_seg_df = seg_df %>%
-    filter(x == xend & (x %% 1) == 0) %>%
-    group_by(x) %>%
-    filter(yend == min(yend)) %>%
-    ungroup %>%
-    left_join(tip_df, by = "x") %>% # join on tip labels
+  terminal_seg_df = seg_df |>
+    filter(x == xend & (x %% 1) == 0) |>
+    group_by(x) |>
+    filter(yend == min(yend)) |>
+    ungroup() |>
+    left_join(tip_df, by = "x") |> # join on tip labels
     left_join(model_input, by = c("label" = "sample_id")) # join on metadata
 
   n = nrow(model_input)
