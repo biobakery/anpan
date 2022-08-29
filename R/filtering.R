@@ -414,17 +414,21 @@ check_filter_res = function(model_input,
                             filter_stats_dir) {
 
   if (is.null(model_input)) {
-    readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
-                       file = warnings_file,
-                       append = TRUE)
+    cat(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
+        file = warnings_file,
+        append = TRUE,
+        sep = "\n")
+
     return(NULL)
   }
 
   if (nrow(model_input) == 0) {
     # ^ if nothing passed the prevalence or kmeans filters:
-    readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
-                       file = warnings_file,
-                       append = TRUE)
+    cat(paste0(bug_file, " contained no genes that the prevalence filter."),
+        file = warnings_file,
+        append = TRUE,
+        sep = "\n")
+
     return(NULL)
   }
 

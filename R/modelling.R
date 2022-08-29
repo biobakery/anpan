@@ -179,9 +179,12 @@ fit_horseshoe = function(model_input,
 
   if (skip_large && ncol(model_input) > (10002 + length(covariates))) {
     warnings_file = file.path(out_dir, "warnings.txt")
-    readr::write_lines(paste0(bug_name, " was skipped because there are over ten thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
-                       file = warnings_file,
-                       append = TRUE)
+
+    cat(paste0(bug_name, " was skipped because there are over ten thousand genes after filtering. Add skip_large = FALSE to disable this behavior."),
+        file = warnings_file,
+        append = TRUE,
+        sep = "\n")
+
     return(NULL)
   }
 
@@ -336,9 +339,11 @@ anpan = function(bug_file,
     prefiltered_bug = list.files(prefiltered_dir, full.names = TRUE, pattern = bug_name)
 
     if (length(prefiltered_bug) == 0) {
-      readr::write_lines(paste0(bug_file, " was skipped because no matching file was found in the pre-filtered data."),
-                         file = warnings_file,
-                         append = TRUE)
+      cat(paste0(bug_file, " was skipped because no matching file was found in the pre-filtered data."),
+          file = warnings_file,
+          append = TRUE,
+          sep = "\n")
+
       if (verbose) message(paste0("(3/", n_steps, ") No matching file found in in pre-filtered data directory - Model fitting skipped"))
       return(data.table::data.table())
     }
@@ -368,18 +373,22 @@ anpan = function(bug_file,
                                   verbose = verbose)
 
     if (is.null(model_input)) {
-      readr::write_lines(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
-                         file = warnings_file,
-                         append = TRUE)
+      cat(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
+          file = warnings_file,
+          append = TRUE,
+          sep = "\n")
+
       if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
       return(data.table::data.table())
     }
 
     if (nrow(model_input) == 0) {
       # ^ if nothing passed the prevalence or kmeans filters:
-      readr::write_lines(paste0(bug_file, " contained no genes that the prevalence filter."),
-                         file = warnings_file,
-                         append = TRUE)
+      cat(paste0(bug_file, " contained no genes that the prevalence filter."),
+          file = warnings_file,
+          append = TRUE,
+          sep = "\n")
+
       if (verbose) message(paste0("(3/", n_steps, ") Nothing passed filters - Model fitting skipped"))
       return(data.table::data.table())
     }
@@ -505,8 +514,9 @@ anpan_batch = function(bug_dir,
     dir.create(out_dir)
   }
 
-  readr::write_lines(fn_call_string,
-                     file = file.path(out_dir, "anpan_batch_call.txt"))
+  cat(fn_call_string,
+      file = file.path(out_dir, "anpan_batch_call.txt"),
+      sep = "\n")
 
   bug_files = get_file_list(bug_dir)
 

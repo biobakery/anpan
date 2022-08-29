@@ -742,8 +742,9 @@ anpan_pglmm_batch = function(meta_file,
     if (verbose) message("* Creating output directory.")
     dir.create(out_dir)
 
-    readr::write_lines(fn_call_string,
-                       file = file.path(out_dir, "anpan_pglmm_batch_call.txt"))
+    cat(fn_call_string,
+        file = file.path(out_dir, "anpan_pglmm_batch_call.txt"),
+        sep = "\n")
   }
 
   tree_files = list.files(tree_dir,
