@@ -1005,3 +1005,87 @@ plot_tree_with_post_pred = function(tree_file,
     return(tree_with_post_pred)
   }
 }
+
+get_corners = function(x,y){
+  p5 = .5 # one over
+  res = matrix(byrow = TRUE,
+               c(x + p5,      y,
+                 x     , y + p5,
+                 x - p5,     y,
+                 x     , y - p5),
+               ncol = 2)
+  colnames(res) = c("cx", "cy")
+  return(res)
+}
+
+#' Plot a rotated half correlation matrix
+#'
+#' @description Plot the lower triangle of a correlation matrix
+#' @param cor_mat a correlation matrix (must have dimnames)
+#' @param border_width width parameter of the border around each cell.
+#' @details If you see a thin, pixel-width grey border around each cell, try setting border_width =
+#'   0.1 or so, depending on your output resolution.
+#'
+#'   No checks are made on the order of the columns. If you want the order to line up with another
+#'   plot, you'll need to check the input manually beforehand.
+#' @return a ggplot of the lower triangle of the matrix.
+#' @export
+plot_half_cor_mat = function(cor_mat,
+                             border_width = 0) {
+
+  if (is.null(colnames(cor_mat))) stop("The correlation matrix must have column names.")
+
+  samples = colnames(cor_mat)
+  n = length(samples)
+
+  lower_tri_df = data.table(t(combn(samples,2)),
+                            correlation = cor_mat[lower.tri(cor_mat)]) |>
+    rbind(data.table(V1 = samples,
+                     V2 = samples,
+                     correlation = 1))
+  col_df = data.table(V1 = samples,
+                      V1_i = 1:n)
+  row_df = data.table(V2 = rev(samples),
+                      V2_i = 1:n)
+  lower_tri_coords = expand.grid(V1 = colnames(cor_mat), V2 = colnames(cor_mat)) |>
+    as.data.table()
+
+  coord_df = lower_tri_coords[col_df, on = "V1"][row_df, on = "V2"][lower_tri_df, on = c("V1", "V2"), nomatch = 0]
+
+  # Get the transformation matrix from three example points:
+  in_pts = matrix(c(1, 1,   1, # intercept column
+                    1, n,   1,
+                    n, 1, n-1),
+                  3, 3)
+  out_pts = matrix(c(1,   n,  1.5,
+                     -1, -1, -1.5),
+                   3,2)
+  trans_mat = solve(in_pts, out_pts)
+  in_coords = cbind(rep(1, nrow(coord_df)),
+                    as.matrix(coord_df[,.(V1_i, V2_i)]))
+
+  out_coords = in_coords %*% trans_mat
+  colnames(out_coords) = c("x", "y")
+
+  coord_df = cbind(coord_df, out_coords)
+  coord_df[,`:=`(      i = .I,
+                 corners = mapply(get_corners, x, y, SIMPLIFY = FALSE))]
+
+  plot_input = coord_df |>
+    tidyr::unnest(c(corners)) |>
+    as.data.table()
+
+  # You can get rid of the thin borders by mapping color as well, but then the thickness of the
+  # borders ("size = .1") can make the edges look ragged if the thickness isn't perfect.
+  plot_input |>
+    ggplot(aes(corners.V1, corners.V2)) +
+    geom_polygon(aes(group = i,
+                     fill = correlation,
+                     color = correlation),
+                 size = border_width) +
+    scale_fill_viridis_c() +
+    scale_color_viridis_c() +
+    theme_void() +
+    coord_equal()
+
+}
