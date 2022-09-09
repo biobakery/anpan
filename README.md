@@ -8,8 +8,11 @@
 
 The goal of anpan is to consolidate statistical methods for strain
 analysis. This includes automated filtering of metagenomic functional
-profiles, testing genetic elements for association with outcomes, and
-phylogenetic association testing.
+profiles, testing genetic elements for association with outcomes,
+phylogenetic association testing, and pathway-level random effects
+models.
+
+<img src="man/figures/1_overview.png" width="90%" height="90%" />
 
 ## Dependencies
 
@@ -41,7 +44,7 @@ through CRAN (the exception being cmdstanr):
 
 If the `cmdstanr` installation doesn’t work you can find more detailed
 instructions [at this link](https://mc-stan.org/cmdstanr/). Once you’ve
-installed `cmdstanr`, you will need to use it to install CmdStan:
+installed `cmdstanr`, you will need to use it to install CmdStan itself:
 
     library(cmdstanr)
     check_cmdstan_toolchain()
@@ -59,7 +62,8 @@ If you would like to read the walkthrough vignette, you will need to set
 the `build_vignettes = TRUE` argument in the `install_github()` command,
 at which point you can view the vignette with
 `vignette("anpan_tutorial", package = 'anpan')`. There is also a static
-version of the tutorial available on [the biobakery wiki GitHub
+(and probably not perfectly up-to-date) version of the tutorial
+available on [the biobakery wiki GitHub
 page](https://github.com/biobakery/biobakery/wiki/anpan-tutorial).
 
 ## Example - element testing
