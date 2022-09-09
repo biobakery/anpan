@@ -1155,7 +1155,9 @@ plot_elpd_diff = function(anpan_pglmm_res,
     theme_light() +
     theme(axis.title.y = element_blank(),
           axis.ticks.y = element_blank(),
-          axis.text.y  = element_blank())
+          axis.text.y  = element_blank(),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank())
 
   return(p)
 }
@@ -1213,5 +1215,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
                color = 'white') +
     labs(x = expression("PGLMM ELPD difference")) +
     theme_light() +
-    theme(axis.title.y = element_blank())
+    theme(axis.title.y = element_blank(),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank())
 }
