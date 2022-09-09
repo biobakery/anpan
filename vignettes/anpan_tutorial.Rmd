@@ -53,8 +53,9 @@ It's difficult to find associations between microbial strains and host health ou
 * Adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
 * Modeling the association between outcome variables and microbial gene presence while accounting for covariates
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
+* Modeling the difference in microbial pathways between experimental groups while controlling for species abundance.
 
-We'll cover the last point first in the section on phylogenetic generalized linear mixed models [PGLMMs].
+We'll cover each of these points in a top-level section. Currently the only section fleshed out in this tutorial is the [PGLMMs] section.
 
 # Libraries
 
@@ -75,6 +76,8 @@ library(tibble)
 library(dplyr)
 library(ape)
 ```
+
+One point to mention before going further is that all of the modelling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete should show a list of all the modeling functions. Same goes for the plotting functions and the `plot_` prefix. This can help you find the function you need quickly without having to dig through the documentation.
 
 # PGLMMs
 
@@ -309,6 +312,15 @@ This section isn't done.
 ```{r eval = FALSE}
 anpan_batch()
 ```
+
+# Pathway random effects model
+
+This section isn't done.
+
+```{r}
+?anpan_pwy_ranef_batch()
+```
+
 
 # References
 
