@@ -1089,3 +1089,129 @@ plot_half_cor_mat = function(cor_mat,
     coord_equal()
 
 }
+
+#' Plot the ELPD difference interval
+#'
+#' @param anpan_pglmm_res a result from \code{anpan_pglmm} or \code{anpan_pglmm_batch}
+#' @param probs the probability to cover in the inner and outer intervals
+#' @param verbose verbose
+#'
+#' @details The validity of the intervals shown in the plot hinges on the normality approximation of
+#'   the loo model comparison. See the [Cross validation
+#'   FAQ](https://mc-stan.org/loo/articles/online-only/faq.html#se_diff) for more details.
+#'
+#'   For batch results, you can set the \code{input_file} column to a factor to alter the vertical
+#'   sorting of input files. By default it sorts according to ELPD difference.
+#' @export
+plot_elpd_diff = function(anpan_pglmm_res,
+                          probs = c(.5, .98),
+                          verbose = TRUE) {
+
+  is_batch = is.data.frame(anpan_pglmm_res)
+
+  if (is_batch) {
+    p = plot_elpd_diff_batch(anpan_pglmm_res)
+    return(p)
+  }
+
+  comp_mat = anpan_pglmm_res$loo$comparison[2,,drop =FALSE]
+
+  if (rownames(comp_mat)[1] == "base_fit") {
+    comp_mat[1,1] = -1 * comp_mat[1,1]
+    if (verbose) message("The PGLMM has better predictive performance.")
+  } else {
+    if (verbose) message("The PGLMM has worse predictive performance.")
+  }
+
+  comp_df = comp_mat |>
+    tibble::as_tibble()
+
+  seg_df = tibble::tibble(ed   = comp_df$elpd_diff,
+                          mult = qnorm(1 - (1 - sort(probs))/2),
+                          lo   = ed - mult * comp_df$se_diff,
+                          hi   = ed + mult * comp_df$se_diff)
+
+  p = comp_df |>
+    ggplot(aes(elpd_diff, y = 1)) +
+    geom_vline(xintercept = 0,
+               color = 'grey50',
+               lty = 2) +
+    geom_segment(data = seg_df[2,],
+                 aes(y    = 1,
+                     yend = 1,
+                     x    = lo,
+                     xend = hi)) +
+    geom_segment(data = seg_df[1,],
+                 aes(y    = 1,
+                     yend = 1,
+                     x    = lo,
+                     xend = hi),
+                 lwd = 2,
+                 color = "#9b4a60") +
+    geom_point(size = 2.5) +
+    geom_point(size = 1.5,
+               color = 'white') +
+  labs(x = expression("PGLMM ELPD difference")) +
+    theme_light() +
+    theme(axis.title.y = element_blank(),
+          axis.ticks.y = element_blank(),
+          axis.text.y  = element_blank())
+
+  return(p)
+}
+
+loo_to_df = function(loo_res) {
+  loo_res$comparison |>
+    as.data.frame() |>
+    tibble::rownames_to_column("model") |>
+    tibble::as_tibble()
+}
+
+plot_elpd_diff_batch = function(anpan_pglmm_res,
+                                probs = c(.5, .98),
+                                verbose = TRUE) {
+
+  mult = qnorm(1 - (1 - sort(probs))/2)
+
+  plot_input = anpan_pglmm_res |>
+    select(input_file, loo) |>
+    mutate(loo_comp = map(loo, loo_to_df)) |>
+    select(-loo) |>
+    unnest(c(loo_comp)) |>
+    group_by(input_file) |>
+    summarise(best_model = model[1],
+              elpd_diff = case_when(model[1] == "pglmm_fit" ~ -1 * elpd_diff[2],
+                                    TRUE ~ elpd_diff[2]),
+              se_diff = se_diff[2]) |>
+    mutate(inner_lo = elpd_diff - mult[1] * se_diff,
+           inner_hi = elpd_diff + mult[1] * se_diff,
+           outer_lo = elpd_diff - mult[2] * se_diff,
+           outer_hi = elpd_diff + mult[2] * se_diff)
+
+  if (!is.factor(plot_input$input_file)) {
+    plot_input = plot_input |> arrange(elpd_diff)
+    plot_input$input_file = factor(plot_input$input_file,
+                                   levels = plot_input$input_file)
+  }
+
+  ggplot(plot_input,
+         aes(x = elpd_diff,
+             y = input_file)) +
+    geom_vline(xintercept = 0,
+               color = 'grey50',
+               lty = 2) +
+    geom_segment(aes(yend = input_file,
+                     x    = outer_lo,
+                     xend = outer_hi)) +
+    geom_segment(aes(yend = input_file,
+                     x    = inner_lo,
+                     xend = inner_hi),
+                 lwd = 2,
+                 color = "#9b4a60") +
+    geom_point(size = 2.5) +
+    geom_point(size = 1.5,
+               color = 'white') +
+    labs(x = expression("PGLMM ELPD difference")) +
+    theme_light() +
+    theme(axis.title.y = element_blank())
+}
