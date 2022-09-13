@@ -69,15 +69,21 @@ library(anpan)
 
 The startup message points out that you can easily parallelize / show progress bars for most long-running computations in `anpan` by setting `plan()` and `handlers()` after loading the `furrr` and `progressr` packages. For most users `plan(multisession, workers = 4)` and `handlers(global = TRUE)` are probably close to what you want, though both the [parallelization strategy](https://future.futureverse.org/reference/plan.html) and [progress reporting](https://progressr.futureverse.org/articles/progressr-intro.html#customizing-how-progress-is-reported) are highly customizable.
 
+A couple points to know about anpan function names:
+
+* All of the modeling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete prompt should show a list of all the modeling functions. This can help you find the function you need quickly without having to dig through the documentation. 
+  * Several functions have a `_batch()` version, which applies a single model to each bug present in a user-specified input directory.
+* Same goes for the plotting functions and the `plot_` prefix. 
+
 This code chunk loads some other packages we'll use:
+
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
+library(data.table)
 library(ggplot2)
 library(tibble)
 library(dplyr)
 library(ape)
 ```
-
-One point to mention before going further is that all of the modelling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete should show a list of all the modeling functions. Same goes for the plotting functions and the `plot_` prefix. This can help you find the function you need quickly without having to dig through the documentation.
 
 # PGLMMs
 
@@ -307,7 +313,127 @@ There's a lot more to be said about loo model comparison that is beyond the scop
 
 # Element testing
 
-This section isn't done.
+## Get example data
+
+In this section we'll simulate a small dataset for a single bug. If you have your own data or would like to use the example data built into the package, you can skip this section and go straight to [Apply `anpan`]. You can get the paths to the data included with the package with these two commands:
+
+```{r eval = FALSE}
+meta_path = system.file("extdata", "fake_metadata.tsv", 
+                        package = "anpan", mustWork = TRUE)
+bug_path = system.file("extdata", "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz", 
+                       package = "anpan", mustWork = TRUE)
+```
+
+### Simulate example data
+
+This section simulates some data for 200 samples in a synthetic bug with 500 genes. The simulation doesn't look realistically noisy (see the plots in the README / manuscript for that), but it incorporates the generative features anpan aims to pick up on.
+
+First we set some of the simulation parameters and a random seed:
+
+```{r eval = FALSE}
+n_per_group = 100
+n_gene = 500
+
+out_dir = tempdir()
+
+set.seed(1234)
+```
+
+Then we generate the simulated metadata. The `has_bug` column is an indicator if a given sample has the bug at all. Roughly a quarter of our samples don't.
+
+```{r eval = FALSE}
+sim_meta = data.table(sample_id = paste0('sample_', 1:(2 * n_per_group)),
+                      is_case   = rep(c(FALSE, TRUE), 
+                                      each = n_per_group),
+                      has_bug   = sample(x       = c(TRUE, FALSE),
+                                         prob    = c(.75, .25), 
+                                         size    = 2 * n_per_group,
+                                         replace = TRUE))
+
+meta_path = file.path(out_dir, "fake_metadata.tsv")
+
+fwrite(sim_meta,
+       file = meta_path)
+```
+
+We simulate the gene-level data in the blocks below. A couple notes on what's going on here:
+
+* we set the first five genes to have a non-zero true effect
+* the bug and gene abundances are modeled on the log scale 
+* the log abundances (`labd`) come from a skew normal distribution, which we define in the function `rskewnormal` (adapted from the [`sn` package](https://cran.r-project.org/web/packages/sn/index.html))
+* gene log-abundances below the 33rd percentile are truncated to -Inf i.e. are zeroed out.
+
+First we create the simulated metadata: 
+```{r eval = FALSE}
+true_effects = data.table(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
+                          effect = c(rnorm(5, sd = 2), 
+                                     rep(0, (n_gene - 5))))
+
+sim_grid = sim_dat = expand.grid(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
+                      sample_id = paste0('sample_', 1:(2*n))) |>
+  as.data.table()
+```
+
+Then we simulate the log-abundances. If a sample doesn't have a bug present, it drops the bug abundance. Gene log-abundance is proportional to bug abundance and in cases, the true effect of the gene (which really flips the causal direction of `anpan()`, but for a simulation this simple it doesn't matter).
+
+```{r eval = FALSE}
+rskewnormal = function(n, location = 0, scale = 1, skew = 0) {
+  # adapted from sn::rsn()
+  
+  delta = skew / sqrt(1 + skew^2)
+  chi   = abs(rnorm(n))
+  nrv   = rnorm(n)
+  
+  z = delta * chi + sqrt(1 - delta^2) * nrv
+
+  return(location + scale * z)
+}
+
+sim_meta[, bug_labd := rskewnormal(n        = nrow(sim_meta),
+                                   location = -2,
+                                   skew     = -3) +
+                       -0.5 * (!has_bug)]
+
+sim_df = sim_grid[sim_meta, on = 'sample_id'][true_effects, on = 'gene']
+
+sim_df[, gene_labd := rskewnormal(n        = nrow(sim_df),
+                                  location = -1.5 + bug_labd + is_case * effect,
+                                  skew     = -3,
+                                  scale    = 2)]
+
+sim_df$gene_labd[sim_df$gene_labd < quantile(sim_df$gene_labd,
+                                               probs = .333)] = -Inf
+```
+
+The block below performs a bit of formatting to make the simulated data look like real [HUMAnN](https://huttenhower.sph.harvard.edu/humann) data:
+
+* exponentiate the log-abundances
+* pivot to wide format
+* add on the fake species identifier to the gene column
+* and rename to the gene column to `# Gene Family`
+
+```{r eval = FALSE}
+sim_df[, gene_abd := exp(gene_labd)]
+
+sim_wide = dcast(sim_df[, .(gene, sample_id, gene_abd)],
+                 gene ~ sample_id,
+                 value.var = "gene_abd")
+
+sim_wide[, gene := paste0(gene, "|g__Madeuppy.s__Madeuppy_Fakerii")]
+
+names(sim_wide)[1] = "# Gene Family"
+```
+
+Then we write out the simulated data. The name of the file isn't important, but here we've chosen to follow the naming conventions of [HUMAnN](https://huttenhower.sph.harvard.edu/humann).
+
+```{r eval = FALSE}
+bug_path = file.path(out_dir, "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz")
+
+fwrite(sim_wide,
+       file = bug_path)
+```
+
+## Apply `anpan`
 
 ```{r eval = FALSE}
 anpan_batch()
@@ -317,7 +443,7 @@ anpan_batch()
 
 This section isn't done.
 
-```{r}
+```{r eval = FALSE}
 ?anpan_pwy_ranef_batch()
 ```
 

@@ -1,201 +1,201 @@
-sample_id	is_case
-sample_001	FALSE
-sample_002	FALSE
-sample_003	FALSE
-sample_004	FALSE
-sample_005	FALSE
-sample_006	FALSE
-sample_007	FALSE
-sample_008	FALSE
-sample_009	FALSE
-sample_010	FALSE
-sample_011	FALSE
-sample_012	FALSE
-sample_013	FALSE
-sample_014	FALSE
-sample_015	FALSE
-sample_016	FALSE
-sample_017	FALSE
-sample_018	FALSE
-sample_019	FALSE
-sample_020	FALSE
-sample_021	FALSE
-sample_022	FALSE
-sample_023	FALSE
-sample_024	FALSE
-sample_025	FALSE
-sample_026	FALSE
-sample_027	FALSE
-sample_028	FALSE
-sample_029	FALSE
-sample_030	FALSE
-sample_031	FALSE
-sample_032	FALSE
-sample_033	FALSE
-sample_034	FALSE
-sample_035	FALSE
-sample_036	FALSE
-sample_037	FALSE
-sample_038	FALSE
-sample_039	FALSE
-sample_040	FALSE
-sample_041	FALSE
-sample_042	FALSE
-sample_043	FALSE
-sample_044	FALSE
-sample_045	FALSE
-sample_046	FALSE
-sample_047	FALSE
-sample_048	FALSE
-sample_049	FALSE
-sample_050	FALSE
-sample_051	FALSE
-sample_052	FALSE
-sample_053	FALSE
-sample_054	FALSE
-sample_055	FALSE
-sample_056	FALSE
-sample_057	FALSE
-sample_058	FALSE
-sample_059	FALSE
-sample_060	FALSE
-sample_061	FALSE
-sample_062	FALSE
-sample_063	FALSE
-sample_064	FALSE
-sample_065	FALSE
-sample_066	FALSE
-sample_067	FALSE
-sample_068	FALSE
-sample_069	FALSE
-sample_070	FALSE
-sample_071	FALSE
-sample_072	FALSE
-sample_073	FALSE
-sample_074	FALSE
-sample_075	FALSE
-sample_076	FALSE
-sample_077	FALSE
-sample_078	FALSE
-sample_079	FALSE
-sample_080	FALSE
-sample_081	FALSE
-sample_082	FALSE
-sample_083	FALSE
-sample_084	FALSE
-sample_085	FALSE
-sample_086	FALSE
-sample_087	FALSE
-sample_088	FALSE
-sample_089	FALSE
-sample_090	FALSE
-sample_091	FALSE
-sample_092	FALSE
-sample_093	FALSE
-sample_094	FALSE
-sample_095	FALSE
-sample_096	FALSE
-sample_097	FALSE
-sample_098	FALSE
-sample_099	FALSE
-sample_100	FALSE
-sample_101	TRUE
-sample_102	TRUE
-sample_103	TRUE
-sample_104	TRUE
-sample_105	TRUE
-sample_106	TRUE
-sample_107	TRUE
-sample_108	TRUE
-sample_109	TRUE
-sample_110	TRUE
-sample_111	TRUE
-sample_112	TRUE
-sample_113	TRUE
-sample_114	TRUE
-sample_115	TRUE
-sample_116	TRUE
-sample_117	TRUE
-sample_118	TRUE
-sample_119	TRUE
-sample_120	TRUE
-sample_121	TRUE
-sample_122	TRUE
-sample_123	TRUE
-sample_124	TRUE
-sample_125	TRUE
-sample_126	TRUE
-sample_127	TRUE
-sample_128	TRUE
-sample_129	TRUE
-sample_130	TRUE
-sample_131	TRUE
-sample_132	TRUE
-sample_133	TRUE
-sample_134	TRUE
-sample_135	TRUE
-sample_136	TRUE
-sample_137	TRUE
-sample_138	TRUE
-sample_139	TRUE
-sample_140	TRUE
-sample_141	TRUE
-sample_142	TRUE
-sample_143	TRUE
-sample_144	TRUE
-sample_145	TRUE
-sample_146	TRUE
-sample_147	TRUE
-sample_148	TRUE
-sample_149	TRUE
-sample_150	TRUE
-sample_151	TRUE
-sample_152	TRUE
-sample_153	TRUE
-sample_154	TRUE
-sample_155	TRUE
-sample_156	TRUE
-sample_157	TRUE
-sample_158	TRUE
-sample_159	TRUE
-sample_160	TRUE
-sample_161	TRUE
-sample_162	TRUE
-sample_163	TRUE
-sample_164	TRUE
-sample_165	TRUE
-sample_166	TRUE
-sample_167	TRUE
-sample_168	TRUE
-sample_169	TRUE
-sample_170	TRUE
-sample_171	TRUE
-sample_172	TRUE
-sample_173	TRUE
-sample_174	TRUE
-sample_175	TRUE
-sample_176	TRUE
-sample_177	TRUE
-sample_178	TRUE
-sample_179	TRUE
-sample_180	TRUE
-sample_181	TRUE
-sample_182	TRUE
-sample_183	TRUE
-sample_184	TRUE
-sample_185	TRUE
-sample_186	TRUE
-sample_187	TRUE
-sample_188	TRUE
-sample_189	TRUE
-sample_190	TRUE
-sample_191	TRUE
-sample_192	TRUE
-sample_193	TRUE
-sample_194	TRUE
-sample_195	TRUE
-sample_196	TRUE
-sample_197	TRUE
-sample_198	TRUE
-sample_199	TRUE
-sample_200	TRUE
+sample_id,is_case,has_bug
+sample_001,FALSE,TRUE
+sample_002,FALSE,TRUE
+sample_003,FALSE,TRUE
+sample_004,FALSE,TRUE
+sample_005,FALSE,FALSE
+sample_006,FALSE,TRUE
+sample_007,FALSE,TRUE
+sample_008,FALSE,TRUE
+sample_009,FALSE,TRUE
+sample_010,FALSE,TRUE
+sample_011,FALSE,TRUE
+sample_012,FALSE,TRUE
+sample_013,FALSE,TRUE
+sample_014,FALSE,FALSE
+sample_015,FALSE,TRUE
+sample_016,FALSE,FALSE
+sample_017,FALSE,TRUE
+sample_018,FALSE,TRUE
+sample_019,FALSE,TRUE
+sample_020,FALSE,TRUE
+sample_021,FALSE,TRUE
+sample_022,FALSE,TRUE
+sample_023,FALSE,TRUE
+sample_024,FALSE,TRUE
+sample_025,FALSE,TRUE
+sample_026,FALSE,FALSE
+sample_027,FALSE,TRUE
+sample_028,FALSE,FALSE
+sample_029,FALSE,FALSE
+sample_030,FALSE,TRUE
+sample_031,FALSE,TRUE
+sample_032,FALSE,TRUE
+sample_033,FALSE,TRUE
+sample_034,FALSE,TRUE
+sample_035,FALSE,TRUE
+sample_036,FALSE,FALSE
+sample_037,FALSE,TRUE
+sample_038,FALSE,TRUE
+sample_039,FALSE,FALSE
+sample_040,FALSE,FALSE
+sample_041,FALSE,TRUE
+sample_042,FALSE,TRUE
+sample_043,FALSE,TRUE
+sample_044,FALSE,TRUE
+sample_045,FALSE,TRUE
+sample_046,FALSE,TRUE
+sample_047,FALSE,TRUE
+sample_048,FALSE,TRUE
+sample_049,FALSE,TRUE
+sample_050,FALSE,FALSE
+sample_051,FALSE,TRUE
+sample_052,FALSE,TRUE
+sample_053,FALSE,TRUE
+sample_054,FALSE,TRUE
+sample_055,FALSE,TRUE
+sample_056,FALSE,TRUE
+sample_057,FALSE,TRUE
+sample_058,FALSE,FALSE
+sample_059,FALSE,TRUE
+sample_060,FALSE,FALSE
+sample_061,FALSE,FALSE
+sample_062,FALSE,TRUE
+sample_063,FALSE,TRUE
+sample_064,FALSE,TRUE
+sample_065,FALSE,TRUE
+sample_066,FALSE,TRUE
+sample_067,FALSE,TRUE
+sample_068,FALSE,TRUE
+sample_069,FALSE,TRUE
+sample_070,FALSE,TRUE
+sample_071,FALSE,TRUE
+sample_072,FALSE,FALSE
+sample_073,FALSE,TRUE
+sample_074,FALSE,FALSE
+sample_075,FALSE,TRUE
+sample_076,FALSE,TRUE
+sample_077,FALSE,TRUE
+sample_078,FALSE,TRUE
+sample_079,FALSE,TRUE
+sample_080,FALSE,TRUE
+sample_081,FALSE,FALSE
+sample_082,FALSE,TRUE
+sample_083,FALSE,TRUE
+sample_084,FALSE,TRUE
+sample_085,FALSE,TRUE
+sample_086,FALSE,FALSE
+sample_087,FALSE,TRUE
+sample_088,FALSE,TRUE
+sample_089,FALSE,TRUE
+sample_090,FALSE,FALSE
+sample_091,FALSE,TRUE
+sample_092,FALSE,FALSE
+sample_093,FALSE,TRUE
+sample_094,FALSE,TRUE
+sample_095,FALSE,TRUE
+sample_096,FALSE,TRUE
+sample_097,FALSE,TRUE
+sample_098,FALSE,TRUE
+sample_099,FALSE,TRUE
+sample_100,FALSE,TRUE
+sample_101,TRUE,TRUE
+sample_102,TRUE,TRUE
+sample_103,TRUE,TRUE
+sample_104,TRUE,TRUE
+sample_105,TRUE,TRUE
+sample_106,TRUE,TRUE
+sample_107,TRUE,TRUE
+sample_108,TRUE,TRUE
+sample_109,TRUE,TRUE
+sample_110,TRUE,TRUE
+sample_111,TRUE,TRUE
+sample_112,TRUE,TRUE
+sample_113,TRUE,FALSE
+sample_114,TRUE,TRUE
+sample_115,TRUE,TRUE
+sample_116,TRUE,FALSE
+sample_117,TRUE,FALSE
+sample_118,TRUE,TRUE
+sample_119,TRUE,TRUE
+sample_120,TRUE,FALSE
+sample_121,TRUE,TRUE
+sample_122,TRUE,FALSE
+sample_123,TRUE,FALSE
+sample_124,TRUE,FALSE
+sample_125,TRUE,TRUE
+sample_126,TRUE,TRUE
+sample_127,TRUE,TRUE
+sample_128,TRUE,TRUE
+sample_129,TRUE,TRUE
+sample_130,TRUE,TRUE
+sample_131,TRUE,FALSE
+sample_132,TRUE,TRUE
+sample_133,TRUE,TRUE
+sample_134,TRUE,TRUE
+sample_135,TRUE,FALSE
+sample_136,TRUE,TRUE
+sample_137,TRUE,FALSE
+sample_138,TRUE,TRUE
+sample_139,TRUE,TRUE
+sample_140,TRUE,FALSE
+sample_141,TRUE,TRUE
+sample_142,TRUE,FALSE
+sample_143,TRUE,TRUE
+sample_144,TRUE,TRUE
+sample_145,TRUE,TRUE
+sample_146,TRUE,TRUE
+sample_147,TRUE,TRUE
+sample_148,TRUE,TRUE
+sample_149,TRUE,FALSE
+sample_150,TRUE,TRUE
+sample_151,TRUE,TRUE
+sample_152,TRUE,TRUE
+sample_153,TRUE,TRUE
+sample_154,TRUE,FALSE
+sample_155,TRUE,TRUE
+sample_156,TRUE,FALSE
+sample_157,TRUE,TRUE
+sample_158,TRUE,FALSE
+sample_159,TRUE,TRUE
+sample_160,TRUE,TRUE
+sample_161,TRUE,TRUE
+sample_162,TRUE,TRUE
+sample_163,TRUE,TRUE
+sample_164,TRUE,TRUE
+sample_165,TRUE,TRUE
+sample_166,TRUE,TRUE
+sample_167,TRUE,TRUE
+sample_168,TRUE,TRUE
+sample_169,TRUE,FALSE
+sample_170,TRUE,TRUE
+sample_171,TRUE,FALSE
+sample_172,TRUE,TRUE
+sample_173,TRUE,TRUE
+sample_174,TRUE,TRUE
+sample_175,TRUE,TRUE
+sample_176,TRUE,FALSE
+sample_177,TRUE,TRUE
+sample_178,TRUE,TRUE
+sample_179,TRUE,TRUE
+sample_180,TRUE,TRUE
+sample_181,TRUE,TRUE
+sample_182,TRUE,TRUE
+sample_183,TRUE,TRUE
+sample_184,TRUE,TRUE
+sample_185,TRUE,FALSE
+sample_186,TRUE,TRUE
+sample_187,TRUE,FALSE
+sample_188,TRUE,TRUE
+sample_189,TRUE,TRUE
+sample_190,TRUE,TRUE
+sample_191,TRUE,TRUE
+sample_192,TRUE,FALSE
+sample_193,TRUE,TRUE
+sample_194,TRUE,FALSE
+sample_195,TRUE,FALSE
+sample_196,TRUE,FALSE
+sample_197,TRUE,FALSE
+sample_198,TRUE,TRUE
+sample_199,TRUE,FALSE
+sample_200,TRUE,TRUE
