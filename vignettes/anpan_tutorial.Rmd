@@ -72,7 +72,7 @@ The startup message points out that you can easily parallelize / show progress b
 A couple points to know about anpan function names:
 
 * All of the modeling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete prompt should show a list of all the modeling functions. This can help you find the function you need quickly without having to dig through the documentation. 
-  * Several functions have a `_batch()` version, which applies a single model to each bug present in a user-specified input directory.
+  * Several functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
 * Same goes for the plotting functions and the `plot_` prefix. 
 
 This code chunk loads some other packages we'll use:
@@ -97,11 +97,13 @@ $$\epsilon \sim \text{Normal}(0, σ_R^2)$$
 
 The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\text{leaf})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_{phylo}$.
 
-To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the correlation matrix it implies. First consider a pair of two leaves that are deeply branched from the root node and very close together (red highlight). If the phylogeny is truly impacting the outcome, the outcome measurements for this pair of leaves should be highly correlated. Now imagine a pair of leaves that are on opposite ends of the tree, only very distantly connected to one another through the root node (orange highlight). This pair would show low correlation. By numerically quantifying the "higher inter-leaf distance → lower correlation" principle, we can repeat this process for every possible pair of leaves to fill out $\Omega$.
+To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the lower triangle of the correlation matrix it implies. You can see that the clade on the left (with low inter-leaf distances between its members) forms a bright sub-block of high correlation in the matrix. The tiny clade on the far right has high inter-leaf distance between its members and the rest of the tree, so its members generally have low correlation with the rest of the leaves, exhibited by the dark band on the right of the triangle. Note that the matrix is derived solely from the structure of the tree -- it is not influenced by the colored outcome dots. The correlation matrix numerically quantifies the "higher inter-leaf distance → lower correlation" principle.
 
 ```{r echo=FALSE}
-knitr::include_graphics("leaf_pairs.PNG")
+knitr::include_graphics("vignette_figs/tree_hcm.png")
 ```
+
+We can see in the synthetic example above that the tree clearly does impact the outcome: the two well-separated clades clearly show very different outcome values. A PGLMM evaluated on this data would easily detect such a blazing signal, so in the next section we'll simulate a tree with an outcome that's realistically noisier and less visually obvious.
 
 ## Simulate data
 
@@ -182,7 +184,8 @@ result = anpan_pglmm(meta_file      = metadata,
                      reg_noise      = TRUE,
                      loo_comparison = TRUE,
                      refresh        = 500,
-                     show_plot_tree = FALSE)
+                     show_plot_tree = FALSE,
+                     show_post      = FALSE)
 ```
 
 Aside from fitting the model, this command prints a plot (and a lot of console output with messages about the progression of the MCMC sampler). This plots shows the correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
@@ -195,7 +198,7 @@ result$loo$comparison
 
 The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_{phylo} > 0$, that is the correct conclusion.
 
-If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()`:
+If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()` (or leave `show_post` at its default `TRUE` value in the above call to `anpan_pglmm()`):
 
 ```{r out.width='120%'}
 plot_tree_with_post(tr,
@@ -210,7 +213,7 @@ You can see that the model fit confirms what we observed visually earlier: the p
 
 But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is a simple presentation of the raw model fit, but can't draw the sharp dividing lines we might want. 
 
-In principle one could manually define a clade (ideally with some orthogonal justification for the choice of membership) and sum the phylogenetic effects of that clade to get a "clade effect", then contrast that quantity against a similar quantity summed over all nonmembers. One could then compute the posterior on the difference between the two clades. But automating the selection of clades is highly non-trivial and beyond the scope of this package.
+If you are able to justifiably define a clade (with some articulable reason beyond "this clade looks like it has a higher outcome") manually, you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
 ## Detailed interpretation
 
@@ -295,9 +298,9 @@ Let's look at the `pglmm_loo` result:
 result$loo$pglmm_loo
 ```
 
-PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes, though these cutoffs depend heavily on the tree as well).
+PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights calculated from raw log-likelihood values to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes, though these cutoffs depend heavily on the tree as well).
 
-The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get one Pareto k diagnostic value that is only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
+The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get a small number of Pareto k diagnostic values that are only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
 
 We only got a small number of non-good Pareto k value here (and none that were bad), so in this case the model comparison should be fine.
 
@@ -317,7 +320,7 @@ There's a lot more to be said about loo model comparison that is beyond the scop
 
 In this section we'll simulate a small dataset for a single bug. If you have your own data or would like to use the example data built into the package, you can skip this section and go straight to [Apply `anpan`]. You can get the paths to the data included with the package with these two commands:
 
-```{r eval = FALSE}
+```{r eval = TRUE}
 meta_path = system.file("extdata", "fake_metadata.tsv", 
                         package = "anpan", mustWork = TRUE)
 bug_path = system.file("extdata", "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz", 
@@ -336,7 +339,7 @@ n_gene = 500
 
 out_dir = tempdir()
 
-set.seed(1234)
+set.seed(123)
 ```
 
 Then we generate the simulated metadata. The `has_bug` column is an indicator if a given sample has the bug at all. Roughly a quarter of our samples don't.
@@ -369,8 +372,8 @@ true_effects = data.table(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
                           effect = c(rnorm(5, sd = 2), 
                                      rep(0, (n_gene - 5))))
 
-sim_grid = sim_dat = expand.grid(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
-                      sample_id = paste0('sample_', 1:(2*n))) |>
+sim_grid = sim_dat = expand.grid(gene      = paste0("UniRef90_ABC", 1:(n_gene)),
+                                 sample_id = paste0('sample_', 1:(2*n))) |>
   as.data.table()
 ```
 
@@ -392,25 +395,25 @@ rskewnormal = function(n, location = 0, scale = 1, skew = 0) {
 sim_meta[, bug_labd := rskewnormal(n        = nrow(sim_meta),
                                    location = -2,
                                    skew     = -3) +
-                       -0.5 * (!has_bug)]
+                       -2.5 * (!has_bug)]
 
 sim_df = sim_grid[sim_meta, on = 'sample_id'][true_effects, on = 'gene']
 
 sim_df[, gene_labd := rskewnormal(n        = nrow(sim_df),
-                                  location = -1.5 + bug_labd + is_case * effect,
+                                  location = -1 + .5*bug_labd + is_case * effect,
                                   skew     = -3,
-                                  scale    = 2)]
+                                  scale    = 3)]
 
 sim_df$gene_labd[sim_df$gene_labd < quantile(sim_df$gene_labd,
-                                               probs = .333)] = -Inf
+                                             probs = .333)] = -Inf
 ```
 
-The block below performs a bit of formatting to make the simulated data look like real [HUMAnN](https://huttenhower.sph.harvard.edu/humann) data:
+The block below performs a bit of formatting to make the simulated data look like real [HUMAnN](https://huttenhower.sph.harvard.edu/humann) data. It :
 
-* exponentiate the log-abundances
-* pivot to wide format
-* add on the fake species identifier to the gene column
-* and rename to the gene column to `# Gene Family`
+* exponentiates the log-abundances
+* pivots to wide format
+* adds on the fake species identifier to the gene column
+* and renames to the gene column to `# Gene Family`
 
 ```{r eval = FALSE}
 sim_df[, gene_abd := exp(gene_labd)]
@@ -435,9 +438,49 @@ fwrite(sim_wide,
 
 ## Apply `anpan`
 
-```{r eval = FALSE}
-anpan_batch()
+Now that we have `bug_path` and `meta_path` set, we can run the filtering and modeling with `anpan()`. If you have multiple bug files in a single directory, use `anpan_batch()` instead and set the `bug_dir` argument instead of `bug_file`. 
+
+The code block below shows the `anpan()` function call. The outcome argument is set to `is_case` the logical indicator of case status. Note that this means anpan will be running logistic regression models for each gene. In this case, we have no covariates to include, so we set that argument to `NULL`. The output directory is set to a sub-directory of the tempdir() we've been using so far, but it could be somewhere more permanent if you like.  
+
+```{r}
+anpan_res = anpan(bug_file = bug_path,
+                  meta_file = meta_path,
+                  out_dir = file.path(tempdir(), "anpan_output"),
+                  covariates = NULL,
+                  outcome = "is_case",
+                  model_type = "fastglm",
+                  discretize_inputs = TRUE)
+
+head(anpan_res)
 ```
+
+You can see from the first set of messages that it seems to have identified most of the ~50 samples that didn't have the bug present in the simulation.
+
+`anpan()` returns a tibble with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a Q < .01 threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. 
+
+## Examine filtering diagnostics
+
+Before interpreting the model results, it's important to ensure that the filtering step didn't go awry. `anpan()` calls the function `read_and_filter()` internally, which applies
+
+* an initial prevalence filter to genes 
+* a sample filter to remove samples where the species in question is absent
+* and then a final prevalence filter to remove any marginal genes that don't pass the prevalence filter 
+
+The outputs of the filtering step goes into the `filter_stats/` directory inside the specified `out_dir`. The final filtered data (which is the input to the modeling step) is in `filter_stats/filtered_*.tsv.gz` where * represents the bug name. The `filter_stats/labels/` directory contains the calls of which samples contained the bug. The `filter_stats/plots/` directory contains diagnostic plots from the filtering step.
+
+```{r eval = FALSE, echo = FALSE}
+knitr::include_graphics() #show lines and kmeans plots
+```
+
+
+## Examine gene model results
+
+We can visulize the results with `plot_results()` as in the code block below. This function is called automatically on each bug when using `anpan_batch(). 
+
+```{r eval = FALSE}
+plot_results()
+```
+
 
 # Pathway random effects model
 
