@@ -323,8 +323,8 @@ In this section we'll simulate a small dataset for a single bug. If you have you
 ```{r eval = TRUE}
 meta_path = system.file("extdata", "fake_metadata.tsv", 
                         package = "anpan", mustWork = TRUE)
-bug_path = system.file("extdata", "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz", 
-                       package = "anpan", mustWork = TRUE)
+bug_path  = system.file("extdata", "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz", 
+                        package = "anpan", mustWork = TRUE)
 ```
 
 ### Simulate example data
@@ -335,14 +335,14 @@ First we set some of the simulation parameters and a random seed:
 
 ```{r eval = FALSE}
 n_per_group = 100
-n_gene = 500
+n_gene      = 500
 
 out_dir = tempdir()
 
 set.seed(123)
 ```
 
-Then we generate the simulated metadata. The `has_bug` column is an indicator if a given sample has the bug at all. Roughly a quarter of our samples don't.
+Then we generate the simulated metadata. The `has_bug` column is an indicator if a given sample has the bug at all. Roughly a quarter of our samples don't. Of course you won't have this indicator in real data -- this is what the adaptive filtering step tries to figure out.
 
 ```{r eval = FALSE}
 sim_meta = data.table(sample_id = paste0('sample_', 1:(2 * n_per_group)),
@@ -356,14 +356,15 @@ sim_meta = data.table(sample_id = paste0('sample_', 1:(2 * n_per_group)),
 meta_path = file.path(out_dir, "fake_metadata.tsv")
 
 fwrite(sim_meta,
-       file = meta_path)
+       file = meta_path,
+       sep = "\t")
 ```
 
 We simulate the gene-level data in the blocks below. A couple notes on what's going on here:
 
 * we set the first five genes to have a non-zero true effect
 * the bug and gene abundances are modeled on the log scale 
-* the log abundances (`labd`) come from a skew normal distribution, which we define in the function `rskewnormal` (adapted from the [`sn` package](https://cran.r-project.org/web/packages/sn/index.html))
+* the log abundances (`labd`) come from a left-skewed normal distribution, which we define in the function `rskewnormal` (adapted from the [`sn` package](https://cran.r-project.org/web/packages/sn/index.html))
 * gene log-abundances below the 33rd percentile are truncated to -Inf i.e. are zeroed out.
 
 First we create the simulated metadata: 
@@ -373,7 +374,7 @@ true_effects = data.table(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
                                      rep(0, (n_gene - 5))))
 
 sim_grid = sim_dat = expand.grid(gene      = paste0("UniRef90_ABC", 1:(n_gene)),
-                                 sample_id = paste0('sample_', 1:(2*n))) |>
+                                 sample_id = paste0(     "sample_", 1:(2*n))) |>
   as.data.table()
 ```
 
@@ -408,7 +409,7 @@ sim_df$gene_labd[sim_df$gene_labd < quantile(sim_df$gene_labd,
                                              probs = .333)] = -Inf
 ```
 
-The block below performs a bit of formatting to make the simulated data look like real [HUMAnN](https://huttenhower.sph.harvard.edu/humann) data. It :
+The block below performs a bit of formatting to make the simulated data look like real [HUMAnN](https://huttenhower.sph.harvard.edu/humann) data. It:
 
 * exponentiates the log-abundances
 * pivots to wide format
@@ -433,7 +434,8 @@ Then we write out the simulated data. The name of the file isn't important, but 
 bug_path = file.path(out_dir, "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz")
 
 fwrite(sim_wide,
-       file = bug_path)
+       file = bug_path,
+       sep  = "\t")
 ```
 
 Let's take a peek at the top of the metadata and the top-left corner of the gene profile data to see what they look like:
@@ -442,7 +444,9 @@ Let's take a peek at the top of the metadata and the top-left corner of the gene
 fread(meta_path, nrows = 5)
 ```
 
-Notably, the metadata needs to have a column called "sample_id" that matches the column names of the gene file and any outcome / covariate information we might use. Later we will be using only `is_case` as the outcome and no additional covariates, but you might as want to include age, gender, etc.
+Notably, the metadata needs to have a column called "sample_id" that matches the column names of the gene file and any outcome / covariate information we might use. Later we will be using only `is_case` as the outcome and no additional covariates, but you might as want to include age, gender, etc. in which case they need to be present in this file.
+
+Now let's look at the gene data:
 
 ```{r}
 fread(bug_path, nrows = 5, select = 1:4)
@@ -452,25 +456,29 @@ The gene file needs to have gene IDs in the first column, formatted as `gene_id|
 
 ## Run the gene model
 
-Now that we have `bug_path` and `meta_path` set, we can run the filtering and modeling with `anpan()`. If you have multiple bug files in a single directory, use `anpan_batch()` instead and set the `bug_dir` argument instead of `bug_file`. 
+Now that we have the path to the gene data set in `bug_path` and the path to the metadata set in  `meta_path`, we can run the filtering and modeling with `anpan()`. If you have multiple bug files in a single directory, use `anpan_batch()` instead and set the `bug_dir` argument instead of `bug_file`. 
 
 The code block below shows the `anpan()` function call. The outcome argument is set to `is_case` the logical indicator of case status (which means that `anpan()` will be running a logistic regression model). Note that this means anpan will be running logistic regression models for each gene. In this case, we have no covariates to include, so we set that argument to `NULL`. The output directory is set to a sub-directory of the tempdir() we've been using so far, but it could be somewhere more permanent if you like.  
 
 ```{r}
-anpan_res = anpan(bug_file = bug_path,
-                  meta_file = meta_path,
-                  out_dir = file.path(tempdir(), "anpan_output"),
-                  covariates = NULL,
-                  outcome = "is_case",
-                  model_type = "fastglm",
+anpan_res = anpan(bug_file          = bug_path,
+                  meta_file         = meta_path,
+                  out_dir           = file.path(tempdir(), "anpan_output"),
+                  covariates        = NULL,
+                  outcome           = "is_case",
+                  model_type        = "fastglm",
                   discretize_inputs = TRUE)
-
-head(anpan_res)
 ```
 
 You can see from the first set of messages that it seems to have identified most of the ~50 samples that didn't have the bug present in the simulation.
 
-`anpan()` returns a tibble with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a Q < .01 threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. 
+A lot of stuff gets written out to `out_dir`, but let's look at the result that we get in R:
+
+```{r}
+head(anpan_res)
+```
+
+`anpan()` returns a tibble with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a reasonable q-value threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. The regression statistics for other components of the model (non-gene covariate terms) are written to the output directory in `*all_terms.tsv.gz`.
 
 ## Examine filtering diagnostics
 
@@ -494,7 +502,9 @@ Next we'll look at the gene profile lines plot:
 knitr::include_graphics("vignette_figs/g__Madeuppy.s__Madeuppy_Fakerii_labelled_lines.png") #show lines and kmeans plots
 ```
 
-This shows a monotonic decreasing line for each sample. The x-axis is the rank of genes in that sample, while the y-axis is the log-abundance value of the ith-ranked gene in that sample. Ideally there should be good separation between red and blue lines. In this simulated data they seem to decrease uniformly, but in more realistic data it usually looks more like a plateau. If a particular sample contains a mixture of strains, there may even be multiple plateau steps as the profile decreases, representing different groups of genes dropping out between strains.  
+This shows a monotonic decreasing line for each sample. The x-axis is the rank of genes in that sample, while the y-axis is the log-abundance value of the ith-ranked gene in that sample. Ideally there should be good separation between red and blue lines. In this simulated data they seem to decrease linearly, but in more realistic data it usually looks more like a plateau. If a particular sample contains a mixture of strains, there may even be multiple plateau steps as the profile decreases, representing different groups of genes dropping out between strains.  
+
+If the groups of samples that the filter step identifies as "present" and "absent" aren't clearly separated that's cause for concern. That means you're potentially throwing out or including samples you shouldn't. If the automated filtering doesn't work out, you can filter your samples manually on your own then turn off the automated filtering with `filtering_method = "none"`.
 
 ## Examine gene model results
 
@@ -508,10 +518,27 @@ plot_results(res         = anpan_res,
              model_input = model_input,
              covariates  = NULL, 
              outcome     = "is_case",
-             bug_name    = "Madeuppy_Fakerii")
+             bug_name    = "Madeuppy_Fakerii",
+             cluster     = "both",
+             show_trees  = TRUE)
 ```
 
-The central blue/green tile plot shows the model inputs i.e. which genes (rows) are present in which samples (columns). The annotation bar at the top shows the outcome variable, while the estimate intervals on the left show the coefficient estimates +/- 1.96 * standard error bars and the nominal significance stars. You can see that really only the top two rows are visually obvious, despite the nominal significance stars on the lower rows. The genes are sorted by significance by default, but they and/or the samples may be clustered by setting `cluster = "samples"` or `"genes"` or `"both"`. The plot shows the top 50 genes by default, but you can set the `n_top` or `q_threshold` arguments to override this behavior.
+Things to know about the results plot: 
+
+* The central blue/green tile plot shows the model inputs i.e. which genes (rows) are present in which samples (columns). 
+* The annotation bar at the top shows the outcome variable
+  * The color bars at the top can also show up to two additional covariates.
+* the estimate intervals on the left show the coefficient estimates +/- 1.96 * standard error bars and nominal significance stars
+  * In this case, you can see that really only the top two rows are obviously different between the two groups, despite the nominal significance stars on the lower rows. 
+* The genes are sorted by significance by default, but they and/or the samples may be clustered by setting `cluster = "samples"` or `"genes"` or `"both"`. 
+  * In this case, because we didn't incorporate any linkage of genes or relatedness of samples, we don't get any interesting clustring structure. 
+* The plot shows the top 50 genes by default, but you can set the `n_top` or `q_threshold` arguments to override this behavior.
+
+Some additional outputs you'll get with `anpan_batch()`:
+
+* with `model_type = "fastglm"` you'll get a global p-value histogram as a diagnostic for the performance of the regressions. You can learn how to interpret p-value histograms [here](http://varianceexplained.org/statistics/interpreting-pvalue-histogram/). Basically, you should expect/hope to get a mostly uniform distribution with a spike on the left.
+* a `warnings.txt` file listing any warnings that occurred
+* a `anpan_batch_call.txt` listing the command that was issued to `anpan_batch()`
 
 # Pathway random effects model
 
