@@ -31,4 +31,7 @@ The validity of the intervals shown in the plot hinges on the normality approxim
 
   For batch results, you can set the \code{input_file} column to a factor to alter the vertical
   sorting of input files. By default it sorts according to ELPD difference.
+
+  If you only want to highlight a subset of intervals with colors, set the \code{color_category}
+  variable to NA for all other entries.
 }

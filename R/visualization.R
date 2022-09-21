@@ -1104,6 +1104,9 @@ plot_half_cor_mat = function(cor_mat,
 #'
 #'   For batch results, you can set the \code{input_file} column to a factor to alter the vertical
 #'   sorting of input files. By default it sorts according to ELPD difference.
+#'
+#'   If you only want to highlight a subset of intervals with colors, set the \code{color_category}
+#'   variable to NA for all other entries.
 #' @export
 plot_elpd_diff = function(anpan_pglmm_res,
                           probs = c(.5, .98),
