@@ -4,12 +4,20 @@
 \alias{plot_elpd_diff}
 \title{Plot the ELPD difference interval}
 \usage{
-plot_elpd_diff(anpan_pglmm_res, probs = c(0.5, 0.98), verbose = TRUE)
+plot_elpd_diff(
+  anpan_pglmm_res,
+  probs = c(0.5, 0.98),
+  color_category = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{anpan_pglmm_res}{a result from \code{anpan_pglmm} or \code{anpan_pglmm_batch}}
 
 \item{probs}{the probability to cover in the inner and outer intervals}
+
+\item{color_category}{an optional string giving the name of the column in the input for a
+categorical variable used to color the intervals}
 
 \item{verbose}{verbose}
 }

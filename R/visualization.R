@@ -1094,6 +1094,8 @@ plot_half_cor_mat = function(cor_mat,
 #'
 #' @param anpan_pglmm_res a result from \code{anpan_pglmm} or \code{anpan_pglmm_batch}
 #' @param probs the probability to cover in the inner and outer intervals
+#' @param color_category an optional string giving the name of the column in the input for a
+#'   categorical variable used to color the intervals
 #' @param verbose verbose
 #'
 #' @details The validity of the intervals shown in the plot hinges on the normality approximation of
@@ -1105,12 +1107,15 @@ plot_half_cor_mat = function(cor_mat,
 #' @export
 plot_elpd_diff = function(anpan_pglmm_res,
                           probs = c(.5, .98),
+                          color_category = NULL,
                           verbose = TRUE) {
 
   is_batch = is.data.frame(anpan_pglmm_res)
 
   if (is_batch) {
-    p = plot_elpd_diff_batch(anpan_pglmm_res)
+    p = plot_elpd_diff_batch(anpan_pglmm_res,
+                             probs = probs,
+                             color_category = color_category)
     return(p)
   }
 
@@ -1171,6 +1176,7 @@ loo_to_df = function(loo_res) {
 
 plot_elpd_diff_batch = function(anpan_pglmm_res,
                                 probs = c(.5, .98),
+                                color_category = NULL,
                                 verbose = TRUE) {
 
   mult = qnorm(1 - (1 - sort(probs))/2)
@@ -1179,7 +1185,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     select(input_file, loo) |>
     mutate(loo_comp = map(loo, loo_to_df)) |>
     select(-loo) |>
-    unnest(c(loo_comp)) |>
+    tidyr::unnest(c(loo_comp)) |>
     group_by(input_file) |>
     summarise(best_model = model[1],
               elpd_diff = case_when(model[1] == "pglmm_fit" ~ -1 * elpd_diff[2],
@@ -1190,10 +1196,38 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
            outer_lo = elpd_diff - mult[2] * se_diff,
            outer_hi = elpd_diff + mult[2] * se_diff)
 
+  if (!is.null(color_category) && color_category %in% names(anpan_pglmm_res)) {
+
+    plot_input = left_join(plot_input,
+                           anpan_pglmm_res |> select(input_file, color_category),
+                           by = "input_file")
+  }
+
   if (!is.factor(plot_input$input_file)) {
     plot_input = plot_input |> arrange(elpd_diff)
     plot_input$input_file = factor(plot_input$input_file,
                                    levels = plot_input$input_file)
+  }
+
+  if (!is.null(color_category) && color_category %in% names(anpan_pglmm_res)) {
+
+    inner_interval = geom_segment(aes_string(yend  = "input_file",
+                                             x     = "inner_lo",
+                                             xend  = "inner_hi",
+                                             color = color_category),
+                                  lwd = 2)
+
+    big_dot = geom_point(size = 2.5,
+                 aes_string(color = color_category))
+
+  } else {
+    inner_interval = geom_segment(aes(yend = input_file,
+                                      x    = inner_lo,
+                                      xend = inner_hi),
+                                  lwd = 2,
+                                  color = "#9b4a60")
+
+    big_dot = geom_point(size = 2.5)
   }
 
   ggplot(plot_input,
@@ -1205,15 +1239,13 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     geom_segment(aes(yend = input_file,
                      x    = outer_lo,
                      xend = outer_hi)) +
-    geom_segment(aes(yend = input_file,
-                     x    = inner_lo,
-                     xend = inner_hi),
-                 lwd = 2,
-                 color = "#9b4a60") +
-    geom_point(size = 2.5) +
+    inner_interval +
+    big_dot +
     geom_point(size = 1.5,
                color = 'white') +
-    labs(x = expression("PGLMM ELPD difference")) +
+    scale_color_brewer(palette = "Set1") +
+    labs(x = expression("PGLMM ELPD difference"),
+         color = NULL) +
     theme_light() +
     theme(axis.title.y = element_blank(),
           panel.grid.major.y = element_blank(),
