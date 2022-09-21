@@ -1201,6 +1201,11 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     plot_input = left_join(plot_input,
                            anpan_pglmm_res |> select(input_file, color_category),
                            by = "input_file")
+
+    if (is.factor(anpan_pglmm_res$input_file)) {
+      plot_input$input_file = factor(plot_input$input_file,
+                                     levels = levels(anpan_pglmm_res$input_file))
+    }
   }
 
   if (!is.factor(plot_input$input_file)) {
