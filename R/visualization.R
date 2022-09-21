@@ -1199,7 +1199,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
   if (!is.null(color_category) && color_category %in% names(anpan_pglmm_res)) {
 
     plot_input = left_join(plot_input,
-                           anpan_pglmm_res |> select(input_file, color_category),
+                           anpan_pglmm_res |> select(input_file, tidyselect::all_of(color_category)),
                            by = "input_file")
 
     if (is.factor(anpan_pglmm_res$input_file)) {
@@ -1248,7 +1248,8 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     big_dot +
     geom_point(size = 1.5,
                color = 'white') +
-    scale_color_brewer(palette = "Set1") +
+    scale_color_brewer(palette = "Set1",
+                       na.value = "grey30") +
     labs(x = expression("PGLMM ELPD difference"),
          color = NULL) +
     theme_light() +
