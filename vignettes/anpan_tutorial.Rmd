@@ -542,10 +542,40 @@ Some additional outputs you'll get with `anpan_batch()`:
 
 # Pathway random effects model
 
-This section isn't done.
+The pathway model uses a random effects model applied to the pathways in a single bug. It looks for pathways that differ substantially in abundance between two groups while accounting for the correlation with species abundance. Using the usual `lme4` formula syntax, the model is: 
+
+$$ \textbf{log10(pwy_abd)} \sim $$
 
 ```{r eval = FALSE}
 ?anpan_pwy_ranef_batch()
+```
+
+
+
+# Advanced topics
+
+This section isn't done.
+
+## Genome comparisons
+
+```{r eval=FALSE}
+?plot_genome_intersections()
+```
+
+## Horseshoe gene model
+
+```{r eval = FALSE}
+anpan(model_type = "horseshoe")
+```
+
+## Tweaking with patchwork plots
+
+```{r eval = FALSE}
+# Making the gene labels on a plot_results() plot smaller
+p[[2]]$theme$axis.text.y = element_text(size = 1)
+
+# Making the points on a plot_outcome_tree() smaller
+tree$layers[[2]]$aes_params$size = 3.5
 ```
 
 
