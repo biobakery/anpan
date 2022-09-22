@@ -14,7 +14,7 @@
 #'   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
 #'   column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
 #'   the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
-#'   size threshold, and 3) the estimated fixed effect of species_abd on pwy_abd is positive.
+#'   size threshold, and 3) the estimated fixed effect of log10_species_abd on log10_pwy_abd is positive.
 #' @param bug_pwy_dat a data frame with a row for each observation and columns "pwy",
 #'   "log10_species_abd", "log10_pwy_abd", and a group indicator column named according to the
 #'   \code{group_ind} argument

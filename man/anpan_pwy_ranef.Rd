@@ -44,7 +44,7 @@ The priors are as follows: A) student_t(3, mean(log10_pwy_abd), 2.5) on the inte
   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
   column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
   the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
-  size threshold, and 3) the estimated fixed effect of species_abd on pwy_abd is positive.
+  size threshold, and 3) the estimated fixed effect of log10_species_abd on log10_pwy_abd is positive.
 }
 \seealso{
 \code{\link[=plot_pwy_ranef]{plot_pwy_ranef()}} , \code{\link[=plot_pwy_ranef_intervals]{plot_pwy_ranef_intervals()}}, \code{\link[cmdstanr:CmdStanMCMC]{cmdstanr::CmdStanMCMC}}
