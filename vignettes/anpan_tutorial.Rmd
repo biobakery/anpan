@@ -50,12 +50,12 @@ h3 { /* Header 3 */
 
 It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, anpan, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
 
-* Adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
 * Modeling the association between outcome variables and microbial gene presence while accounting for covariates
+  * Including adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
 * Modeling the difference in microbial pathways between experimental groups while controlling for species abundance.
 
-We'll cover each of these points in a top-level section. Currently the only section fleshed out in this tutorial is the [PGLMMs] section.
+We'll cover each of these points in a top-level section. Currently the [Pathway random effects model] section is incomplete. There is also an [Advanced topics] section with some additional information on more complicated details.
 
 # Libraries
 
@@ -201,12 +201,13 @@ The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive
 If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()` (or leave `show_post` at its default `TRUE` value in the above call to `anpan_pglmm()`):
 
 ```{r out.width='120%'}
-plot_tree_with_post(tr,
-                    metadata,
-                    fit        = result$pglmm_fit,
-                    covariates = "covariate",
-                    outcome    = "outcome",
-                    labels     = metadata$sample_id)
+p = plot_tree_with_post(tree_file  = tr,
+                        meta_file  = metadata,
+                        fit        = result$pglmm_fit,
+                        covariates = "covariate",
+                        outcome    = "outcome",
+                        labels     = metadata$sample_id)
+p
 ```
 
 You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up in the middle clade and tightly correlated neighbors generally have very similar phylogenetic effects.
@@ -216,6 +217,52 @@ But how do we estimate *clade* effects? It's important to contextualize the resu
 If you are able to justifiably define a clade (with some articulable reason beyond "this clade looks like it has a higher outcome") manually, you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
 ## Detailed interpretation
+
+PGLMMs have a lot of moving parts. Let's look at some of the results more closely.
+
+### Messages
+
+A couple points to mention on the messages produced by `anpan_pglmm()`:
+
+* There's an important startup message that usually gets pushed off by later messages:
+
+```
+(1/3) Checking inputs.
+Plotting correlation matrix...
+Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:
+   linear_term prior_sd
+        <char>    <num>
+1:   covariate    1.019
+It would be better to set the beta_sd argument based on scientific background knowledge.
+```
+
+This message is stating the empirical priors on the covariate coefficients which anpan inferred from the data. It's usually better to set these yourself based on background information with the `beta_sd` argument. 
+
+* There are messages from Stan about missing init values:
+
+```
+Init values were only set for a subset of parameters. 
+Missing init values for the following parameters:
+ - chain 1: beta, centered_cov_intercept, std_phylo_effects
+ - chain 2: beta, centered_cov_intercept, std_phylo_effects
+ - chain 3: beta, centered_cov_intercept, std_phylo_effects
+ - chain 4: beta, centered_cov_intercept, std_phylo_effects
+```
+
+These are benign, the randomized initialization that Stan provides works fine for these parameters.
+
+* There's a fairly innocuous message from Stan that usually occurs at the start of the MCMC chains:
+
+```
+Chain 1 Informational Message: The current Metropolis proposal is about to be rejected because of the following issue:
+Chain 1 Exception: normal_id_glm_lpdf: Scale vector is inf, but must be positive finite! (in '/var/folders/g8/22sdpptx451fng3nbj7c45vw0000gq/T/RtmpSaBGri/model-2e4326e878c5.stan', line 37, column 2 to column 62)
+Chain 1 If this warning occurs sporadically, such as for highly constrained variable types like covariance matrices, then the sampler is fine,
+Chain 1 but if this warning occurs often then your model may be either severely ill-conditioned or misspecified.
+```
+
+This means that the noise parameter during one of the warmup iterations escaped the weak prior and got set to a really large value and the model didn't like it. As the message states, this isn't a problem if it only occurs sporadically during the warmup iterations. You can check the Stan outputs or set `refresh = 1` to confirm this, but I've personally never seen this message occur outside of warmup.
+
+### Elements of the result value
 
 `result` is a list with five elements:
 
@@ -548,7 +595,7 @@ Some additional outputs you'll get with `anpan_batch()`:
 
 The pathway model uses a random effects model applied to the pathways in a single bug. It looks for pathways that differ substantially in abundance between two groups while accounting for the correlation with species abundance. Using the standard `lme4` formula syntax, the model is: 
 
-$$ \textbf{log10(pwy_abd)} \sim \textbf{log10(species_abd) + (1|pwy) + (0 + group|pwy) + } \beta_0$$
+$$ \textbf{log10(pwy_abd)} \sim \textbf{log10(species_abd) + (1|pwy) + (0 + group|pwy) + intercept}$$
 A few notes on this model:
 
 * zeros are discarded
@@ -557,7 +604,6 @@ A few notes on this model:
   * These terms come from a $Normal(0, \sigma_{int})$ distribution. The prior on $\sigma_{int}$ is a $t_{5, 0, 2.5}$ distribution
 * each pathway has its own group effect. These are also pooled across pathways, but they are independent of the pathway intercepts
   * These terms come from a $Normal(0, \sigma_{effects})$ distribution. The prior on $\sigma_{effects}$ is a relatively aggressive $exponential(3)$ distribution.
-* the final term $\beta_0$ is the global intercept
 * There are some additional weak priors on several terms. The best place to inspect these in the model code itself in the installation folder `anpan/stan/pwy_ranef.stan`
     * If you don't know where this file is located on your system, you can use `system.file('stan', 'pwy_ranef.stan', package = 'anpan')` to find it
 
@@ -565,7 +611,6 @@ A few notes on this model:
 ```{r eval = FALSE}
 ?anpan_pwy_ranef_batch()
 ```
-
 
 
 # Advanced topics
@@ -602,13 +647,34 @@ anpan(model_type = "horseshoe")
 
 ## Tweaking with patchwork plots
 
-```{r eval = FALSE}
-# Making the gene labels on a plot_results() plot smaller
-p[[2]]$theme$axis.text.y = element_text(size = 1)
+Most of the theme parameters used in anpan's plotting functions are set to reasonable defaults, but sometimes real data makes the plots look a bit wonky. Take the PGLMM posterior plot we generated in the [PGLMMs] section:
 
-# Making the points on a plot_outcome_tree() smaller
-tree$layers[[2]]$aes_params$size = 3.5
+```{r echo = FALSE}
+p
 ```
+
+The labels are a bit too small. Another common problem with these plots is that for large datasets the tree gets too crowded to see the individual tips.
+
+These can mostly be addressed after the fact with the normal ggplot means for single-figure plots. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
+
+* make the lines thinner on the tree (first sub-plot)
+* make the labels bigger and right-justified on the posterior box plots (second sub-plot)
+* make the points bigger on the tree
+
+```{r eval = TRUE}
+# Thinner lines on the tree
+p[[1]]$layers[[1]]$aes_params$size = .2
+
+# Make the sample labels smaller
+p[[2]]$theme$axis.text.x = element_text(size = 4.5, angle = 90, hjust = 1)
+
+# Make the points bigger
+p[[1]]$layers[[2]]$aes_params$size = 3
+
+p
+```
+
+The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign `p[[2]]$` then looking at the names suggested by RStudio auto-complete can get you pretty far. 
 
 ## Configuring furrr and progressr
 
