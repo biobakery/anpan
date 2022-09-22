@@ -676,25 +676,60 @@ p
 
 The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign `p[[2]]$` then looking at the names suggested by RStudio auto-complete can get you pretty far. 
 
-## Configuring furrr and progressr
+## Configuring `furrr` and `progressr`
 
-```{r eval = FALSE}
-handlers(global=TRUE)
+anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code my display progress" and the configuration of the parallelization and progress reporting is left to the user's preference. 
 
-handlers(handler_progress(
-  format   = "[:bar] :current/:total (:percent) in :elapsed ETA: :eta"
-))
+### `furrr`
 
-handlers(handler_beepr()) # let's do the fork in the garbage disposal
-```
+See the details on `?future::plan()`, but the most common way to parallelize is via multisession:
 
 ```{r eval = FALSE}
 plan(multisession, workers = 4)
 ```
 
+This will start up 4 separate R sessions evaluating the appropriate parallelized code.
+
+The exception to this is `anpan_pglmm_batch()`. This function parallelizes both over bugs and loo calculations for each bug, so typically the fastest way to run is to use Stan's `parallel_chains` argument to parallelize the MCMC and a so-called "nested future topology" to parallelize the loo:
 
 ```{r eval = FALSE}
 plan(list(sequential, tweak(multisession, workers = 6)))
+anpan_pglmm_batch(..., 
+                  parallel_chains = 4)
+```
+
+This is sequential over bugs but parallelizes the 4 MCMC chains for each model and parallelizes the loo calculations over iterations. However depending on the ratio of MCMC time to loo time (and the amount of memory you have available), it might be faster to use a non-nested future topology and simply parallelize over bugs.
+
+### `progressr`
+
+Turning on all global progress reporting is done with this command:
+
+```{r eval = FALSE}
+handlers(global=TRUE)
+```
+
+
+From there, you can set up additional handlers to customize the progress reporting. My favorite is:
+
+```{r eval=FALSE}
+handlers(handler_progress(
+  format   = "[:bar] :current/:total (:percent) in :elapsed ETA: :eta"
+))
+```
+
+There are also some that are more exciting:
+
+```{r eval = FALSE}
+handlers(handler_beepr(initiate = 1,
+                       update = 1,
+                       finish = 1,
+                       intrusiveness = 1)) # let's do the fork in the garbage disposal!
+```
+
+Once you've set your preferred handler(s), you can test the reporting with this command:
+
+```{r eval=FALSE}
+progressr::slow_sum(1:5)
 ```
 
 
