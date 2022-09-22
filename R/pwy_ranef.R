@@ -1,7 +1,7 @@
 #' Estimate a species-pathway abundance random effects model
-#' @description Fit a model of the form pwy_abd ~ species_abd + (1|pwy) + (0+group|pwy) for a single
+#' @description Fit a model of the form log10_pwy_abd ~ log10_species_abd + (1|pwy) + (0+group|pwy) for a single
 #'   bug
-#' @details The priors are as follows: A) student_t(3, mean(pwy_abd), 2.5) on the intercept at the
+#' @details The priors are as follows: A) student_t(3, mean(log10_pwy_abd), 2.5) on the intercept at the
 #'   mean species abundance. B) half student_t(3, 0, 2.5) on the residual noise C) 0-centered normal
 #'   priors on pathway specific effects C1) half student_t(5,0,2.5) on the SD of pathway intercepts
 #'   C2) half standard normal on the SD of group-specific effects.
