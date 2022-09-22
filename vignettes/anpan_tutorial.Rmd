@@ -318,7 +318,7 @@ There's a lot more to be said about loo model comparison that is beyond the scop
 
 ## Get example data
 
-In this section we'll simulate a small dataset for a single bug. If you have your own data or would like to use the example data built into the package, you can skip this section and go straight to [Run the gene model]. You can get the paths to the data included with the package with these two commands:
+In this section we'll obtain a small simulated dataset for a single bug. If you have your own data or would like to use the example data built into the package, you can skip this section and go straight to [Run the gene model]. If not, the next sub-section will show how to simulate the data from scratch. You can get the paths to the data included with the package with these two commands:
 
 ```{r eval = TRUE}
 meta_path = system.file("extdata", "fake_metadata.tsv", 
@@ -378,7 +378,11 @@ sim_grid = sim_dat = expand.grid(gene      = paste0("UniRef90_ABC", 1:(n_gene)),
   as.data.table()
 ```
 
-Then we simulate the log-abundances. If a sample doesn't have a bug present, it drops the bug abundance. Gene log-abundance is proportional to bug abundance and in cases, the true effect of the gene (which really flips the causal direction of `anpan()`, but for a simulation this simple it doesn't matter).
+Then we simulate the log-abundances. A couple notes on how this is done:
+
+* If a sample doesn't have a bug present, it drops the bug abundance. 
+* Gene log-abundance is proportional to bug abundance and in cases, the true effect of the gene (which really flips the causal direction implied by the gene model, but for a simulation this simple it doesn't matter).
+* most of the coefficients used here are magic numbers chosen to get the values roughly near realistic ranges
 
 ```{r eval = FALSE}
 rskewnormal = function(n, location = 0, scale = 1, skew = 0) {
@@ -401,7 +405,7 @@ sim_meta[, bug_labd := rskewnormal(n        = nrow(sim_meta),
 sim_df = sim_grid[sim_meta, on = 'sample_id'][true_effects, on = 'gene']
 
 sim_df[, gene_labd := rskewnormal(n        = nrow(sim_df),
-                                  location = -1 + .5*bug_labd + is_case * effect,
+                                  location = -1 + 0.5 * bug_labd + is_case * effect,
                                   skew     = -3,
                                   scale    = 3)]
 
@@ -478,7 +482,7 @@ A lot of stuff gets written out to `out_dir`, but let's look at the result that 
 head(anpan_res)
 ```
 
-`anpan()` returns a tibble with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a reasonable q-value threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. The regression statistics for other components of the model (non-gene covariate terms) are written to the output directory in `*all_terms.tsv.gz`.
+`anpan()` returns a tibble with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a reasonable q-value threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. The regression statistics for all terms in the model (including non-gene covariate terms) are written to the output directory in `*all_terms.tsv.gz`. The stats for just the gene terms (i.e. the same data frame returned by `anpan()` in R) is written to `*gene_terms.tsv.gz`.
 
 ## Examine filtering diagnostics
 
@@ -542,9 +546,21 @@ Some additional outputs you'll get with `anpan_batch()`:
 
 # Pathway random effects model
 
-The pathway model uses a random effects model applied to the pathways in a single bug. It looks for pathways that differ substantially in abundance between two groups while accounting for the correlation with species abundance. Using the usual `lme4` formula syntax, the model is: 
+The pathway model uses a random effects model applied to the pathways in a single bug. It looks for pathways that differ substantially in abundance between two groups while accounting for the correlation with species abundance. Using the standard `lme4` formula syntax, the model is: 
 
-$$ \textbf{log10(pwy_abd)} \sim $$
+$$ \textbf{log10(pwy_abd)} \sim \textbf{log10(species_abd) + (1|pwy) + (0 + group|pwy) + } \beta_0$$
+A few notes on this model:
+
+* zeros are discarded
+* The relationship between species abundance and pathway abundance is measured globally by all pathways in the bug
+* each pathway has its own intercept, but these intercepts are partially pooled across pathways
+  * These terms come from a $Normal(0, \sigma_{int})$ distribution. The prior on $\sigma_{int}$ is a $t_{5, 0, 2.5}$ distribution
+* each pathway has its own group effect. These are also pooled across pathways, but they are independent of the pathway intercepts
+  * These terms come from a $Normal(0, \sigma_{effects})$ distribution. The prior on $\sigma_{effects}$ is a relatively aggressive $exponential(3)$ distribution.
+* the final term $\beta_0$ is the global intercept
+* There are some additional weak priors on several terms. The best place to inspect these in the model code itself in the installation folder `anpan/stan/pwy_ranef.stan`
+    * If you don't know where this file is located on your system, you can use `system.file('stan', 'pwy_ranef.stan', package = 'anpan')` to find it
+
 
 ```{r eval = FALSE}
 ?anpan_pwy_ranef_batch()
@@ -558,9 +574,25 @@ This section isn't done.
 
 ## Genome comparisons
 
+Sometimes you get too many hits from a single bug. This can happen if two conditions are met: 
+
+* the upstream definition of the genes present in the species is overly broad, improperly clumping multiple distinct sub-species into the same species
+* one or more of these sub-species is confounded with the outcome
+
+This will cause all of the genes characteristic of the sub-species to show up as significantly associated with the outcome. That is true in the statistical sense, but it's not a helpful result when looking for potentially causal genes.
+
+The function `plot_genome_intersections()` can be used to plot overlaps of genes across isolate genomes in a unistrain files (which are used to define which genes belong to which species in the upstream gene profiling step). Multiple distinct blocks (as shown in the sample below) can cause the problematic "too many hits" phenomenon described above.
+
 ```{r eval=FALSE}
-?plot_genome_intersections()
+unistrain_path = "/path/to/g__Faecalibacterium.s__Faecalibacterium_prausnitzii.unistrains.tsv.gz"
+plot_genome_intersections(unistrain_path)
 ```
+
+```{r echo = FALSE}
+knitr::include_graphics("vignette_figs/fprau_ints.png")
+```
+
+We leave the approach to handling this to the user. If the blocking is driven by a single outlier genome, it may make sense to remove the genes unique to that outlier. More complicated cases like the example shown above may require more ad hoc measures, such as separating out the separate genomes and running them through the gene model separately.
 
 ## Horseshoe gene model
 
