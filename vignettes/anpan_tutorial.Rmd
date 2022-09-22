@@ -578,6 +578,27 @@ p[[2]]$theme$axis.text.y = element_text(size = 1)
 tree$layers[[2]]$aes_params$size = 3.5
 ```
 
+## Configuring furrr and progressr
+
+```{r eval = FALSE}
+handlers(global=TRUE)
+
+handlers(handler_progress(
+  format   = "[:bar] :current/:total (:percent) in :elapsed ETA: :eta"
+))
+
+handlers(handler_beepr()) # let's do the fork in the garbage disposal
+```
+
+```{r eval = FALSE}
+plan(multisession, workers = 4)
+```
+
+
+```{r eval = FALSE}
+plan(list(sequential, tweak(multisession, workers = 6)))
+```
+
 
 # References
 
