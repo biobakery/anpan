@@ -1252,7 +1252,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     geom_point(size = 1.5,
                color = 'white') +
     scale_color_brewer(palette = "Set1",
-                       na.value = "grey30") +
+                       na.value = "grey40") +
     labs(x = expression("PGLMM ELPD difference"),
          color = NULL) +
     theme_light() +
