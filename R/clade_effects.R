@@ -19,11 +19,11 @@ compute_clade_effects = function(clade_members,
     tibble::as_tibble()
 
   phy_effect_df = anpan_pglmm_result$pglmm_fit$draws(format = 'draws_df',
-                                         variables = "phylo_effect") |>
-    tibble::as_tibble() |>
-    tidyr::pivot_longer(matches("phylo_effect"),
-                        names_to = 'param_name',
-                        values_to = 'value')
+                                                     variables = "phylo_effect") |>
+    data.table::as.data.table() |>
+    data.table::melt(id.vars = c(".chain", ".iteration", ".draw"),
+                     variable.name = "param_name",
+                     value.name = "value")
 
   clade_draws = clade_df |>
     select(clade, param_name) |>
@@ -31,10 +31,12 @@ compute_clade_effects = function(clade_members,
     group_by(`.chain`, `.iteration`, `.draw`, clade) |>
     summarise(mean_val = mean(value),
               .groups = "drop_last") |>
-    tidyr::pivot_wider(names_from = "clade",
-                       values_from = "mean_val") |>
     ungroup() |>
-    mutate(clade_difference = clade_member - clade_nonmember)
+    as.data.table() |>
+    data.table::dcast(value.var = "mean_val",
+                      `.iteration` + `.chain` + `.draw` ~ clade) |>
+    mutate(clade_difference = clade_member - clade_nonmember) |>
+    tibble::as_tibble()
 
   clade_summary = clade_draws |>
     posterior::as_draws_df() |>
