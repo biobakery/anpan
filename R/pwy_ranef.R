@@ -57,10 +57,12 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                        pwy_group_effect = paste("pwy_effects[", index, "]", sep = ""),
                        pwy_intercept = paste("pwy_intercepts[", index, "]", sep = ""),
                        pwy = levels(factor(bug_pwy_dat$pwy))) |>
-    tidyr::pivot_longer(matches("pwy_"),
-                        names_to = 'var_names',
-                        values_to = 'variable') |>
+    data.table::as.data.table() |>
+    data.table::melt(id.vars = c("index", "pwy"),
+                     variable.name = 'var_names',
+                     value.name = 'variable') |>
     dplyr::select(-var_names) |>
+    dplyr::arrange(index) |>
     data.table::as.data.table()
 
   mod_fit = pwy_ranef_model$sample(data = data_list, ...)
@@ -321,9 +323,11 @@ plot_pwy_ranef = function(bug_pwy_dat,
     cmdstan_fit$draws(format = 'data.frame') |>
       as_tibble() |>
       dplyr::slice_sample(n = post_draws) |>
-      tidyr::pivot_longer(-c(`.chain`, `.iteration`, `.draw`),
-                          names_to = 'variable',
-                          values_to = 'value') |>
+      as.data.table() |>
+      data.table::melt(id.vars = c(".chain", ".iteration", ".draw"),
+                       variable.name = 'variable',
+                       value.name = 'value') |>
+      tibble::as_tibble() |>
       dplyr::filter(grepl("^pwy_eff|beta|glob|^pwy_interc", variable))
   }
 
