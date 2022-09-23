@@ -47,9 +47,9 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   worked = glm_fits[sapply(glm_fits$glm_res,
                            function(.x) is.null(.x$error))]
 
-  # V Find the data.table way to unnest. tidyr is slow.
-  all_terms = tidyr::unnest(worked[,.(gene, glm_res = lapply(glm_res, function(.x) .x$result))],
-                            cols = c(glm_res))
+  unnest_input = worked[,.(gene, glm_res = lapply(glm_res, function(.x) .x$result))]
+  all_terms = unnest_input[,data.table::rbindlist(glm_res), by = gene] |>
+    tibble::as_tibble()
 
   # TODO add a check here if ^ is empty and exit gracefully. Necessary for anpan().
 
