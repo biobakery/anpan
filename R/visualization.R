@@ -650,9 +650,11 @@ plot_cor_mat = function(cor_mat,
     tibble::as_tibble() |>
     dplyr::mutate(rn = factor(rn,
                        levels = unique(rn))) |>
-    tidyr::pivot_longer(-rn,
-                 names_to = 'V2',
-                 values_to = 'cor') |>
+    as.data.table() |>
+    data.table::melt(id.vars = "rn",
+                     variable.name = 'V2',
+                     value.name = 'cor') |>
+    tibble::as_tibble() |>
     dplyr::mutate(V2 = factor(V2,
                        levels = rev(levels(rn)))) |>
     ggplot(aes(rn, V2)) +
@@ -931,9 +933,11 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_df$y = as.numeric(yrep_df$y) - 1
 
     yrep_df = yrep_df |>
-      tidyr::pivot_longer(cols = c("y_rep", "y"),
-                          names_to = 'y_type',
-                          values_to = 'value') |>
+      as.data.table() |>
+      data.table::melt(measure.vars = c("y_rep", "y"),
+                       variable.name = 'y_type',
+                       value.name = 'value') |>
+      tibble::as_tibble() |>
       mutate(y_type = factor(y_type,
                              levels = c("y_rep", "y")))
 
@@ -1015,7 +1019,7 @@ get_corners = function(x,y){
                  x     , y - p5),
                ncol = 2)
   colnames(res) = c("cx", "cy")
-  return(res)
+  return(as.data.table(res))
 }
 
 #' Plot a rotated half correlation matrix
@@ -1071,14 +1075,12 @@ plot_half_cor_mat = function(cor_mat,
   coord_df[,`:=`(      i = .I,
                  corners = mapply(get_corners, x, y, SIMPLIFY = FALSE))]
 
-  plot_input = coord_df |>
-    tidyr::unnest(c(corners)) |>
-    as.data.table()
+  plot_input = coord_df[,rbindlist(corners), by = list(i, correlation)]
 
   # You can get rid of the thin borders by mapping color as well, but then the thickness of the
   # borders ("size = .1") can make the edges look ragged if the thickness isn't perfect.
   plot_input |>
-    ggplot(aes(corners.V1, corners.V2)) +
+    ggplot(aes(cx, cy)) +
     geom_polygon(aes(group = i,
                      fill = correlation,
                      color = correlation),
@@ -1087,7 +1089,6 @@ plot_half_cor_mat = function(cor_mat,
     scale_color_viridis_c() +
     theme_void() +
     coord_equal()
-
 }
 
 #' Plot the ELPD difference interval
@@ -1184,11 +1185,14 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
 
   mult = qnorm(1 - (1 - sort(probs))/2)
 
-  plot_input = anpan_pglmm_res |>
+  loo_df = anpan_pglmm_res |>
     select(input_file, loo) |>
     mutate(loo_comp = map(loo, loo_to_df)) |>
     select(-loo) |>
-    tidyr::unnest(c(loo_comp)) |>
+    as.data.table()
+
+  plot_input = loo_df[,rbindlist(loo_comp), by = input_file]  |>
+    tibble::as_tibble() |>
     group_by(input_file) |>
     summarise(best_model = model[1],
               elpd_diff = case_when(model[1] == "pglmm_fit" ~ -1 * elpd_diff[2],
