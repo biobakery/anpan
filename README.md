@@ -36,8 +36,7 @@ through CRAN (the exception being cmdstanr):
                        "purrr", 
                        "R.utils",
                        "stringr",
-                       "tibble", 
-                       "tidyr",
+                       "tibble",
                        "tidyselect")) # add Ncpus = 4 to go faster
 
     install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
