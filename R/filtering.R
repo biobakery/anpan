@@ -17,10 +17,8 @@ get_samp_stats_large = function(gf_file) {
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
     names(gf)[1] = "gene"
-    gf = gf |>
-      tidyr::separate(gene,
-                      into = c("u", "s"),
-                      sep = "\\|")
+    gf = gf[, c("u", "s") := tstrsplit(gene, split = "\\|")][,-"gene"] |>
+      dplyr::relocate(u, s)
 
     s_ids = names(gf)[-c(1, 2)]
 
