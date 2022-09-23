@@ -573,13 +573,19 @@ anpan_pglmm = function(meta_file,
       warning("loo-based model comparison is unstable and/or anti-conservative without regularized noise. Do not trust the results if there are bad Pareto k diagnostic values.")
     }
 
-    draw_df = pglmm_fit$draws(format = "data.frame") |>
+    draw_dt = pglmm_fit$draws(format = "data.frame") |>
       tibble::as_tibble() |>
-      select(-tidyselect::matches("std_phylo|yrep|log_lik|z_")) |>
-      tidyr::nest(phylo_effects = tidyselect::matches("phylo_effect"),
-                  beta = tidyselect::matches("^beta")) |>
-      mutate(phylo_effects = purrr::map(phylo_effects,
-                                        unlist))
+      select(-tidyselect::matches("std_phylo|yrep|log_lik|z_|lin_pred")) |>
+      as.data.table()
+
+    phylo_eff_cols = grep("phylo_effect", names(draw_dt), value = TRUE)
+    beta_cols = grep("^beta", names(draw_dt), value = TRUE)
+    # other_cols = grep("phylo_eff|^beta", x = names(draw_dt), value = TRUE, invert = TRUE)
+
+    draw_dt[,phylo_effects := list(list(unlist(.SD))), by = `.draw`, .SDcols = phylo_eff_cols]
+    draw_dt[,beta          := list(list(.SD)), by = `.draw`, .SDcols = beta_cols]
+    draw_df = draw_dt[,!..phylo_eff_cols][,!..beta_cols] |>
+      tibble::as_tibble()
 
     if (ncol(draw_df$beta[[1]]) != 0) {
       draw_df$beta = purrr::map(draw_df$beta,
