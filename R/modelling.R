@@ -179,7 +179,7 @@ fit_horseshoe = function(model_input,
                    hs_df_global_genes = 1,
                    hs_df_slab_genes = 4,
                    hs_scale_global_genes = .01 / sqrt(nrow(model_input)),
-                   hs_scale_slab_genes = 3,
+                   hs_scale_slab_genes = 1,
                    prior_only = 0)
 
   ushoe_fit = ushoe_model$sample(data = data_list,
