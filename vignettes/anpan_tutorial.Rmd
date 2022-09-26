@@ -645,7 +645,9 @@ We leave the approach to handling this to the user. If the blocking is driven by
 anpan(model_type = "horseshoe")
 ```
 
-## Tweaking with patchwork plots
+## Picking out clade members
+
+## Tweaking patchwork plots
 
 Most of the theme parameters used in anpan's plotting functions are set to reasonable defaults, but sometimes real data makes the plots look a bit wonky. Take the PGLMM posterior plot we generated in the [PGLMMs] section:
 
@@ -720,10 +722,11 @@ handlers(handler_progress(
 There are also some that are more exciting:
 
 ```{r eval = FALSE}
+# let's do the fork in the garbage disposal!
 handlers(handler_beepr(initiate = 1,
                        update = 1,
                        finish = 1,
-                       intrusiveness = 1)) # let's do the fork in the garbage disposal!
+                       intrusiveness = 1)) 
 ```
 
 Once you've set your preferred handler(s), you can test the reporting with this command:
