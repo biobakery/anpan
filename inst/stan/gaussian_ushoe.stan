@@ -22,18 +22,17 @@ data {
   int prior_only;  // should the likelihood be ignored?
 }
 parameters {
-  vector[K_covariates] b_covariates;  // population-level effects
+  vector[K_covariates] b_covariates;  // coefficients for additional (non-horseshoe'd) covariates
   // local parameters for horseshoe prior
   vector[K_genes] zb_genes;
   vector<lower=0>[K_genes] hs_local_genes;
   // horseshoe shrinkage parameters
   real<lower=0> hs_global_genes;  // global shrinkage parameters
   real<lower=0> hs_slab_genes;  // slab regularization parameter
-  real<lower=0> sigma;  // dispersion parameter
+  real<lower=0> sigma;
 }
 transformed parameters {
-  vector[K_genes] b_genes;  // population-level effects
-  // compute actual regression coefficients
+  vector[K_genes] b_genes;  // gene coefficients
   b_genes = horseshoe(zb_genes, hs_local_genes, hs_global_genes, hs_scale_slab_genes^2 * hs_slab_genes);
 }
 model {
@@ -54,12 +53,14 @@ model {
   // priors
   target += normal_lpdf(b_covariates[2:] | 0, 2);
   target += student_t_lpdf(b_covariates[1] | 3, 0, 3.3); //intercept
+
   target += std_normal_lpdf(zb_genes);
   target += student_t_lpdf(hs_local_genes | hs_df_genes, 0, 1)
     - rows(hs_local_genes) * log(0.5);
   target += student_t_lpdf(hs_global_genes | hs_df_global_genes, 0, hs_scale_global_genes * sigma)
     - 1 * log(0.5);
   target += inv_gamma_lpdf(hs_slab_genes | 0.5 * hs_df_slab_genes, 0.5 * hs_df_slab_genes);
+
   target += student_t_lpdf(sigma | 3, 0, 3.3)
     - 1 * student_t_lccdf(0 | 3, 0, 3.3);
 }
