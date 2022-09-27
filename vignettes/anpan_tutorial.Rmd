@@ -55,7 +55,7 @@ It's difficult to find associations between microbial strains and host health ou
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
 * Modeling the difference in microbial pathways between experimental groups while controlling for species abundance.
 
-We'll cover each of these points in a top-level section. Currently the [Pathway random effects model] section is incomplete. There is also an [Advanced topics] section with some additional information on more complicated details.
+We'll cover each of these points in a top-level section. Currently the [Pathway random effects model] section is incomplete. There is also an [Advanced topics] section with some additional information on a handful of more complicated diagnostics/methods/techniques.
 
 # Libraries
 
@@ -641,9 +641,45 @@ We leave the approach to handling this to the user. If the blocking is driven by
 
 ## Horseshoe gene model
 
+The default model type for the gene model runs a simple glm for every gene in every bug, then FDR corrects the p-values after the fact. Why conceptually and computationally simple, this approach has a few disadvantages:
+
+* the dependence between genes is ignored
+* the gene coefficients are unregularized
+* the coefficients for additional covariates (e.g. age, gender) get estimated repeatedly separately estimated for each gene, increasing the chances of identifying non-impactful genes as hits because they're confounded with one of the covariates
+
+By setting `model_type = "horseshoe"` in a call to `anpan()`, it is possible to use a "regularized horseshoe" model instead. This type of model is described in detail in @piironen_sparsity_2017 . Basically, instead of running many small models then FDR correcting, it fits a single model per bug. This has a number of advantages:
+
+* the coefficients for additional covariates (e.g. age, gender) are only estimated once, reducing the chance of finding genes that are confounded with/by covariates
+* the horseshoe incorporates the strong prior knowledge that only a very small proportion of bacterial genes will affect the outcome
+* the strong regularization from the horseshoe will tend to pick out the most explanatory genes from sets of collinear genes (if the effects are sufficiently identifiable)
+
+The horseshoe model does this by fitting a single regression model that includes all genes as predictors (as well as any additional covariates like age and gender), with a regularized horseshoe prior on the gene coefficients. 
+
+A full explanation of the regularized horseshoe is available in @piironen_sparsity_2017. The coefficients for the genes $\beta_j$ use the following model:
+
+$$\beta_j \vert \lambda_j, \tau , c  \sim N\left(0 , \tau^2 \tilde{\lambda}^2_j \right) \\
+\tilde{\lambda}^2_j = \frac{c^2 \lambda^2_j}{c^2 + \tau^2\lambda^2_j} \\
+\lambda_j \sim Cauchy^+(0,1)$$
+
+* $\lambda_j$ are gene-wise (local) shrinkage parameters
+* $\tau$ is a global shrinkage parameter
+* $c$ controls the degree of regularization on non-zero coefficients
+
+The Stan code used under the hood is adapted from code originally produced by the `brms` package @burkner_brms . 
+
 ```{r eval = FALSE}
 anpan(model_type = "horseshoe")
 ```
+
+The outputs of this model will look largely the same as `model_type = "fastglm"` except:
+
+* there are no p-/q-values
+  * and hence no significance stars on the plot
+* there are typically far fewer hits
+* the error bars on non-zero coefficients are usually very wide
+* the output includes MCMC convergence statistics
+
+The main disadvantage of the horseshoe model is that it is much more computationally expensive. 
 
 ## Picking out clade members
 
@@ -657,7 +693,7 @@ p
 
 The labels are a bit too small. Another common problem with these plots is that for large datasets the tree gets too crowded to see the individual tips.
 
-These can mostly be addressed after the fact with the normal ggplot means for single-figure plots. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
+These can mostly be addressed after the fact with the usal means of altering ggplot. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
 
 * make the lines thinner on the tree (first sub-plot)
 * make the labels bigger and right-justified on the posterior box plots (second sub-plot)
