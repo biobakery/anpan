@@ -560,8 +560,10 @@ anpan_batch = function(bug_dir,
     anno = fread(annotation_file)
 
     if (!("gene" %in% colnames(anno))) {
-      warning('No "gene" column in annotation file.')
+      warning('No "gene" column in annotation file. Annotations not joined onto result')
 
+    } if (any(duplicated(anno$gene))) {
+      warning("Gene annotations are not unique. Annotations not joined onto result")
     } else {
       all_bug_terms = anno[all_bug_terms, on = 'gene'] |>
         dplyr::relocate(bug_name, gene) |>
