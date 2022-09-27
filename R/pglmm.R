@@ -272,7 +272,7 @@ anpan_pglmm = function(meta_file,
                                    covariates,
                                    outcome,
                                    omit_na,
-                                   trim_pattern,
+                                   trim_pattern = trim_pattern,
                                    verbose)
 
     bug_tree = olap_list[[1]]
@@ -538,6 +538,7 @@ anpan_pglmm = function(meta_file,
                                  omit_na = omit_na,
                                  verbose = FALSE,
                                  fit = pglmm_fit,
+                                 trim_pattern = trim_pattern,
                                  labels = levels(model_input$sample_id))
 
     if (!is.null(out_dir)) {
@@ -556,6 +557,7 @@ anpan_pglmm = function(meta_file,
                                            omit_na = omit_na,
                                            verbose = FALSE,
                                            fit = pglmm_fit,
+                                           trim_pattern = trim_pattern,
                                            labels = levels(model_input$sample_id))
 
     if (!is.null(out_dir)) {
