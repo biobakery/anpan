@@ -714,6 +714,7 @@ plot_outcome_tree = function(tree_file,
                              outcome = 'crc',
                              omit_na = FALSE,
                              verbose = TRUE,
+                             trim_pattern = NULL,
                              return_tree_df = FALSE) {
 
   # if (length(covariates) > 2) {
@@ -726,7 +727,7 @@ plot_outcome_tree = function(tree_file,
                                  outcome = outcome,
                                  omit_na = omit_na,
                                  verbose = verbose,
-                                 trim_pattern = NULL)
+                                 trim_pattern = trim_pattern)
 
   bug_tree = olap_list[[1]]
   model_input = olap_list[[2]]
@@ -814,6 +815,7 @@ plot_tree_with_post = function(tree_file,
                                omit_na = FALSE,
                                verbose = TRUE,
                                labels,
+                               trim_pattern = NULL,
                                return_tree_df = FALSE) {
 
   tree_plot = plot_outcome_tree(tree_file,
@@ -822,6 +824,7 @@ plot_tree_with_post = function(tree_file,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 verbose = verbose,
+                                trim_pattern = trim_pattern,
                                 return_tree_df = TRUE)
 
   post_df = fit$summary(NULL, "mean", ~quantile(., probs = c(.05, .25, .75, .95))) |>
@@ -887,6 +890,7 @@ plot_tree_with_post_pred = function(tree_file,
                                     verbose = TRUE,
                                     fit,
                                     labels,
+                                    trim_pattern = NULL,
                                     return_tree_df = FALSE) {
 
   tree_plot = plot_outcome_tree(tree_file,
@@ -895,6 +899,7 @@ plot_tree_with_post_pred = function(tree_file,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 verbose = verbose,
+                                trim_pattern = trim_pattern,
                                 return_tree_df = TRUE)
 
   model_input = tree_plot$orig_model_input

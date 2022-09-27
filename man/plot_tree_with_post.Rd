@@ -13,6 +13,7 @@ plot_tree_with_post(
   omit_na = FALSE,
   verbose = TRUE,
   labels,
+  trim_pattern = NULL,
   return_tree_df = FALSE
 )
 }
@@ -31,6 +32,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{omit_na}{logical indicating whether to omit incomplete cases}
 
 \item{labels}{the ordered tip labels from the tree}
+
+\item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{return_tree_df}{if true, return a list containing 1) the plot, 2) the
 segment data frame, and 3) the labelled terminal segment data frame.

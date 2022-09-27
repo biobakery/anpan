@@ -11,6 +11,7 @@ plot_outcome_tree(
   outcome = "crc",
   omit_na = FALSE,
   verbose = TRUE,
+  trim_pattern = NULL,
   return_tree_df = FALSE
 )
 }
@@ -25,6 +26,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{outcome}{the name of the outcome variable}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases}
+
+\item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{return_tree_df}{if true, return a list containing 1) the plot, 2) the
 segment data frame, and 3) the labelled terminal segment data frame.

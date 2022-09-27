@@ -519,6 +519,7 @@ anpan_pglmm = function(meta_file,
                           covariates = covariates,
                           outcome = outcome,
                           omit_na = omit_na,
+                          trim_pattern = trim_pattern,
                           verbose = FALSE)
 
     if (!is.null(out_dir)) {
