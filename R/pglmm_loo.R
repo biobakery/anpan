@@ -5,9 +5,13 @@
 # Sivula, and Ole Winther. “Bayesian Leave-One-Out Cross-Validation
 # Approximations for Gaussian Latent Variable Models,” n.d., 38.
 
-# The integral is simple, but you have to figure out the distribution of each
-# phylogenetic effect conditional on the others. This involves a bit of linear
-# algebra that can be mostly pre-computed. See the wikipedia link below.
+# The integral is relatively simple, but needs to be evaluated numerically for non-Gaussian
+# outcomes. It has to integrate the likelihood on the identity scale (not the log scale), so you
+# have to use an offset trick like LogSumExp(). LogIntExp() I guess.
+
+# You have to figure out the distribution of each phylogenetic effect conditional on the others.
+# This involves a bit of linear algebra that can be mostly pre-computed. See the wikipedia link
+# below.
 
 # See also the thread where I had to ask for help lol:
 # https://discourse.mc-stan.org/t/integrated-loo-with-a-pglmm/27271
@@ -20,8 +24,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
 }
 
 
-# For each posterior iteration, compute the log-likelihood of the
-# observations.
+# For each posterior iteration, compute the log-likelihood of each observation.
 get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verbose = TRUE) {
 
   n_obs = length(effect_means)
@@ -300,21 +303,25 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                     offset_term      = 0,
                                     log              = TRUE)
 
-  int_res = safely_integrate(vec_integrand_logistic,
-                             lower = -Inf, upper = Inf,
-                             mu_bar_j         = mu_bar_j,
-                             sigma_bar_j      = sigma_bar_j,
-                             yj               = yj,
-                             lm_term          = lm_mean,
-                             offset_term      = offset_j,
-                             log              = FALSE)
+  offset_check = abs(offset_j) > 25
 
-  if (!is.null(int_res$error) ||
+  if (!offset_check) {
+    int_res = safely_integrate(vec_integrand_logistic,
+                               lower = -Inf, upper = Inf,
+                               mu_bar_j         = mu_bar_j,
+                               sigma_bar_j      = sigma_bar_j,
+                               yj               = yj,
+                               lm_term          = lm_mean,
+                               offset_term      = offset_j,
+                               log              = FALSE)
+  }
+
+  if (offset_check ||
+      !is.null(int_res$error) ||
       !is.finite(int_res$result$value) ||
       int_res$result$value == 0 ||
       int_res$result$value < 1e-4 ||
-      int_res$result$value > 100 ||
-      abs(offset_j) > 25) {
+      int_res$result$value > 100) {
     opt_res = safely_optim(par = mu_bar_j,
                            fn = vec_integrand_logistic,
                            method = "L-BFGS-B",
