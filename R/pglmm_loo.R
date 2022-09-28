@@ -153,31 +153,34 @@ log_lik_terms_i = function(i_df,
   # j = index over observations
   if (family == 'gaussian') {
     # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-    j_df = tibble(j = 1:p,
-                  l = c(lm_means),
-                  sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
-                  sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
-                  effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-                  sigma_resid    = i_df$sigma_resid,
-                  yj             = Y,
-                  effect_mean_j  = effect_means,
-                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x])) |>
-      transmute(m1 = map2_dbl(sigma12x22_inv, effects_mj, ~c(.x %*% .y)),
-                s1 = pmap_dbl(list(cov_mat_jj, sigma12x22_inv, sigma21), function(.x, .y, .z) sqrt(.x - c(.y %*% .z))),
-                l  = l,
-                yj = yj,
-                s2 = sigma_resid)
+    j_df = data.table(j = seq_len(p),
+                      l = c(lm_means),
+                      sigma12x22_inv = lapply(seq_len(p), function(.x) matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
+                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
+                      effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+                      sigma_resid    = i_df$sigma_resid,
+                      yj             = Y,
+                      effect_mean_j  = effect_means,
+                      cov_mat_jj     = diag(cov_mat)) |>
+      dplyr::transmute(m1 = mapply(function(.x, .y) c(.x %*% .y),
+                                   sigma12x22_inv, effects_mj),
+                       s1 = mapply(function(.x, .y, .z) sqrt(.x - c(.y %*% .z)),
+                                   cov_mat_jj, sigma12x22_inv, sigma21),
+                       l  = l,
+                       yj = yj,
+                       s2 = sigma_resid)
 
     ll_ij_fun = log_lik_i_j_gaussian
   } else {
-    j_df = tibble(j              = 1:p,
-                  lm_mean        = c(lm_means),
-                  sigma12x22_inv = purrr::map(j, ~matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
-                  sigma21        = purrr::map(j, ~matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
-                  effects_mj     = purrr::map(j, ~matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-                  yj             = Y,
-                  effect_mean_j  = effect_means,
-                  cov_mat_jj     = purrr::map_dbl(j, ~cov_mat[.x,.x]))
+    j_df = data.table(j              = seq_len(p),
+                      lm_mean        = c(lm_means),
+                      sigma12x22_inv = lapply(seq_len(p), function(.x) matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
+                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
+                      effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+                      yj             = Y,
+                      effect_mean_j  = effect_means,
+                      cov_mat_jj     = diag(cov_mat),
+                      sqrt2pi        = sqrt(2*pi))
     ll_ij_fun = log_lik_i_j_logistic
   }
 
@@ -285,7 +288,7 @@ safely_optim = purrr::safely(optim)
 log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                 effects_mj, # effects minus j
                                 yj,
-                                effect_mean_j, cov_mat_jj) {
+                                effect_mean_j, cov_mat_jj, sqrt2pi) {
 
   p = length(effects_mj) + 1
 
@@ -301,6 +304,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                     yj               = yj,
                                     lm_term          = lm_mean,
                                     offset_term      = 0,
+                                    sqrt2pi          = sqrt2pi,
                                     log              = TRUE)
 
   offset_check = abs(offset_j) > 25
@@ -313,6 +317,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                yj               = yj,
                                lm_term          = lm_mean,
                                offset_term      = offset_j,
+                               sqrt2pi          = sqrt2pi,
                                log              = FALSE)
   }
 
@@ -331,6 +336,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                            yj               = yj,
                            lm_term          = lm_mean,
                            offset_term      = 0,
+                           sqrt2pi          = sqrt2pi,
                            log              = TRUE)
 
     if (!is.null(opt_res$error)) {
@@ -343,6 +349,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                              yj               = yj,
                              lm_term          = lm_mean,
                              offset_term      = 0,
+                             sqrt2pi          = sqrt2pi,
                              log              = TRUE)
     }
 
@@ -357,6 +364,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                yj               = yj,
                                lm_term          = lm_mean,
                                offset_term      = offset_j,
+                               sqrt2pi          = sqrt2pi,
                                log              = FALSE)
 
     if (!is.null(int_res$error) ||
@@ -373,6 +381,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                               yj               = yj,
                                               lm_term          = lm_mean,
                                               offset_term      = 0,
+                                              sqrt2pi          = sqrt2pi,
                                               log              = TRUE)
 
       # Set up the linear system
@@ -393,6 +402,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                  yj               = yj,
                                  lm_term          = lm_mean,
                                  offset_term      = offset_j,
+                                 sqrt2pi          = sqrt2pi,
                                  log              = FALSE)
     }
   }
@@ -409,6 +419,7 @@ vec_integrand_logistic = function(phylo_effect_vec,
                                   mu_bar_j, sigma_bar_j,      # phylo term components
                                   yj, lm_term,   # LM term components, NO SIGMA_RESID NOW!
                                   offset_term,
+                                  sqrt2pi,
                                   log = FALSE) {
   # This function for the integrand is vectorized because that's what
   # integrate() needs. The log argument keeps the result on the log scale, which
@@ -416,10 +427,13 @@ vec_integrand_logistic = function(phylo_effect_vec,
 
   # This is for a binomial outcome variable.
 
-  phylo_term = dnorm(phylo_effect_vec,
-                     mean = mu_bar_j,
-                     sd = sigma_bar_j,
-                     log = TRUE)
+  # phylo_term = dnorm(phylo_effect_vec,
+  #                    mean = mu_bar_j,
+  #                    sd = sigma_bar_j,
+  #                    log = TRUE)
+
+  # Doing the log normal density manually is faster than dnorm(log=TRUE). This is NOT true for dbinom().
+  phylo_term = -1/2 * ((phylo_effect_vec - mu_bar_j) / sigma_bar_j)^2 - log(sigma_bar_j * sqrt2pi)
 
   model_mean = c(lm_term) + phylo_effect_vec
 
