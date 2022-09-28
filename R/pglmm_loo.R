@@ -309,7 +309,11 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                              offset_term      = offset_j,
                              log              = FALSE)
 
-  if (!is.null(int_res$error) || !is.finite(int_res$result$value) || int_res$result$value == 0|| int_res$result$value < 1e-4) {
+  if (!is.null(int_res$error) ||
+      !is.finite(int_res$result$value) ||
+      int_res$result$value == 0 ||
+      int_res$result$value < 1e-4 ||
+      int_res$result$value > 100) {
     opt_res = safely_optim(par = mu_bar_j,
                            fn = vec_integrand_logistic,
                            method = "L-BFGS-B",
@@ -347,7 +351,10 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                offset_term      = offset_j,
                                log              = FALSE)
 
-    if (!is.null(int_res$error) || int_res$result$value == 0 || int_res$result$value < 1e-4) {
+    if (!is.null(int_res$error) ||
+        int_res$result$value == 0 ||
+        int_res$result$value < 1e-4 |
+        int_res$result$value > 100) {
       # If it still fails, it's a really sharp integral. Take a parabolic
       # approximation about the optimum to find integration limits.
 
