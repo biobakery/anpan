@@ -275,6 +275,10 @@ anpan_pglmm = function(meta_file,
                                    trim_pattern = trim_pattern,
                                    verbose)
 
+    if (is.null(olap_list[[1]])) {
+      stop("Couldn't find any overlapping samples between the sample_id column in the metadata and the tips of the first tree. Maybe you need to set the trim_pattern argument?")
+    }
+
     bug_tree = olap_list[[1]]
     model_input = olap_list[[2]]
   } else {
@@ -780,6 +784,21 @@ anpan_pglmm_batch = function(meta_file,
     base_path = system.file("stan", "bin_no_phylo_term.stan",
                             package = 'anpan',
                             mustWork = TRUE)
+  }
+
+  # Check for overlaps in the first file, just to make sure the entire batch doesn't suffer from a
+  # missing trim pattern.
+
+  olap_list = olap_tree_and_meta(tree_files[1],
+                                 meta_file,
+                                 covariates,
+                                 outcome,
+                                 omit_na,
+                                 trim_pattern = trim_pattern,
+                                 verbose = FALSE)
+
+  if (is.null(olap_list[[1]])) {
+    stop("Couldn't find any overlapping samples between the sample_id column in the metadata and the tips of the first tree. Maybe you need to set the trim_pattern argument?")
   }
 
 
