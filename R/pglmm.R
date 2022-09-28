@@ -884,7 +884,14 @@ anpan_pglmm_batch = function(meta_file,
     dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
 
   res_df = dplyr::bind_cols(worked["input_file"],
-                            as_tibble(purrr::transpose(worked$result)))
+                            as_tibble(purrr::transpose(worked$result))) |>
+    mutate(n = purrr::map_int(model_input, nrow),
+           prop_bad_k_diagnostics = purrr::map_dbl(loo, ~mean(.x$pglmm_loo$diagnostics$pareto_k > .7)),
+           best_model = gsub("_fit", "", purrr::map_chr(loo, ~rownames(.x$comparison)[1])),
+           elpd_diff = purrr::map_dbl(loo, ~.x$comparison[2,1]),
+           elpd_se = purrr::map_dbl(loo, ~.x$comparison[2,2])) |>
+    dplyr::select(input_file, n:elpd_se, model_input:loo)
+
 
   return(res_df)
 
