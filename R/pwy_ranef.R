@@ -370,7 +370,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     mutate(rdraws = lapply(model_fit,
                            get_post_draws,
                            post_draws = post_draws),
-           line_draws = map2(summary_df, rdraws,
+           line_draws = purrr::map2(summary_df, rdraws,
                              combine_summ_with_draws)) |>
     select(bug, line_draws) |>
     as.data.table()
@@ -384,9 +384,11 @@ plot_pwy_ranef = function(bug_pwy_dat,
   replace_vector = group_labels
   names(replace_vector) = c("ctrl", "case")
 
-  draw_df$group_var = replace_vector[draw_df$group_var]
-  draw_df = draw_df |> mutate(group_var = factor(group_var,
-                                                 levels = group_labels))
+  draw_df$group_var = factor(replace_vector[as.character(draw_df$group_var)],
+                             levels = group_labels)
+
+  color_vec = c("#1F78C8", "#ff0000")
+  names(color_vec) = group_labels
 
   plot_data |>
     mutate(pwy = stringr::str_wrap(pwy, width = wrap_char),
@@ -400,9 +402,9 @@ plot_pwy_ranef = function(bug_pwy_dat,
                 alpha = .33) +
     geom_point(aes(color = group_var)) +
     facet_wrap(c("bug", "pwy"), scales = 'free') +
-    scale_color_manual(values = c("#1F78C8", "#ff0000")) +  # pals::cols25(2) |> dput()
+    scale_color_manual(values = color_vec) +  # pals::cols25(2) |> dput()
     theme_light() +
-    theme(strip.text = element_text(color = 'grey20', margin = margin(.1,.1,.1,.1, unit = 'pt'),
+    theme(strip.text = element_text(color = 'grey20', margin = margin(.2, .2, .2, .2, unit = 'pt'),
                                     size = 6.5)) +
     labs(color = NULL)
 }
