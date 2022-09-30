@@ -378,6 +378,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
   draw_df = line_df[,data.table::rbindlist(line_draws), by = bug] |>
     tibble::as_tibble() |>
     inner_join(top_pwys, by = c("bug", "pwy")) |>
+    dplyr::slice_sample(prop = 1) |>
     mutate(pwy = stringr::str_wrap(pwy, width = wrap_char))
 
   replace_vector = group_labels
