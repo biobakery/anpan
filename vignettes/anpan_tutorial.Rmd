@@ -214,7 +214,7 @@ You can see that the model fit confirms what we observed visually earlier: the p
 
 But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is a simple presentation of the raw model fit, but can't draw the sharp dividing lines we might want. 
 
-If you are able to justifiably define a clade (with some articulable reason beyond "this clade looks like it has a higher outcome") manually, you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
+If you are able to justifiably define a clade manually (with some articulable, non-circular reasoning beyond "this clade looks like it has a higher outcome"), you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
 ## Detailed interpretation
 
@@ -249,7 +249,7 @@ Missing init values for the following parameters:
  - chain 4: beta, centered_cov_intercept, std_phylo_effects
 ```
 
-These are benign, the randomized initialization that Stan provides works fine for these parameters.
+These are benign -- the randomized initialization that Stan provides works fine for these parameters.
 
 * There's a fairly innocuous message from Stan that usually occurs at the start of the MCMC chains:
 
@@ -335,7 +335,7 @@ result$model_input |>
 
 ```
 
-You can see that there's a bit more uncertainty in the slope and intercept than you might expect. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component is free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
+There's a bit more uncertainty in the slope and intercept than you might expect given how visually clear the relationship is. This is because the model has to assess this relationship in the context of the very flexible phylogenetic component. If $\sigma_{phylo}$ is high and the phylogenetic component if explaining most of the residual variation here, the linear component is free to relax toward the prior distribution. Vice versa if the phylogenetic component explains the variation poorly.
 
 ### `loo` interpretation
 
@@ -345,7 +345,7 @@ Let's look at the `pglmm_loo` result:
 result$loo$pglmm_loo
 ```
 
-PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights calculated from raw log-likelihood values to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <100 for continuous outcomes or <200 for binary outcomes, though these cutoffs depend heavily on the tree as well).
+PGLMM models are very flexible because they have a parameter for every leaf. In some cases, this can cause the naive leave-one-out importance weights calculated from raw log-likelihood values to be unstable. `anpan` generates importance weights for each observation by integrating the conditional likelihood for each observation at each posterior iteration as described in section 3.6.1 of @vehtari_glvm. This produces stable importance weights that we can use for model comparison. Note that unstable importance weights can still occur if the posterior on phylogenetic effects are poorly constrained by the tree (i.e. the correlation matrix is close to the identity matrix) and/or data (i.e. n is low, typically <50 for continuous outcomes or <100 for binary outcomes, though these cutoffs depend heavily on the tree as well).
 
 The `loo()` result provides some diagnostics that can help confirm that the importance weights are stable and we can trust the downstream model comparison. In this case, we get a small number of Pareto k diagnostic values that are only "okay". If there are bad or "very bad" k values, that indicates that individual observations are having a strong effects on the model fit, and hence that the loo-based model comparison shouldn't be trusted. That scenario can happen more frequently without regularization when `reg_noise = FALSE`. 
 
@@ -357,7 +357,7 @@ Let's look at the model comparison:
 result$loo$comparison
 ```
 
-The `loo` package prints model comparison objects by placing the model with the best leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about `r round(result$loo$comparison[2,1], digits = 1)` with a SE around +/- `r round(result$loo$comparison[2,2], digits = 1)`, which is both large and clearly non-zero. So here we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the tree with $\sigma_{phylo} \neq 0$, that is the correct conclusion.
+The `loo` package prints model comparison objects by placing the model with the best leave-one-out predictive performance on the first row, in this case the PGLMM fit. The difference in expected log pointwise predictive density (ELPD) compared to the other model is shown in the first column along with a standard error of the difference in the second column. Here the ELPD difference is about `r round(result$loo$comparison[2,1], digits = 1)` with a SE around +/- `r round(result$loo$comparison[2,2], digits = 1)`, which is both large and clearly non-zero. So here we would conclude that the phylogenetic component of the PGLMM clearly fits better than the base linear model. Given that we simulated the outcome based on the tree with $\sigma_{phylo} \neq 0$, that is the correct conclusion.
 
 There's a lot more to be said about loo model comparison that is beyond the scope of this vignette. You can read more interpretation of loo results on the [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#11_What_is_the_interpretation_of_ELPD__elpd_loo__elpd_diff) written by the loo authors. 
 
@@ -623,7 +623,94 @@ A few notes on this model:
 
 ## Simulate data
 
+In this section we'll simulate pathway level data. For the sake of simplicity we'll simulate only 6 pathways, though many bugs usually have sufficient data for a dozen or more. Throughout this section we'll include "log10" in the name of some variables because that's how they'll be calculated in practice (by taking logarithms of real abundance measurments), even though we're not calculating any logarithms here.
+
+First we generate the log10 species abundance with a simple call to `rnorm(n)`:
+
+```{r}
+n = 100
+n_pwy = 6
+
+set.seed(123)
+
+species_abd_df = data.table(log10_species_abd = rnorm(n),
+                            group             = sample(c("case", "control"), 
+                                                       size = n, 
+                                                       replace = TRUE),
+                            sample_id         = paste0("sample", 1:n))
+```
+
+Here we generate the true effects of the pathway intercepts/effects. We apply a true pathway effect of +/- 0.5 to the first two pathways (these will be the effects we try to detect) and 0 to everything else.
+
+```{r}
+pwy_true_params = data.table(pwy              = paste0("pwy", 1:n_pwy),
+                             pwy_intercept    = rnorm(n_pwy),
+                             pwy_group_effect = c(c(0.5, -0.5),
+                                                  rep(0, n_pwy - 2)))
+pwy_true_params
+```
+
+
+Then we generate the log pathway abundances. Some things to note:
+
+* We subtract 3 from the lo10_pwy_abd mean as a global intercept just because real pathway abundance measurements are usually pretty low
+* We put a 0.85 global slope on the linear relationship between pathway abundance and species abundance. This implies that the pathway is less efficiently detectable than the species itself.
+* The true pathway effects only get applied to the cases in the last line
+
+
+```{r}
+pwy_grid = expand.grid(sample_id = paste0("sample", 1:n),
+                         pwy       = paste0("pwy", 1:n_pwy)) |> 
+  as.data.table()
+
+bug_pwy_dat = pwy_grid[species_abd_df, on = "sample_id"][pwy_true_params, on = "pwy"]
+
+bug_pwy_dat[, log10_pwy_abd := rnorm(n * n_pwy,
+                                     mean = -3 + 
+                                            0.85 * log10_species_abd +
+                                            pwy_intercept + 
+                                            (group == "case") * pwy_group_effect)]
+
+```
+
+Let's look at a plot of the simulated data:
+
+```{r}
+bug_pwy_dat |> 
+  ggplot(aes(log10_species_abd,
+             log10_pwy_abd)) + 
+  geom_abline(lty = 2,
+              color = "grey", 
+              intercept = -3) + 
+  geom_point(aes(color = group)) + 
+  facet_wrap("pwy") +
+  scale_color_manual(values = c("case" = "red", 
+                                "control" = "lightblue")) + 
+  theme_bw()
+```
+
+By chance the positive effect in the first pathway is fairly visually obvious. The negative effect in pwy2 is a bit harder to see. We'll see how well the model can detect these effects in the next section. 
+
+
 ## Fit the pathway model
+
+We first create a 0/1 indicator variable, then fit the model with `anpan_pwy_ranef()`:
+
+```{r message=FALSE, warning = FALSE, results="hide"}
+bug_pwy_dat[, group01 := as.numeric(group == "case")]
+
+pwy_result = anpan_pwy_ranef(bug_pwy_dat = bug_pwy_dat,
+                             group_ind = "group01")
+```
+
+Our result is a data frame with columns containing the fit and the summary. Let's look at the summary:
+
+```{r}
+pwy_result$summary_df[[1]]
+```
+
+We can see in the `hit` column that pwy1 and pwy2 were both correctly called as hits.
+
 
 ```{r eval = FALSE}
 ?anpan_pwy_ranef_batch()
@@ -633,16 +720,19 @@ A few notes on this model:
 
 There are two functions for plotting the results of the pathway model. `plot_pwy_ranef_intervals()` compactly plots 98% intervals for pathways (faceted by bug as appropriate). It will automatically highlight "hits" (as defined by the conditions in the help documentation of `anpan_pwy_ranef()`) in red.
 
-```{r eval = FALSE}
-plot_pwy_ranef_intervals()
+```{r eval = TRUE}
+plot_pwy_ranef_intervals(pwy_result)
 ```
 
-The next plotting fun
-```{r}
-plot_pwy_ranef()
+The next plotting function is `plot_pwy_ranef()`. This creates a plot of the data overlaid with posterior draws of the estimated species:pwy relationship by pathway. 
+```{r eval = TRUE}
+plot_pwy_ranef(bug_pwy_dat = bug_pwy_dat,
+               pwy_ranef_res = pwy_result,
+               group_ind = "group01",
+               group_labels = c("control", "case"))
 ```
 
-
+You can see the clear visual separation between the two groups in the first two bugs, while the draws from the other four pathways tend to overlap. 
 
 # Advanced topics
 
@@ -650,7 +740,7 @@ This section isn't done.
 
 ## Genome comparisons
 
-Sometimes you get too many hits from a single bug. This can happen if two conditions are met: 
+Sometimes then gene model gives too many hits from a single bug. This can happen if two conditions are met: 
 
 * the upstream definition of the genes present in the species is overly broad, improperly clumping multiple distinct sub-species into the same species
 * one or more of these sub-species is confounded with the outcome
