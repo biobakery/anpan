@@ -102,7 +102,7 @@ safely_anpan_pwy_ranef = purrr::safely(anpan_pwy_ranef)
 #'                    pwy = rep(paste0('pwy', 1:5), times = 200),
 #'                    log10_species_abd = rnorm(1000),
 #'                    log10_pwy_abd = rnorm(1000, mean = .8*log10_species_abd),
-#'                    group_ind = sample(c(0,1), size = 1000, replace = TRUE))
+#'                    group = sample(c(0,1), size = 1000, replace = TRUE))
 #'  # ^ the pathway and and group are NOT related in any pathway.
 #'
 #' res = anpan_pwy_ranef_batch(input_dat, group_ind = "group_ind")
@@ -296,16 +296,17 @@ plot_pwy_ranef = function(bug_pwy_dat,
 
 
   if (is.null(bug_name) && !("bug" %in% colnames(pwy_ranef_res))) {
-    stop("If using a model fit to a single bug, you need to specify the bug_name parameter")
-  } else if (!is.null(bug_name)) {
+    warning("Couldn't determine the bug name from inputs, setting a placeholder.")
+    bug_pwy_dat$bug = "bug"
+    pwy_ranef_res$bug = "bug"
+  } else if (!is.null(bug_name) && !("bug" %in% colnames(pwy_ranef_res))) {
+    pwy_ranef_res$bug = bug_name
+    bug_pwy_dat$bug = bug_name
+  } else if (!is.null(bug_name) && "bug" %in% colnames(bug_pwy_dat)) {
     if (verbose) message("Filtering bug_pwy_dat to the specified bug.")
 
     bug_pwy_dat = bug_pwy_dat |>
       filter(bug == bug_name)
-  }
-
-  if (!("bug" %in% colnames(pwy_ranef_res))) {
-    pwy_ranef_res$bug = bug_name
   }
 
   top_pwys = bug_pwy_dat |>
@@ -353,12 +354,13 @@ plot_pwy_ranef = function(bug_pwy_dat,
     summary_df |> select(pwy, variable) |>
       filter(!grepl("sd_|sigma", variable)) |>
       full_join(rdraws, by = 'variable') |>
-      mutate(effects = str_extract(variable, "pwy_eff|pwy_int")) |>
+      mutate(effects = stringr::str_extract(variable, "pwy_eff|pwy_int")) |>
       group_split(`.draw`) |>
       map_dfr(line_from_iter) |>
-      pivot_longer(cols = case:ctrl,
-                   names_to = 'group_var',
-                   values_to = "int")
+      as.data.table() |>
+      melt(measure.vars = c("case", "ctrl"),
+           variable.name = "group_var",
+           value.name = "int")
   }
 
   wrap_char = 40 # Expose to user?
