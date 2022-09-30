@@ -168,7 +168,7 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
                                                        scheduling = Inf))
 
   res_df = purrr::transpose(res) |>
-    as_tibble()
+    tibble::as_tibble()
 
   errors = res_df |>
     filter(map_lgl(result, is.null))
@@ -192,7 +192,7 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
     filter(map_lgl(error, is.null)) |>
     pull(result) |>
     data.table::rbindlist() |>
-    as_tibble()
+    tibble::as_tibble()
 
   if (!is.null(out_dir)) {
     message("Saving results to pwy_ranef_batch_res.RData in the specified output directory.")
@@ -221,9 +221,15 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
 
   if ("bug" %in% names(pwy_ranef_res)){
     # It's a batch result
-    plot_input = pwy_ranef_res |>
-      select(bug, summary_df) |>             # select the two main columns
-      unnest(c(summary_df)) |>               # unnest
+
+    unnest_input = pwy_ranef_res |>
+      select(bug, summary_df) |>
+      as.data.table()
+
+    unnested = unnest_input[,data.table::rbindlist(summary_df), by = bug] |>
+      tibble::as_tibble() # TODO test this works
+
+    plot_input = unnested |>
       filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
       arrange(-abs(mean)) |>                    # sort by decreasing effect size
       mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
@@ -233,8 +239,8 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
 
   } else {
     plot_input = pwy_ranef_res |>
-      select(summary_df) |>
-      unnest(c(summary_df)) |>
+      dplyr::pull(summary_df) |>
+      dplyr::bind_rows() |>
       filter(grepl("^pwy_eff", variable)) |>
       arrange(-abs(mean)) |>
       mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
@@ -252,7 +258,7 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
     geom_point(aes(color = hit_lab)) +
     labs(color = NULL,
          y = NULL,
-         x = "pwy:group value and 98% posterior intervals") +
+         x = "pwy:group estimate\n(98% posterior intervals)") +
     scale_color_manual(values = c("hit" = "#E41A1C", # brewer set1 but reversed
                                   "non-hit" = "#377EB8")) +
     facets +
@@ -321,7 +327,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
 
   get_post_draws = function(cmdstan_fit, post_draws = post_draws) {
     cmdstan_fit$draws(format = 'data.frame') |>
-      as_tibble() |>
+      tibble::as_tibble() |>
       dplyr::slice_sample(n = post_draws) |>
       as.data.table() |>
       data.table::melt(id.vars = c(".chain", ".iteration", ".draw"),
@@ -357,7 +363,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
 
   wrap_char = 40 # Expose to user?
 
-  draw_df = pwy_ranef_res |>
+  line_df = pwy_ranef_res |>
     filter(bug %in% unique(plot_data$bug)) |>
     mutate(rdraws = lapply(model_fit,
                            get_post_draws,
@@ -365,7 +371,10 @@ plot_pwy_ranef = function(bug_pwy_dat,
            line_draws = map2(summary_df, rdraws,
                              combine_summ_with_draws)) |>
     select(bug, line_draws) |>
-    unnest(c(line_draws)) |>
+    as.data.table()
+
+  draw_df = line_df[,data.table::rbindlist(line_draws), by = bug] |>
+    tibble::as_tibble() |>
     inner_join(top_pwys, by = c("bug", "pwy")) |>
     mutate(pwy = stringr::str_wrap(pwy, width = wrap_char))
 
