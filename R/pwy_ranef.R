@@ -404,7 +404,7 @@ plot_pwy_ranef = function(bug_pwy_dat,
     facet_wrap(c("bug", "pwy"), scales = 'free') +
     scale_color_manual(values = color_vec) +  # pals::cols25(2) |> dput()
     theme_light() +
-    theme(strip.text = element_text(color = 'grey20', margin = margin(.2, .2, .2, .2, unit = 'pt'),
+    theme(strip.text = element_text(color = 'grey20', margin = margin(.5, .5, .9, .5, unit = 'pt'),
                                     size = 6.5)) +
     labs(color = NULL)
 }
