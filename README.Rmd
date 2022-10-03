@@ -27,7 +27,7 @@ knitr::include_graphics("man/figures/1_overview.png")
 
 ## Dependencies
 
-anpan depends on the following R packages, most of which are available through CRAN (the exception being cmdstanr):
+anpan depends on R >= 4.1 and the following R packages, most of which are available through CRAN (the exception being cmdstanr):
 
 ```
 install.packages(c("ape", 
