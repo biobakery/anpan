@@ -466,6 +466,13 @@ anpan_batch = function(bug_dir,
                        height = 8,
                        ...) {
 
+  if (!is.null(annotation_file)) {
+    anno = fread(annotation_file, nrows = 3)
+    if (!all(c("gene", "annotation") %in% names(anno))) {
+      stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
+    }
+  }
+
   call = match.call()
 
   fn_call_string = paste0(gsub(', (?!")',
