@@ -613,3 +613,73 @@ anpan_batch = function(bug_dir,
   return(all_bug_terms)
 
 }
+
+#' Use repeated measures to refine the gene model
+#' @param subject_sample_map a dataframe between sample_id and subject_id
+#' @details This function performs the standard anpan filtering on all samples, then uses the subject-sample map to compute the proportion of samples with the bug,
+#' @inheritParams anpan_batch
+anpan_repeated_measures = function(subject_sample_map,
+                                   meta_file,
+                                   out_dir,
+                                   prefiltered_dir = NULL,
+                                   model_type = "fastglm",
+                                   covariates = c("age", "gender"),
+                                   outcome = "crc",
+                                   omit_na = FALSE,
+                                   filtering_method = "kmeans",
+                                   discard_absent_samples = TRUE,
+                                   skip_large = TRUE,
+                                   save_fit = TRUE,
+                                   annotation_file = NULL,
+                                   save_filter_stats = TRUE,
+                                   verbose = TRUE,
+                                   plot_result = TRUE,
+                                   plot_ext = "png",
+                                   q_threshold = NULL,
+                                   n_top = 50,
+                                   width = 10,
+                                   height = 8,
+                                   ...) {
+  if (!is.null(annotation_file)) {
+    anno = fread(annotation_file, nrows = 3)
+    if (!all(c("gene", "annotation") %in% names(anno))) {
+      stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
+    }
+  }
+
+  call = match.call()
+
+  fn_call_string = paste0(gsub(', (?!")',
+                               ",\n            ",
+                               as.character(enquote(call))[2],
+                               perl = TRUE),
+                          "\n")
+
+  if (verbose & !interactive()) message(paste0("Now running:\n\n", fn_call_string))
+
+  if (!dir.exists(out_dir)) {
+    if (verbose) message("* Creating output directory.")
+    dir.create(out_dir)
+  }
+
+  cat(fn_call_string,
+      file = file.path(out_dir, "anpan_batch_call.txt"),
+      sep = "\n")
+
+  bug_files = get_file_list(bug_dir)
+
+  metadata = read_meta(meta_file,
+                       select_cols = c("sample_id", outcome, covariates),
+                       omit_na = omit_na)
+
+
+  bug_files |>
+    lapply(read_and_filter, metadata)
+
+  # For each subject, multiply the proportion of samples that have the bug by the proportion of
+  # samples that have the gene to get the final gene data. Pass that to anpan_batch with no
+  # filtering and no discretizing.
+
+  anpan_batch(discretize_inputs = FALSE,
+              filtering_method = "none")
+}
