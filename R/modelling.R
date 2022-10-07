@@ -293,7 +293,7 @@ anpan = function(bug_file,
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
     error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
-                       class(meta[[outcome]])[1])
+                       class(metadata[[outcome]])[1])
     stop(error_msg)
   }
 
@@ -614,11 +614,49 @@ anpan_batch = function(bug_dir,
 
 }
 
+aggregate_by_subject = function(filtered_sample_file,
+                                subject_dir,
+                                subject_sample_map,
+                                covariates,
+                                outcome) {
+  sample_df = filtered_sample_file |>
+    fread() |>
+    melt(id.vars = c(covariates, outcome, "sample_id"),
+         variable.name = "gene", value.name = "present")
+
+  subject_sample_map[, bug_present := sample_id %in% sample_df$sample_id]
+  subject_sample_map[, n_samples := .N, by = subject_id]
+
+  joined = merge(subject_sample_map,
+        sample_df, by = "sample_id",
+        all = TRUE)
+
+  joined$present[!joined$bug_present] = FALSE
+
+  prop_df = joined[, .(present_prop = sum(bug_present & present) / n_samples[1]), by = c("subject_id", "gene")][!is.na(gene)] |>
+    dcast(subject_id ~ gene, value.var = "present_prop")
+
+  select_cols = c(covariates, outcome, "sample_id")
+  output_cols = c(covariates, outcome, "subject_id")
+  other_cols = unique(sample_df[, ..select_cols])[subject_sample_map, on = 'sample_id', nomatch = 0][,..output_cols] |>
+    unique()
+
+  res = other_cols[prop_df, on = "subject_id"]
+
+  fwrite(res,
+         file = file.path(subject_dir,
+                          basename(filtered_sample_file)),
+         sep = "\t")
+
+  return(NULL)
+}
+
 #' Use repeated measures to refine the gene model
 #' @param subject_sample_map a dataframe between sample_id and subject_id
 #' @details This function performs the standard anpan filtering on all samples, then uses the subject-sample map to compute the proportion of samples with the bug,
 #' @inheritParams anpan_batch
 anpan_repeated_measures = function(subject_sample_map,
+                                   bug_dir,
                                    meta_file,
                                    out_dir,
                                    prefiltered_dir = NULL,
@@ -640,12 +678,6 @@ anpan_repeated_measures = function(subject_sample_map,
                                    width = 10,
                                    height = 8,
                                    ...) {
-  if (!is.null(annotation_file)) {
-    anno = fread(annotation_file, nrows = 3)
-    if (!all(c("gene", "annotation") %in% names(anno))) {
-      stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
-    }
-  }
 
   call = match.call()
 
@@ -666,6 +698,23 @@ anpan_repeated_measures = function(subject_sample_map,
       file = file.path(out_dir, "anpan_batch_call.txt"),
       sep = "\n")
 
+  if (is.character(subject_sample_map) && file.exists(subject_sample_map)) {
+    subject_sample_map = fread(subject_sample_map)
+  } else if (!is.data.frame(subject_sample_map)) {
+    stop("Couldn't read subject_sample_map from a file nor is it a data frame.")
+  }
+
+  if (!(all(c("subject_id", "sample_id") %in% names(subject_sample_map)))) {
+    stop("Couldn't find the subject_id and sample_id columns in the subject_sample_map")
+  }
+
+  if (!is.null(annotation_file)) {
+    anno = fread(annotation_file, nrows = 3)
+    if (!all(c("gene", "annotation") %in% names(anno))) {
+      stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
+    }
+  }
+
   bug_files = get_file_list(bug_dir)
 
   metadata = read_meta(meta_file,
@@ -673,13 +722,46 @@ anpan_repeated_measures = function(subject_sample_map,
                        omit_na = omit_na)
 
 
+  sample_wise_filter_stats_dir = file.path(out_dir, "sample_wise_filter_stats_dir")
+  dir.create(sample_wise_filter_stats_dir)
+  dir.create(file.path(sample_wise_filter_stats_dir, "plots"))
+  dir.create(file.path(sample_wise_filter_stats_dir, "labels"))
   bug_files |>
-    lapply(read_and_filter, metadata)
+    purrr::walk(function(.x) fwrite(read_and_filter(.x,
+                                             metadata = metadata,
+                                             covariates = covariates,
+                                             outcome = outcome,
+                                             filtering_method = "kmeans",
+                                             filter_stats_dir = sample_wise_filter_stats_dir,
+                                             plot_ext = "pdf"),
+                                    file = file.path(sample_wise_filter_stats_dir,
+                                                     paste0("filtered_", basename(.x)))))
+
+  subject_dir = file.path(out_dir, "subject_dir")
+  dir.create(subject_dir)
+
+  list.files(sample_wise_filter_stats_dir,
+             full.names = TRUE,
+             pattern = "filtered") |>
+    lapply(aggregate_by_subject,
+           subject_dir = subject_dir,
+           subject_sample_map = subject_sample_map,
+           covariates = covariates,
+           outcome = outcome)
 
   # For each subject, multiply the proportion of samples that have the bug by the proportion of
   # samples that have the gene to get the final gene data. Pass that to anpan_batch with no
   # filtering and no discretizing.
 
-  anpan_batch(discretize_inputs = FALSE,
-              filtering_method = "none")
+  anpan_batch(bug_dir = subject_dir,
+              meta_file = meta_file,
+              model_type = model_type,
+              omit_na = omit_na,
+              skip_large = skip_large,
+              discretize_inputs = FALSE,
+              filtering_method = "none",
+              prefiltered_dir = subject_dir,
+              covariates = covariates,
+              outcome = outcome,
+              out_dir = file.path(out_dir, "model_output"))
 }
