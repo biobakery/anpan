@@ -61,6 +61,8 @@ check_cmdstan_toolchain()
 install_cmdstan(cores = 2)
 ```
 
+On some servers it may also be necessary to install / load the GNU MPFR library prior to installing CmdStan.
+
 ## Installation
 
 Once you have the dependencies, you can install anpan from github with:

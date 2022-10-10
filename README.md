@@ -16,8 +16,8 @@ models.
 
 ## Dependencies
 
-anpan depends on the following R packages, most of which are available
-through CRAN (the exception being cmdstanr):
+anpan depends on R \>= 4.1 and the following R packages, most of which
+are available through CRAN (the exception being cmdstanr):
 
     install.packages(c("ape", 
                        "data.table", 
@@ -48,6 +48,9 @@ installed `cmdstanr`, you will need to use it to install CmdStan itself:
     library(cmdstanr)
     check_cmdstan_toolchain()
     install_cmdstan(cores = 2)
+
+On some servers it may also be necessary to install / load the GNU MPFR
+library prior to installing CmdStan.
 
 ## Installation
 
