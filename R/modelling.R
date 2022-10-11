@@ -588,13 +588,17 @@ anpan_batch = function(bug_dir,
   if (plot_result) {
     plotting_input = all_bug_terms[,.(s = list(.SD)), by = bug_name]
     p = progressr::progressor(steps = nrow(plotting_input))
+
+    filtered_data_dir = if (!is.null(prefiltered_dir)) prefiltered_dir else filter_stats_dir
+
     plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
                                                                                         covariates = covariates,
                                                                                         outcome = outcome,
-                                                                                        model_input = fread(file.path(filter_stats_dir,
-                                                                                                                      paste0("filtered_", bug_name, ".tsv.gz")),
+                                                                                        model_input = fread(grep(list.files(filtered_data_dir, full.names = TRUE),
+                                                                                                                 pattern = bug_name,
+                                                                                                                 value = TRUE),
                                                                                                             showProgress = FALSE),
                                                                                         discretize_inputs = discretize_inputs,
                                                                                         plot_dir = plot_dir,
@@ -641,7 +645,8 @@ aggregate_by_subject = function(filtered_sample_file,
   other_cols = unique(sample_df[, ..select_cols])[subject_sample_map, on = 'sample_id', nomatch = 0][,..output_cols] |>
     unique()
 
-  res = other_cols[prop_df, on = "subject_id"]
+  res = other_cols[prop_df, on = "subject_id"] |>
+    dplyr::rename(sample_id = subject_id) # Needed to work with anpan()
 
   fwrite(res,
          file = file.path(subject_dir,
@@ -651,10 +656,33 @@ aggregate_by_subject = function(filtered_sample_file,
   return(NULL)
 }
 
+read_filter_write = function(.x,
+                             metadata ,
+                             covariates,
+                             outcome ,
+                             filtering_method,
+                             sample_wise_filter_stats_dir ,
+                             plot_ext = "pdf") {
+  read_res = read_and_filter(.x,
+                             metadata = metadata,
+                             covariates = covariates,
+                             outcome = outcome,
+                             filtering_method = "kmeans",
+                             filter_stats_dir = sample_wise_filter_stats_dir,
+                             plot_ext = "pdf")
+
+  if (is.null(read_res)) return(NULL)
+
+  fwrite(read_res,
+         file = file.path(sample_wise_filter_stats_dir,
+                          paste0("filtered_", basename(.x))))
+}
+
 #' Use repeated measures to refine the gene model
 #' @param subject_sample_map a dataframe between sample_id and subject_id
 #' @details This function performs the standard anpan filtering on all samples, then uses the subject-sample map to compute the proportion of samples with the bug,
 #' @inheritParams anpan_batch
+#' @export
 anpan_repeated_measures = function(subject_sample_map,
                                    bug_dir,
                                    meta_file,
@@ -726,16 +754,15 @@ anpan_repeated_measures = function(subject_sample_map,
   dir.create(sample_wise_filter_stats_dir)
   dir.create(file.path(sample_wise_filter_stats_dir, "plots"))
   dir.create(file.path(sample_wise_filter_stats_dir, "labels"))
+
   bug_files |>
-    purrr::walk(function(.x) fwrite(read_and_filter(.x,
-                                             metadata = metadata,
-                                             covariates = covariates,
-                                             outcome = outcome,
-                                             filtering_method = "kmeans",
-                                             filter_stats_dir = sample_wise_filter_stats_dir,
-                                             plot_ext = "pdf"),
-                                    file = file.path(sample_wise_filter_stats_dir,
-                                                     paste0("filtered_", basename(.x)))))
+    purrr::walk(read_filter_write,
+                metadata = metadata,
+                covariates = covariates,
+                outcome = outcome,
+                filtering_method = "kmeans",
+                sample_wise_filter_stats_dir = sample_wise_filter_stats_dir,
+                plot_ext = "pdf")
 
   subject_dir = file.path(out_dir, "subject_dir")
   dir.create(subject_dir)

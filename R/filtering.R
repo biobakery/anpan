@@ -297,6 +297,10 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   gf = read_bug(bug_file, meta = metadata)
 
+  if (!("sample_id" %in% names(gf))) {
+    warning("No samples matching metadata samples found in gene file")
+    return(NULL)
+  }
 
   # first filter: the initial prevalence filter -----------------------------
 
