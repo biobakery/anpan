@@ -591,12 +591,14 @@ anpan_batch = function(bug_dir,
 
     filtered_data_dir = if (!is.null(prefiltered_dir)) prefiltered_dir else filter_stats_dir
 
+    filtered_file_list = list.files(filtered_data_dir, full.names = TRUE)
+
     plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
                                                                                         covariates = covariates,
                                                                                         outcome = outcome,
-                                                                                        model_input = fread(grep(list.files(filtered_data_dir, full.names = TRUE),
+                                                                                        model_input = fread(grep(filtered_file_list,
                                                                                                                  pattern = bug_name,
                                                                                                                  value = TRUE),
                                                                                                             showProgress = FALSE),
