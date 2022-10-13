@@ -105,7 +105,7 @@ safely_anpan_pwy_ranef = purrr::safely(anpan_pwy_ranef)
 #'                    group = sample(c(0,1), size = 1000, replace = TRUE))
 #'  # ^ the pathway and and group are NOT related in any pathway.
 #'
-#' res = anpan_pwy_ranef_batch(input_dat, group_ind = "group_ind")
+#' res = anpan_pwy_ranef_batch(input_dat, group_ind = "group")
 #'
 #' # Examine the summary
 #' pwy_group_res = res |>

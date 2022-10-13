@@ -39,10 +39,10 @@ input_dat = tibble(bug = rep(paste0("bug", 1:5), each = 200),
                    pwy = rep(paste0('pwy', 1:5), times = 200),
                    log10_species_abd = rnorm(1000),
                    log10_pwy_abd = rnorm(1000, mean = .8*log10_species_abd),
-                   group_ind = sample(c(0,1), size = 1000, replace = TRUE))
+                   group = sample(c(0,1), size = 1000, replace = TRUE))
  # ^ the pathway and and group are NOT related in any pathway.
 
-res = anpan_pwy_ranef_batch(input_dat, group_ind = "group_ind")
+res = anpan_pwy_ranef_batch(input_dat, group_ind = "group")
 
 # Examine the summary
 pwy_group_res = res |>
