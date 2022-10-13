@@ -46,7 +46,7 @@ the modelling function}
 the bug according to the filtering strategy (otherwise keep them as
 observations of absence)}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{plot_ext}{extension to use for plots}
 }

@@ -26,7 +26,7 @@ plot_lines(
 
 \item{outcome}{the name of the outcome variable}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{fgf}{a filtered gene family data frame}
 

@@ -48,7 +48,7 @@ earlier run to skip the filtering step}
 
 \item{outcome}{character string of the outcome variable}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{filtering_method}{method to use for filtering samples. Either "kmeans"
 or "none"}

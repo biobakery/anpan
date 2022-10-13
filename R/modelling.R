@@ -220,7 +220,7 @@ fit_horseshoe = function(model_input,
 #'   Only used when model_type = "horseshoe".
 #' @param discard_absent_samples logical indicating whether to discard samples
 #'   when a bug is labelled as completely absent
-#' @param omit_na logical indicating whether to omit incomplete cases
+#' @param omit_na logical indicating whether to omit incomplete cases of the metadata
 #' @param filtering_method method to use for filtering samples. Either "kmeans"
 #'   or "none"
 #' @param discretize_inputs logical indicating whether to discretize the input
@@ -757,6 +757,7 @@ anpan_repeated_measures = function(subject_sample_map,
   dir.create(file.path(sample_wise_filter_stats_dir, "plots"))
   dir.create(file.path(sample_wise_filter_stats_dir, "labels"))
 
+  # TODO Add a progressor here
   bug_files |>
     purrr::walk(read_filter_write,
                 metadata = metadata,
@@ -769,6 +770,7 @@ anpan_repeated_measures = function(subject_sample_map,
   subject_dir = file.path(out_dir, "subject_dir")
   dir.create(subject_dir)
 
+  # TODO Add a progressor here
   list.files(sample_wise_filter_stats_dir,
              full.names = TRUE,
              pattern = "filtered") |>

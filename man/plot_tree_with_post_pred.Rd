@@ -27,7 +27,7 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{outcome}{the name of the outcome variable}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{fit}{a pglmm fit from \code{anpan_pglmm()}}
 

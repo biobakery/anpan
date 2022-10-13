@@ -46,7 +46,7 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{family}{string giving the name of the distribution of the outcome variable (usually
 "gaussian" or "binomial")}

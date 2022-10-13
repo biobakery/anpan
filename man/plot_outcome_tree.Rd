@@ -25,7 +25,7 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{outcome}{the name of the outcome variable}
 
-\item{omit_na}{logical indicating whether to omit incomplete cases}
+\item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
