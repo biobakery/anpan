@@ -835,7 +835,7 @@ p
 
 The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign `p[[2]]$` then looking at the names suggested by RStudio auto-complete can get you pretty far. 
 
-## Configuring `furrr` and `progressr`
+## Configuring parallelization and progress reporting
 
 anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code my display progress" and the configuration of the parallelization and progress reporting is left to the user's preference. 
 
@@ -858,6 +858,8 @@ anpan_pglmm_batch(...,
 ```
 
 This is sequential over bugs but parallelizes the 4 MCMC chains for each model and parallelizes the loo calculations over iterations. However depending on the ratio of MCMC time to loo time (and the amount of memory you have available), it might be faster to use a non-nested future topology and simply parallelize over bugs.
+
+There are many future configuration methods that I haven't tried e.g. `future.batchtools::batchtools_slurm()`, so let me know how it goes if you try them out.
 
 ### `progressr`
 
