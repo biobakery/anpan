@@ -2,8 +2,12 @@ read_meta = function(meta_file,
                      select_cols = c("sample_id", "age", "gender", "crc"),
                      omit_na = FALSE) {
 
-  meta = fread(meta_file,
-               showProgress = FALSE)
+  if (is.character(meta_file) && file.exists(meta_file)) {
+    meta = fread(meta_file,
+                 showProgress = FALSE)
+  } else if (!is.data.frame(meta_file)) {
+    stop("meta_file doesn't seem to be a path to a file nor a data frame.")
+  }
 
   # Handle missing or alternative sample_id column names
   if (!("sample_id" %in% names(meta))) {
