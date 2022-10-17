@@ -594,7 +594,7 @@ anpan_batch = function(bug_dir,
     filtered_file_list = list.files(filtered_data_dir, full.names = TRUE)
 
     if (length(covariates) > 2){
-      warning("Only using the first two covariates for color bars on plots")
+      warning("Only using the first two covariates for annotation color bars on plots.")
       covariates = covariates[1:2]
     }
     plot_list = furrr::future_pmap(plotting_input,
