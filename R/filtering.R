@@ -88,32 +88,60 @@ filter_with_kmeans = function(gf,
   em_input = na.omit(samp_stats[,.(sample_id, n_nz, q50)])
   log_it = dplyr::n_distinct(gf$gene) > 50000
   if (log_it) em_input$n_nz = log1p(em_input$n_nz)
-  em_input$n_nz = scale(em_input$n_nz)
 
-  scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
-  # TODO make sure this doesn't mess up anything downstream
-  em_input$q50 = scale(em_input$q50) / scrunch
+  if (dplyr::n_distinct(em_input$n_nz) == 1) {
+    # This means that all samples either had ALL genes present or were ALL zero. Revert to 1D kmeans
+    # in that case. This might happen if there are samples that are very deeply sequenced.
 
-  km_res = kmeans(as.matrix(em_input[,-1]),
-                  centers = matrix(c(-1,1,1,-1), nrow = 2))
+    message("* Samples passed to kmeans had either ALL genes present or NO genes present. Reverting to 1D clustering on median log abundance.")
 
-  samp_stats$in_right = NA
-  samp_stats$clust = NA
-  present_clust = which.max(km_res$centers[,1])
-  absent_clust = which.min(km_res$centers[,1])
+    scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
+    # TODO make sure this doesn't mess up anything downstream
+    em_input$q50 = scale(em_input$q50) / scrunch
 
-  samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
-  samp_stats$clust[is.na(samp_stats$q50)] = absent_clust
+    km_res = kmeans(as.matrix(em_input$q50),
+                    centers = 2)
 
-  samp_stats$in_right = samp_stats$clust == present_clust
-  samp_stats$clust = NULL
+    samp_stats$in_right = NA
+    samp_stats$clust = NA
+    present_clust = which.max(km_res$centers[,1])
+    absent_clust = which.min(km_res$centers[,1])
 
-  if (save_filter_stats) {
-    plot_kmeans_dots(samp_stats = samp_stats,
-                     plot_dir = file.path(filter_stats_dir, "plots"),
-                     bug_name,
-                     was_logged = log_it,
-                     plot_ext = plot_ext)
+    samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
+    samp_stats$clust[is.na(samp_stats$q50)] = absent_clust
+
+    samp_stats$in_right = samp_stats$clust == present_clust
+    samp_stats$clust = NULL
+
+  } else {
+    em_input$n_nz = scale(em_input$n_nz)
+
+
+    scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
+    # TODO make sure this doesn't mess up anything downstream
+    em_input$q50 = scale(em_input$q50) / scrunch
+
+    km_res = kmeans(as.matrix(em_input[,-1]),
+                    centers = matrix(c(-1,1,1,-1), nrow = 2))
+
+    samp_stats$in_right = NA
+    samp_stats$clust = NA
+    present_clust = which.max(km_res$centers[,1])
+    absent_clust = which.min(km_res$centers[,1])
+
+    samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
+    samp_stats$clust[is.na(samp_stats$q50)] = absent_clust
+
+    samp_stats$in_right = samp_stats$clust == present_clust
+    samp_stats$clust = NULL
+
+    if (save_filter_stats) {
+      plot_kmeans_dots(samp_stats = samp_stats,
+                       plot_dir = file.path(filter_stats_dir, "plots"),
+                       bug_name,
+                       was_logged = log_it,
+                       plot_ext = plot_ext)
+    }
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
@@ -217,7 +245,7 @@ check_table = function(outcome_presence_table,
 
 final_prevalence_filter = function(filtered_gf,
                                    outcome,
-                                   bn,
+                                   bn, # bug_name
                                    minmax_thresh = 5,
                                    filter_stats_dir,
                                    verbose) {
@@ -323,7 +351,6 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   } else {
     samp_stats = NA
   }
-
 
   # second filter: the sample filter ----------------------------------------
   # This filter uses sample statistics to drop samples where the bug is entirely
