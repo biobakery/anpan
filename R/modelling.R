@@ -681,15 +681,17 @@ read_filter_write = function(.x,
 }
 
 #' Use repeated measures to refine the gene model
-#' @param subject_sample_map a dataframe between sample_id and subject_id
-#' @details This function performs the standard anpan filtering on all samples, then uses the subject-sample map to compute the proportion of samples with the bug,
+#' @param subject_sample_map a dataframe between subject_id and sample_id
+#' @details This function performs the standard anpan filtering on all samples, then uses the
+#'   subject-sample map to compute the proportion of samples with the bug. This gives a gene
+#'   _proportion_ matrix (instead of a presence/absence matrix) which is then passed to
+#'   \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}.
 #' @inheritParams anpan_batch
 #' @export
 anpan_repeated_measures = function(subject_sample_map,
                                    bug_dir,
                                    meta_file,
                                    out_dir,
-                                   prefiltered_dir = NULL,
                                    model_type = "fastglm",
                                    covariates = c("age", "gender"),
                                    outcome = "crc",
@@ -751,7 +753,6 @@ anpan_repeated_measures = function(subject_sample_map,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
 
-
   sample_wise_filter_stats_dir = file.path(out_dir, "sample_wise_filter_stats_dir")
   dir.create(sample_wise_filter_stats_dir)
   dir.create(file.path(sample_wise_filter_stats_dir, "plots"))
@@ -784,8 +785,17 @@ anpan_repeated_measures = function(subject_sample_map,
   # samples that have the gene to get the final gene data. Pass that to anpan_batch with no
   # filtering and no discretizing.
 
+  subj_metadata = metadata = read_meta(meta_file,
+                                       select_cols = c("sample_id", outcome, covariates),
+                                       omit_na = omit_na) |>
+    dplyr::left_join(subject_sample_map, by = "sample_id") |>
+    dplyr::select(-sample_id) |>
+    dplyr::select(dplyr::all_of(c("subject_id", outcome, covariates))) |>
+    unique() |>
+    dplyr::rename(sample_id = subject_id)
+
   anpan_batch(bug_dir = subject_dir,
-              meta_file = meta_file,
+              meta_file = subj_metadata,
               model_type = model_type,
               omit_na = omit_na,
               skip_large = skip_large,
