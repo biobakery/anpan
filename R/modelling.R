@@ -706,6 +706,11 @@ read_filter_write = function(.x,
 #'   subject-sample map to compute the proportion of samples with the bug. This gives a gene
 #'   _proportion_ matrix (instead of a presence/absence matrix) which is then passed to
 #'   \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}.
+#'
+#'   In cases where subject metadata varies by sample, the mean is taken if the variable is numeric,
+#'   otherwise it is tabulated and the most frequent category is selected as the subject-level
+#'   metadata value. This tabulation will respect factor ordering if you'd like to alter the value
+#'   selected in the event of ties.
 #' @inheritParams anpan_batch
 #' @export
 anpan_repeated_measures = function(subject_sample_map,
