@@ -593,6 +593,10 @@ anpan_batch = function(bug_dir,
 
     filtered_file_list = list.files(filtered_data_dir, full.names = TRUE)
 
+    if (length(covariates) > 2){
+      warning("Only using the first two covariates for color bars on plots")
+      covariates = covariates[1:2]
+    }
     plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
@@ -810,7 +814,7 @@ anpan_repeated_measures = function(subject_sample_map,
   # samples that have the gene to get the final gene data. Pass that to anpan_batch with no
   # filtering and no discretizing.
 
-  subj_metadata = metadata = read_meta(meta_file,
+  subj_metadata = read_meta(meta_file,
                                        select_cols = c("sample_id", outcome, covariates),
                                        omit_na = omit_na) |>
     dplyr::left_join(subject_sample_map, by = "sample_id") |>
