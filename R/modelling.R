@@ -620,6 +620,18 @@ anpan_batch = function(bug_dir,
 
 }
 
+summarise_metadata_variable = function(meta_var) {
+  if (is.numeric(meta_var)) {
+    return(mean(meta_var))
+  } else if (is.character(meta_var) || is.factor(meta_var) || is.logical(meta_var)) {
+    freq_table = sort(table(meta_var), decreasing = TRUE)
+    res = names(freq_table[1])
+    if (res %in% c("TRUE", "FALSE")) res = as.logical(res)
+    if (is.factor(meta_var)) res = factor(res, levels = levels(meta_var))
+    return(res)
+  }
+}
+
 aggregate_by_subject = function(filtered_sample_file,
                                 subject_dir,
                                 subject_sample_map,
@@ -644,8 +656,16 @@ aggregate_by_subject = function(filtered_sample_file,
 
   select_cols = c(covariates, outcome, "sample_id")
   output_cols = c(covariates, outcome, "subject_id")
-  other_cols = unique(sample_df[, ..select_cols])[subject_sample_map, on = 'sample_id', nomatch = 0][,..output_cols] |>
-    unique()
+
+  subject_sample_map |>
+    left_join(unique(sample_df[, ..select_cols]), by = "sample_id")
+
+  other_cols = dplyr::inner_join(subject_sample_map, unique(sample_df[, ..select_cols]), by = "sample_id")[,..output_cols] |>
+    unique() |>
+    dplyr::group_by(subject_id) |>
+    dplyr::summarise(dplyr::across(.cols = dplyr::all_of(c(covariates, outcome)),
+                                   summarise_metadata_variable)) |>
+    as.data.table()
 
   res = other_cols[prop_df, on = "subject_id"] |>
     dplyr::rename(sample_id = subject_id) # Needed to work with anpan()
