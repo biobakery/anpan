@@ -591,6 +591,7 @@ anpan_pglmm = function(meta_file,
 
     draw_dt[,phylo_effects := list(list(unlist(.SD))), by = `.draw`, .SDcols = phylo_eff_cols]
     draw_dt[,beta          := list(list(.SD)), by = `.draw`, .SDcols = beta_cols]
+
     draw_df = draw_dt[,!..phylo_eff_cols][,!..beta_cols] |>
       tibble::as_tibble()
 
@@ -611,6 +612,7 @@ anpan_pglmm = function(meta_file,
                         max_i = nrow(draw_df),
                         effect_means = effect_means,
                         cor_mat = cor_mat,
+                        Lcov = Lcov,
                         Xc = Xc,
                         Y = data_list$Y,
                         family = family,
@@ -804,7 +806,7 @@ anpan_pglmm_batch = function(meta_file,
 
   # initial compilation -----------------------------------------------------
 
-  if (verbose) message(paste0("(2/", n_steps, ") Performing initial model compilation."))
+  if (verbose) message(paste0("(2/", n_steps, ") Performing initial model compilation(s)."))
 
   # Compile them once here so that they don't get compiled inside future_map()
   pglmm_model = cmdstanr::cmdstan_model(stan_file = model_path,
@@ -895,4 +897,47 @@ anpan_pglmm_batch = function(meta_file,
 
   return(res_df)
 
+}
+
+aggregate_samples_in_tree = function(tree, subject_sample_map) {
+  # tree tip labels must match sample_id values already
+
+  olap_tree_map = olap_tree_and_meta(tree, subject_sample_map, covariates = "subject_id",
+                                     trim_pattern = "_bowtie2", outcome = NULL, verbose = FALSE)
+
+  tree = olap_tree_map[[1]]
+  subject_sample_map = olap_tree_map[[2]]
+
+  n_subj = dplyr::n_distinct(subject_sample_map$subject_id)
+
+  cor_mat = tree |>
+    ape::vcv.phylo(corr = TRUE)
+
+  subj_cor_mat = diag(n_subj)
+  dimnames(subj_cor_mat) = replicate(2,
+                                     unique(subject_sample_map$subject_id),
+                                     simplify = FALSE)
+
+  subj_df = combn(unique(subject_sample_map$subject_id),
+                  2) |>
+    t() |>
+    as.data.table()
+
+  subj_df[subject_sample_map, on = c("V1" = "subject_id"), allow.cartesian = TRUE][subject_sample_map, on = c("V2" = "subject_id"), allow.cartesian = TRUE, ]
+
+  cor_df = subj_df |>
+    left_join(subject_sample_map, by = c("V1" = "subject_id")) |>
+    left_join(subject_sample_map, by = c("V2" = "subject_id"), suffix = c("1", "2")) |>
+    mutate(cor_val = cor_mat[cbind(sample_id1, sample_id2)])
+
+  avg_cor_df = cor_df[,.(avg_cor = mean(cor_val)), by = .(V1, V2)]
+
+  subj_cor_mat[cbind(avg_cor_df$V1,
+                     avg_cor_df$V2)] = avg_cor_df$avg_cor
+  subj_cor_mat[cbind(avg_cor_df$V2,
+                     avg_cor_df$V1)] = avg_cor_df$avg_cor
+
+  eig_subj_cor_mat = eigen(subj_cor_mat)
+
+  # This yields a positive definite correlation matrix, but usually not a valid phylogeny
 }

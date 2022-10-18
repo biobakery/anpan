@@ -25,7 +25,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
 
 
 # For each posterior iteration, compute the log-likelihood of each observation.
-get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verbose = TRUE) {
+get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family, verbose = TRUE) {
 
   n_obs = length(effect_means)
 
@@ -42,12 +42,15 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
   # future, nested futures run sequentially.
   p = progressr::progressor(steps = n_obs)
 
+  cor_mat_inv = chol2inv(t(Lcov))
+  # ^ Stan and R have different conventions on where the triangle should be for a cholesky factor...
+
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
-                                 res = precompute_arrays(.x, cor_mat = cor_mat, n_obs = n_obs)
+                                 res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
                                  p()
                                  return(res)},
-                               .options = furrr::furrr_options(globals = c("cor_mat", "n_obs")))
+                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv")))
 
   for (j in 1:n_obs) {
     sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
@@ -114,14 +117,35 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Xc, Y, family, verb
   return(res)
 }
 
+woodbury_s22_inv = function(cor_mat_inv, cor_mat, j) {
+  # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
+
+  n = nrow(cor_mat)
+  ord = c(j, (1:n)[-j])
+  rcor_mat = cor_mat[ord,ord]
+  rcor_mat_inv = cor_mat_inv[ord,ord]
+
+  U = cbind(c(1, rep(0, n-1)),
+            c(0, rcor_mat[-1, 1]))
+
+  V = t(U)[2:1,]
+
+  update_factor = solve(diag(2) - V %*% (rcor_mat_inv %*% U))
+
+  woodbury_ans = rcor_mat_inv + (rcor_mat_inv %*% U) %*% update_factor %*% (V %*% rcor_mat_inv)
+
+  woodbury_ans[-1,-1]
+}
+
 # compute multivariate normal conditional components
-precompute_arrays = function(j, cor_mat, n_obs) {
+precompute_arrays = function(j, cor_mat, cor_mat_inv) {
 
+  n = nrow(cor_mat)
 
-  ord = c(j, (1:n_obs)[-j])
+  ord = c(j, (1:n)[-j])
 
   r12 = cor_mat[ord, ord][1,-1, drop = FALSE]
-  r22_inv = solve(cor_mat[-j,-j])
+  r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j)
 
   sigma12x22_inv_arr_j = r12 %*% r22_inv
   cor21_arr_j = t(r12)
