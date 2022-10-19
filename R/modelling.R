@@ -593,10 +593,11 @@ anpan_batch = function(bug_dir,
 
     filtered_file_list = list.files(filtered_data_dir, full.names = TRUE)
 
-    if (length(covariates) > 2){
+    if (length(covariates) > 2) {
       warning("Only using the first two covariates for annotation color bars on plots.")
       covariates = covariates[1:2]
     }
+
     plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
@@ -764,6 +765,8 @@ anpan_repeated_measures = function(subject_sample_map,
   } else if (!is.data.frame(subject_sample_map)) {
     stop("Couldn't read subject_sample_map from a file nor is it a data frame.")
   }
+
+  if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
 
   if (!(all(c("subject_id", "sample_id") %in% names(subject_sample_map)))) {
     stop("Couldn't find the subject_id and sample_id columns in the subject_sample_map")
