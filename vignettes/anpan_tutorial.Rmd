@@ -55,7 +55,7 @@ It's difficult to find associations between microbial strains and host health ou
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
 * Modeling the difference in microbial pathways between experimental groups while controlling for species abundance.
 
-We'll cover each of these points in a top-level section. Currently the [Pathway random effects model] section is incomplete. There is also an [Advanced topics] section with some additional information on a handful of more complicated diagnostics/methods/techniques.
+We'll cover each of these points in a top-level section. There is also an [Advanced topics] section with some additional information on a handful of more complicated diagnostics/methods/techniques.
 
 # Libraries
 
@@ -87,7 +87,7 @@ library(ape)
 
 # PGLMMs
 
-Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a simple linear regression as the base model, the model structure is as follows:
+Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a linear regression as the base model, the model structure is as follows:
 
 $$ y = X \beta + (1|\text{leaf}) + \epsilon $$
             
@@ -576,8 +576,11 @@ If the groups of samples that the filter step identifies as "present" and "absen
 We can visualize the results with `plot_results()` as in the code block below. This function is called automatically on each bug when using `anpan_batch()`. We first read in the model inputs from the `filter_stats` directory, then pass that and the model results to `plot_results()`:
 
 ```{r eval = TRUE}
-model_input = fread(file.path(tempdir(), "anpan_output", "filter_stats",
-                              "filtered_g__Madeuppy.s__Madeuppy_Fakerii.tsv.gz"))
+input_path = file.path(tempdir(), 
+                       "anpan_output", "filter_stats",
+                       "filtered_g__Madeuppy.s__Madeuppy_Fakerii.tsv.gz")
+
+model_input = fread(input_path)
 
 plot_results(res         = anpan_res,
              model_input = model_input,
@@ -610,6 +613,8 @@ Some additional outputs you'll get with `anpan_batch()`:
 The pathway model uses a random effects model applied to the pathways in a single bug. It looks for pathways that differ substantially in abundance between two groups while accounting for the correlation with species abundance. Using the standard `lme4` formula syntax, the model is: 
 
 $$ \textbf{log10(pwy_abd)} \sim \textbf{log10(species_abd) + (1|pwy) + (0 + group|pwy) + intercept}$$
+The relevant functions to fit the model are `anpan_pwy_ranef()` and `anpan_pwy_ranef_batch()`.
+
 A few notes on this model:
 
 * Because we're working with log abundances, zeros are discarded. (side note: we once tried a censored model that didn't discard zeros but instead modeled them as unknown low values. It added a lot of complexity and made no practical difference in the results unfortunately.)
@@ -660,7 +665,7 @@ Then we generate the log pathway abundances. Some things to note:
 
 ```{r}
 pwy_grid = expand.grid(sample_id = paste0("sample", 1:n),
-                         pwy       = paste0("pwy", 1:n_pwy)) |> 
+                       pwy       = paste0("pwy", 1:n_pwy)) |> 
   as.data.table()
 
 bug_pwy_dat = pwy_grid[species_abd_df, on = "sample_id"][pwy_true_params, on = "pwy"]
@@ -711,11 +716,6 @@ pwy_result$summary_df[[1]]
 
 We can see in the `hit` column that pwy1 and pwy2 were both correctly called as hits.
 
-
-```{r eval = FALSE}
-?anpan_pwy_ranef_batch()
-```
-
 ## Examine the results
 
 There are two functions for plotting the results of the pathway model. `plot_pwy_ranef_intervals()` compactly plots 98% intervals for pathways (faceted by bug as appropriate). It will automatically highlight "hits" (as defined by the conditions in the help documentation of `anpan_pwy_ranef()`) in red.
@@ -726,10 +726,10 @@ plot_pwy_ranef_intervals(pwy_result)
 
 The next plotting function is `plot_pwy_ranef()`. This creates a plot of the data overlaid with posterior draws of the estimated species:pwy relationship by pathway. 
 ```{r eval = TRUE}
-plot_pwy_ranef(bug_pwy_dat = bug_pwy_dat,
+plot_pwy_ranef(bug_pwy_dat   = bug_pwy_dat,
                pwy_ranef_res = pwy_result,
-               group_ind = "group01",
-               group_labels = c("control", "case"))
+               group_ind     = "group01",
+               group_labels  = c("control", "case"))
 ```
 
 You can see the clear visual separation between the two groups in the first two bugs, while the draws from the other four pathways tend to overlap. 
@@ -802,7 +802,22 @@ The outputs of this model will look largely the same as `model_type = "fastglm"`
 
 The main disadvantage of the horseshoe model is that it is much more computationally expensive. 
 
+
+## Estimating phylogenies from gene matrices
+
+If you don't have a phylogeny for your data, you can get a very rough estimate in the following manner:
+
+```{r eval = FALSE}
+gene_tree = gene_pres_abs_matrix |> 
+  vegan::vegdist(method = "jaccard") |> 
+  ape::bionj()
+```
+
+This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader. 
+
 ## Picking out clade members
+
+This section not done
 
 ## Tweaking patchwork plots
 
