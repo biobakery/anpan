@@ -8,7 +8,7 @@ read_meta = function(meta_file,
   } else if (!is.data.frame(meta_file)) {
     stop("meta_file doesn't seem to be a path to a file nor a data frame.")
   } else {
-    meta = meta_file
+    meta = as.data.table(meta_file)
   }
 
   # Handle missing or alternative sample_id column names
