@@ -708,6 +708,7 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'   Columns give the PGLMM results, "base" model results, and loo comparisons
 #'   in list columns.
 #' @inheritParams anpan_pglmm
+#' @seealso \code{\link[ape:read.tree]{ape::read.tree}}, \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
 #' @export
 anpan_pglmm_batch = function(meta_file,
                              tree_dir,
@@ -861,7 +862,6 @@ anpan_pglmm_batch = function(meta_file,
                                                               show_yrep = show_yrep,
                                                               show_post = show_post,
                                                               sigma_phylo_scale = sigma_phylo_scale,
-                                                              refresh = 0,
                                                               ...)
                                      p()
                                      return(res)},

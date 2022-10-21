@@ -105,3 +105,6 @@ This function fits phylogenetic generalized linear mixed models
   chains for each tree, then compute the importance weights in the future
   multisession for each tree.
 }
+\seealso{
+\code{\link[ape:read.tree]{ape::read.tree}}, \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
+}

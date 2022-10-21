@@ -30,7 +30,7 @@ anpan_repeated_measures(
 )
 }
 \arguments{
-\item{subject_sample_map}{a dataframe between subject_id and sample_id}
+\item{subject_sample_map}{a data frame between the mapping between subject_id and sample_id}
 
 \item{bug_dir}{a directory of gene family files}
 
