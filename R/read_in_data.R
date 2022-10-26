@@ -4,7 +4,8 @@ read_meta = function(meta_file,
 
   if (is.character(meta_file) && file.exists(meta_file)) {
     meta = fread(meta_file,
-                 showProgress = FALSE)
+                 showProgress = FALSE,
+                 header = TRUE)
   } else if (!is.data.frame(meta_file)) {
     stop("meta_file doesn't seem to be a path to a file nor a data frame.")
   } else {
@@ -46,7 +47,8 @@ read_bug = function(bug_file, meta = NULL,
 
   gf = fread(bug_file,
              colClasses = list(character = 1, numeric = 2:nc),
-             showProgress = FALSE) |>
+             showProgress = FALSE,
+             header = TRUE) |>
     dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
 
   names(gf)[1] = "gene"

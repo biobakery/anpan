@@ -1,7 +1,8 @@
 #' Get genome intersection counts
 #' @export
 get_genome_intersect_counts = function(unistrain_file) {
-  genome_df = fread(unistrain_file)
+  genome_df = fread(unistrain_file,
+                    header = TRUE)
   names(genome_df)[1] = "gene"
 
   starting_count = ncol(genome_df) - 1

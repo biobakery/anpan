@@ -13,7 +13,8 @@ get_samp_stats_large = function(gf_file) {
     gf = fread(gf_file,
                colClasses = list(character = 1, numeric = 2:nc),
                select = c(1, (2:nc)[chunks == i]),
-               showProgress = FALSE) |>
+               showProgress = FALSE,
+               header = TRUE) |>
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
     names(gf)[1] = "gene"

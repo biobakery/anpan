@@ -321,7 +321,8 @@ anpan = function(bug_file,
       return(data.table::data.table())
     }
 
-    model_input = fread(prefiltered_bug)
+    model_input = fread(prefiltered_bug,
+                        header = TRUE)
 
     if (model_type %in% c("fastglm")) {
       model_input = data.table::melt(model_input,
@@ -467,7 +468,7 @@ anpan_batch = function(bug_dir,
                        ...) {
 
   if (!is.null(annotation_file)) {
-    anno = fread(annotation_file, nrows = 3)
+    anno = fread(annotation_file, nrows = 3, header = TRUE)
     if (!all(c("gene", "annotation") %in% names(anno))) {
       stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
     }
@@ -564,7 +565,7 @@ anpan_batch = function(bug_dir,
   }
 
   if (!is.null(annotation_file)) {
-    anno = fread(annotation_file)
+    anno = fread(annotation_file, header = TRUE)
 
     if (!("gene" %in% colnames(anno))) {
       warning('No "gene" column in annotation file. Annotations not joined onto result')
@@ -606,7 +607,8 @@ anpan_batch = function(bug_dir,
                                                                                         model_input = fread(grep(filtered_file_list,
                                                                                                                  pattern = bug_name,
                                                                                                                  value = TRUE),
-                                                                                                            showProgress = FALSE),
+                                                                                                            showProgress = FALSE,
+                                                                                                            header = TRUE),
                                                                                         discretize_inputs = discretize_inputs,
                                                                                         plot_dir = plot_dir,
                                                                                         annotation_file = annotation_file,
@@ -643,7 +645,7 @@ aggregate_by_subject = function(filtered_sample_file,
                                 covariates,
                                 outcome) {
   sample_df = filtered_sample_file |>
-    fread() |>
+    fread(header = TRUE) |>
     melt(id.vars = c(covariates, outcome, "sample_id"),
          variable.name = "gene", value.name = "present")
 
@@ -706,7 +708,7 @@ read_filter_write = function(.x,
 }
 
 #' Use repeated measures to refine the gene model
-#' @param subject_sample_map a dataframe between subject_id and sample_id
+#' @param subject_sample_map a data frame between the mapping between subject_id and sample_id
 #' @details This function performs the standard anpan filtering on all samples, then uses the
 #'   subject-sample map to compute the proportion of samples with the bug. This gives a gene
 #'   _proportion_ matrix (instead of a presence/absence matrix) which is then passed to
@@ -761,7 +763,7 @@ anpan_repeated_measures = function(subject_sample_map,
       sep = "\n")
 
   if (is.character(subject_sample_map) && file.exists(subject_sample_map)) {
-    subject_sample_map = fread(subject_sample_map)
+    subject_sample_map = fread(subject_sample_map, header = TRUE)
   } else if (!is.data.frame(subject_sample_map)) {
     stop("Couldn't read subject_sample_map from a file nor is it a data frame.")
   }
@@ -773,7 +775,7 @@ anpan_repeated_measures = function(subject_sample_map,
   }
 
   if (!is.null(annotation_file)) {
-    anno = fread(annotation_file, nrows = 3)
+    anno = fread(annotation_file, nrows = 3, header = TRUE)
     if (!all(c("gene", "annotation") %in% names(anno))) {
       stop("Couldn't find the gene and annotation columns in the supplied annotation file.")
     }

@@ -251,7 +251,7 @@ plot_results = function(res, covariates, outcome, model_input,
 
   if (!is.null(annotation_file)) {
     # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
-    anno = fread(annotation_file) # must have two columns: gene and annotation
+    anno = fread(annotation_file, header = TRUE) # must have two columns: gene and annotation
   } else {
     anno = NULL
   }
@@ -1180,7 +1180,8 @@ loo_to_df = function(loo_res) {
   loo_res$comparison |>
     as.data.frame() |>
     tibble::rownames_to_column("model") |>
-    tibble::as_tibble()
+    tibble::as_tibble() |>
+    mutate(n = ncol(loo_res$pglmm_ll_df))
 }
 
 plot_elpd_diff_batch = function(anpan_pglmm_res,
@@ -1202,7 +1203,8 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
     summarise(best_model = model[1],
               elpd_diff = case_when(model[1] == "pglmm_fit" ~ -1 * elpd_diff[2],
                                     TRUE ~ elpd_diff[2]),
-              se_diff = se_diff[2]) |>
+              se_diff = se_diff[2],
+              n = n[1]) |>
     mutate(inner_lo = elpd_diff - mult[1] * se_diff,
            inner_hi = elpd_diff + mult[1] * se_diff,
            outer_lo = elpd_diff - mult[2] * se_diff,
@@ -1215,6 +1217,8 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
                            by = "input_file")
 
     if (is.factor(anpan_pglmm_res$input_file)) {
+
+      # TODO add n onto the plot in this label
       plot_input$input_file = factor(plot_input$input_file,
                                      levels = levels(anpan_pglmm_res$input_file))
     }
