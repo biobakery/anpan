@@ -899,14 +899,59 @@ anpan_pglmm_batch = function(meta_file,
 
 }
 
-aggregate_samples_in_tree = function(tree, subject_sample_map) {
+
+#' Fit a subject-wise PGLMM
+#' @description If you have a dataset where multiple samples come from the same individual, running
+#'   a PGLMM on all the samples without accounting for this will return a strong spurious signal
+#'   because samples from the same individual will (usually) be right next to each other on the tree
+#'   and all show the same outcome value. This function uses a subject-sample map input to aggregate
+#'   samples by subject, derive a subject-wise correlation matrix, then run a PGLMM on that.
+#' @param subject_sample_map a data frame giving a mapping between sample_id (which must match the
+#'   leaves of the tree up to the trim_pattern) and subject_id
+#' @param meta_file either a data frame or a file. Can provide covariate and outcome variables for
+#'   either subjects or samples.
+#' @details The \code{meta_file} must contain at least one column named "sample_id" or "subject_id".
+#'   If the metadata is inferred to be provided by sample, representative covariate and outcome
+#'   variable values are selected for each subject in the manner described in
+#'   \code{?anpan_repeated_measures()}
+#'
+#'
+#' @inheritParams anpan_pglmm
+#' @seealso \code{\link[=anpan_pglmm]{anpan_pglmm()}} \code{\link[=anpan_repeated_measures]{anpan_repeated_measures()}}
+#' @export
+anpan_subjectwise_pglmm = function(tree_file,
+                                   meta_file,
+                                   subject_sample_map,
+                                   outcome,
+                                   covariates = NULL,
+                                   out_dir = NULL,
+                                   trim_pattern = NULL,
+                                   omit_na = FALSE,
+                                   family = "gaussian",
+                                   show_plot_cor_mat = TRUE,
+                                   show_plot_tree = TRUE,
+                                   show_post = TRUE,
+                                   show_yrep = FALSE,
+                                   save_object = FALSE,
+                                   verbose = TRUE,
+                                   loo_comparison = TRUE,
+                                   reg_noise = TRUE,
+                                   reg_gamma_params = c(1,2),
+                                   plot_ext = "pdf",
+                                   beta_sd = NULL,
+                                   sigma_phylo_scale = 0.333,
+                                   ...) {
   # tree tip labels must match sample_id values already
 
-  olap_tree_map = olap_tree_and_meta(tree, subject_sample_map, covariates = "subject_id",
-                                     trim_pattern = "_bowtie2", outcome = NULL, verbose = FALSE)
+  if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
+
+  olap_tree_map = olap_tree_and_meta(tree_file, subject_sample_map, covariates = "subject_id",
+                                     trim_pattern = trim_pattern, outcome = NULL, verbose = FALSE)
 
   tree = olap_tree_map[[1]]
   subject_sample_map = olap_tree_map[[2]]
+
+  if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
 
   n_subj = dplyr::n_distinct(subject_sample_map$subject_id)
 
@@ -923,7 +968,7 @@ aggregate_samples_in_tree = function(tree, subject_sample_map) {
     t() |>
     as.data.table()
 
-  subj_df[subject_sample_map, on = c("V1" = "subject_id"), allow.cartesian = TRUE][subject_sample_map, on = c("V2" = "subject_id"), allow.cartesian = TRUE, ]
+  # subj_df[subject_sample_map, on = c("V1" = "subject_id"), allow.cartesian = TRUE][subject_sample_map, on = c("V2" = "subject_id"), allow.cartesian = TRUE, ]
 
   cor_df = subj_df |>
     left_join(subject_sample_map, by = c("V1" = "subject_id")) |>
@@ -939,5 +984,76 @@ aggregate_samples_in_tree = function(tree, subject_sample_map) {
 
   eig_subj_cor_mat = eigen(subj_cor_mat)
 
-  # This yields a positive definite correlation matrix, but usually not a valid phylogeny
+  if (any(eig_subj_cor_mat$values < 0)) {
+    stop("The derived subject-wise correlation matrix was not positive definite.")
+  }
+
+  # https://stats.stackexchange.com/questions/165194/using-correlation-as-distance-metric-for-hierarchical-clustering
+  subj_dist = sqrt(2 * (1-subj_cor_mat))
+
+  subj_tree = ape::nj(subj_dist) |>
+    ape::ladderize()
+
+  tree_dend = ggdendro::dendro_data(subj_tree |> phylogram::as.dendrogram())
+
+  ordered_subj_cor_mat = subj_cor_mat[tree_dend$labels$label, tree_dend$labels$label]
+
+  # Get the subjectwise metadata, either from the meta_file or aggregating the meta_file
+
+  if (is.character(meta_file) && file.exists(meta_file)) {
+    metadata = fread(meta_file,
+                     header = TRUE,
+                     showProgress = FALSE)
+  } else if (is.data.frame(meta_file)) {
+    metadata = as.data.table(meta_file)
+  } else {
+    stop("The provided meta_file doesn't seems to be neither a file nor a data frame.")
+  }
+
+  if ("sample_id" %in% names(metadata)) {
+    output_cols = c(covariates, outcome, "subject_id")
+
+    if ("subject_id" %in% names(metadata)) metadata$subject_id = NULL
+
+    metadata = dplyr::left_join(metadata, subject_sample_map, by = "sample_id")[,..output_cols] |>
+      unique() |>
+      dplyr::group_by(subject_id) |>
+      dplyr::summarise(dplyr::across(.cols = dplyr::all_of(c(covariates, outcome)),
+                                     summarise_metadata_variable)) |>
+      dplyr::rename(sample_id = subject_id) |>
+      as.data.table()
+  } else if ("subject_id" %in% names(metadata)) {
+    metadata = metadata |>
+      dplyr::select(dplyr::all_of(c("subject_id", outcome, covariates))) |>
+      dplyr::rename(sample_id = subject_id)
+  } else {
+    stop("Couldn't find subject_id or sample_id in the metadata")
+  }
+
+  # plot_half_cor_mat(ordered_subj_cor_mat)
+  anpan_pglmm(meta_file         = metadata,
+              tree_file         = subj_tree,
+              cor_mat           = ordered_subj_cor_mat,
+              outcome           = outcome,
+              covariates        = covariates,
+              out_dir           = out_dir,
+              trim_pattern      = NULL,
+              bug_name          = bug_name,
+              omit_na           = omit_na,
+              family            = family,
+              show_plot_cor_mat = show_plot_cor_mat,
+              show_plot_tree    = show_plot_tree,
+              show_post         = show_post,
+              show_yrep         = show_yrep,
+              save_object       = save_object,
+              verbose           = verbose,
+              loo_comparison    = loo_comparison,
+              reg_noise         = reg_noise,
+              reg_gamma_params  = reg_gamma_params,
+              plot_ext          = plot_ext,
+              beta_sd           = beta_sd,
+              sigma_phylo_scale = sigma_phylo_scale,
+              ...)
+
+
 }
