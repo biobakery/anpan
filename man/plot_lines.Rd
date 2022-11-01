@@ -9,6 +9,7 @@ plot_lines(
   meta_file = NULL,
   covariates,
   outcome,
+  genomes_stats,
   omit_na = FALSE,
   fgf = NULL,
   bug_name = NULL,
@@ -38,10 +39,9 @@ plot_lines(
 Make a filter-labelled line plot
 }
 \details{
-The required input is either \itemize{ \item{the gene family file
-  and the metadata file} \item{OR a pre-filtered gene family file}}
-  \code{subset_line} is used to make saving plots faster. Plotting thousands
-  of lines each with tens of thousands of points along them is too much
-  visual detail and makes saving the plot very slow. Set \code{subset_line}
-  to 0 to turn off subsetting.
+The required input is either \itemize{ \item{the gene family file and the metadata file}
+  \item{OR a pre-filtered gene family file}} \code{subset_line} is used to make saving plots
+  faster. Plotting thousands of lines each with tens of thousands of points along them is too
+  much visual detail and makes saving the plot very slow. Set \code{subset_line} to 0 to turn off
+  subsetting.
 }

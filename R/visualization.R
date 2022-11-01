@@ -4,24 +4,24 @@
 #' @param fgf a filtered gene family data frame
 #' @param bug_name name of the bug
 #' @param subset_line integer gives the number of points to take along the lines
-#' @details The required input is either \itemize{ \item{the gene family file
-#'   and the metadata file} \item{OR a pre-filtered gene family file}}
-#'   \code{subset_line} is used to make saving plots faster. Plotting thousands
-#'   of lines each with tens of thousands of points along them is too much
-#'   visual detail and makes saving the plot very slow. Set \code{subset_line}
-#'   to 0 to turn off subsetting.
+#' @details The required input is either \itemize{ \item{the gene family file and the metadata file}
+#'   \item{OR a pre-filtered gene family file}} \code{subset_line} is used to make saving plots
+#'   faster. Plotting thousands of lines each with tens of thousands of points along them is too
+#'   much visual detail and makes saving the plot very slow. Set \code{subset_line} to 0 to turn off
+#'   subsetting.
 #' @inheritParams anpan
 #' @export
 plot_lines = function(bug_file = NULL,
-                          meta_file = NULL,
-                          covariates,
-                          outcome,
-                          omit_na = FALSE,
-                          fgf = NULL,
-                          bug_name = NULL,
-                          plot_ext = "pdf",
-                          plot_dir = NULL,
-                          subset_line = 200) {
+                      meta_file = NULL,
+                      covariates,
+                      outcome,
+                      genomes_stats,
+                      omit_na = FALSE,
+                      fgf = NULL,
+                      bug_name = NULL,
+                      plot_ext = "pdf",
+                      plot_dir = NULL,
+                      subset_line = 200) {
 
   precomputed = !is.null(fgf)
   to_compute = !is.null(bug_file) & !is.null(meta_file)
@@ -68,29 +68,70 @@ plot_lines = function(bug_file = NULL,
 }
 
 plot_kmeans_dots = function(samp_stats,
-                               plot_dir = NULL,
-                               bug_name = NULL,
-                               was_logged = FALSE,
-                               plot_ext = "pdf") {
+                            plot_dir = NULL,
+                            bug_name = NULL,
+                            was_logged = FALSE,
+                            plot_ext = "pdf",
+                            genomes_stats = NULL) {
 
   if (was_logged) {
     scale_x = scale_x_continuous(trans = "log1p")
   } else {
     scale_x = scale_x_continuous()
   }
-  p = samp_stats |>
-    na.omit() |>
+
+  na_omit_samp_stats = samp_stats |>
+    na.omit()
+
+  if (!is.null(genomes_stats)) {
+    text_y = min(na_omit_samp_stats$q50) - .1 * sd(na_omit_samp_stats$q50)
+    lt_geom = geom_vline(data = genomes_stats,
+                           aes(xintercept = lower_threshold),
+                           lty = 2,
+                           color = "#E41A1C")
+    lt_annotate = annotate(geom = "text",
+                           x = genomes_stats$lower_threshold,
+                           y = text_y,
+                           hjust = 1.02,
+                           label = genomes_stats$lt_source,
+                           color = "#E41A1C")
+
+    mean_geom = geom_vline(data = genomes_stats,
+                 aes(xintercept = mean_genes),
+                 lty = 1,
+                 color = "#E41A1C")
+    mean_annotate = annotate(geom = "text",
+                             x = genomes_stats$mean_genes,
+                             y = text_y,
+                             hjust = -.02,
+                             label = "Mean genome size",
+                             color = "#E41A1C")
+    caption_str = paste0(genomes_stats$flipped, " samples marked absent by genome size threshold")
+  } else {
+    lt_geom = NULL
+    lt_annotate = NULL
+    mean_geom = NULL
+    mean_annotate = NULL
+    caption_str = NULL
+  }
+
+  p = na_omit_samp_stats |>
     dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
                                        levels = c("present", "absent"))) |>
     ggplot(aes(n_nz, q50)) +
+    lt_geom +
+    mean_geom +
     geom_point(aes(color = labelled_as),
                alpha = .5) +
     scale_color_brewer(palette = "Set1") +
     scale_x +
+    mean_annotate +
+    lt_annotate +
     labs(title = paste0(bug_name, " - labelled by kmeans"),
          x = "Number of non-zero observations",
          y = 'Median log abundance',
-         color = NULL) +
+         color = NULL,
+         caption = caption_str) +
     theme_light()
 
   if (!is.null(plot_dir)) {

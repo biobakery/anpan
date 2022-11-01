@@ -209,32 +209,41 @@ fit_horseshoe = function(model_input,
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
-#' @param prefiltered_dir an optional directory to pre-filtered data from an
-#'   earlier run to skip the filtering step
+#' @param genomes_file optional file giving gene presence/absence of representative isolate genomes
+#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the
+#'   filtering step
 #' @param model_type either "horseshoe" or "fastglm"
 #' @param outcome the name of the outcome variable
 #' @param covariates covariates to account for (as a vector of strings)
-#' @param skip_large logical indicating whether to skip bugs with over 5k genes.
-#'   Only used when model_type = "horseshoe".
-#' @param save_fit logical indicating whether to save horseshoe fit objects.
-#'   Only used when model_type = "horseshoe".
-#' @param discard_absent_samples logical indicating whether to discard samples
-#'   when a bug is labelled as completely absent
+#' @param skip_large logical indicating whether to skip bugs with over 5k genes. Only used when
+#'   model_type = "horseshoe".
+#' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when
+#'   model_type = "horseshoe".
+#' @param discard_absent_samples logical indicating whether to discard samples when a bug is
+#'   labelled as completely absent
 #' @param omit_na logical indicating whether to omit incomplete cases of the metadata
-#' @param filtering_method method to use for filtering samples. Either "kmeans"
-#'   or "none"
-#' @param discretize_inputs logical indicating whether to discretize the input
-#'   abundance measurements (0/nonzero --> FALSE/TRUE) before passing them to
-#'   the modelling function
+#' @param filtering_method method to use for filtering samples. Either "kmeans" or "none"
+#' @param discretize_inputs logical indicating whether to discretize the input abundance
+#'   measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function
 #' @param save_filter_stats logical indicating whether to save filter statistics
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
-#' @details The specified metadata file must contain columns matching
-#'   "sample_id" and the specified covariates and outcome variables.
+#' @details The specified metadata file must contain columns matching "sample_id" and the specified
+#'   covariates and outcome variables.
+#'
+#'   If provided, \code{genomes_file} is used to refine the filtering process. The format must be
+#'   genes as rows, with the first column giving the gene id (usually a UniRef90 identifier), and
+#'   subsequent columns representing isolate genomes. The entries of the isolate genome columns
+#'   should give 0/1 indicators of whether or not the gene is present in the isolate. The gene
+#'   counts present in these isolates are used to establish the typical number of genes present in a
+#'   strain of the species and a lower threshold on the number of acceptable gene observations. If
+#'   >=5 isolate genomes are available, the lower threshold is 2 standard deviations below the mean,
+#'   otherwise it is 2/3 of the mean.
 #' @seealso [anpan_batch()]
 #' @export
 anpan = function(bug_file,
                  meta_file,
                  out_dir,
+                 genomes_file = NULL,
                  prefiltered_dir = NULL,
                  model_type = "fastglm",
                  covariates = c("age", "gender"),
@@ -334,17 +343,19 @@ anpan = function(bug_file,
   } else {
     if (verbose) message(paste0("(2/", n_steps, ") Reading and filtering ", bug_file))
 
-    model_input = read_and_filter(bug_file, metadata = metadata,
-                                  pivot_wide = model_type == "horseshoe",
-                                  covariates = covariates,
-                                  outcome = outcome,
-                                  filtering_method = filtering_method,
-                                  discretize_inputs = discretize_inputs,
+    model_input = read_and_filter(bug_file,
+                                  metadata               = metadata,
+                                  pivot_wide             = model_type == "horseshoe",
+                                  covariates             = covariates,
+                                  outcome                = outcome,
+                                  genomes_file           = genomes_file,
+                                  filtering_method       = filtering_method,
+                                  discretize_inputs      = discretize_inputs,
                                   discard_absent_samples = discard_absent_samples,
-                                  save_filter_stats = save_filter_stats,
-                                  filter_stats_dir = filter_stats_dir,
-                                  plot_ext = plot_ext,
-                                  verbose = verbose)
+                                  save_filter_stats      = save_filter_stats,
+                                  filter_stats_dir       = filter_stats_dir,
+                                  plot_ext               = plot_ext,
+                                  verbose                = verbose)
 
     if (is.null(model_input)) {
       cat(paste0(bug_file, " was skipped because no samples passed the filter criteria."),
@@ -358,7 +369,7 @@ anpan = function(bug_file,
 
     if (nrow(model_input) == 0) {
       # ^ if nothing passed the prevalence or kmeans filters:
-      cat(paste0(bug_file, " contained no genes that the prevalence filter."),
+      cat(paste0(bug_file, " contained no genes that passed the prevalence filter."),
           file = warnings_file,
           append = TRUE,
           sep = "\n")
@@ -428,6 +439,7 @@ safely_anpan = purrr::safely(anpan)
 #'   each.
 #'
 #' @param bug_dir a directory of gene family files
+#' @param genomes_dir an optional directory of genome files
 #' @param plot_result logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
 #' @param prefiltered_dir an optional directory to pre-filtered data from an
@@ -440,12 +452,16 @@ safely_anpan = purrr::safely(anpan)
 #'   abundance files, one for each bug.
 #'
 #'   \code{annotation} file must have two columns named "gene" and "annotation"
+#'
+#'   See \code{?anpan()} for the format / usage if providing genome files.
 #' @inheritParams plot_results
 #' @inheritParams anpan
+#' @seealso [anpan()]
 #' @export
 anpan_batch = function(bug_dir,
                        meta_file,
                        out_dir,
+                       genomes_dir = NULL,
                        prefiltered_dir = NULL,
                        model_type = "fastglm",
                        covariates = c("age", "gender"),
@@ -495,6 +511,10 @@ anpan_batch = function(bug_dir,
 
   bug_files = get_file_list(bug_dir)
 
+  if (!is.null(genomes_dir)) {
+    genomes_files = get_file_list(genomes_dir)
+  }
+
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
@@ -509,9 +529,24 @@ anpan_batch = function(bug_dir,
 
   anpan_results = purrr::map(.x = bug_files,
                              .f = function(.x) {
+                               bn = get_bug_name(.x)
+                               if (!is.null(genomes_dir)) {
+                                 genomes_file = grep(bn, genomes_files, value = TRUE)
+                                 if (length(genomes_file) == 0) {
+                                   genomes_file = NULL
+                                   warning(paste0("No genome file found for ", bn, " in the provided genome directory."))
+                                 }
+                                 if (length(genomes_file) > 1) {
+                                   genomes_file = genomes_file[1]
+                                   warning(paste0("Multiple genome files found for ", bn, " , using the first to establish typical genome size"))
+                                 }
+                               } else {
+                                 genomes_file = NULL
+                               }
                                anpan_res = safely_anpan(.x,
                                                  meta_file = meta_file,
                                                  out_dir = out_dir,
+                                                 genomes_file = genomes_file,
                                                  prefiltered_dir = prefiltered_dir,
                                                  model_type = model_type,
                                                  skip_large = skip_large,
@@ -686,19 +721,20 @@ aggregate_by_subject = function(filtered_sample_file,
 }
 
 read_filter_write = function(.x,
-                             metadata ,
+                             metadata,
                              covariates,
-                             outcome ,
+                             outcome,
                              filtering_method,
-                             sample_wise_filter_stats_dir ,
+                             sample_wise_filter_stats_dir,
                              plot_ext = "pdf") {
+
   read_res = read_and_filter(.x,
-                             metadata = metadata,
-                             covariates = covariates,
-                             outcome = outcome,
+                             metadata         = metadata,
+                             covariates       = covariates,
+                             outcome          = outcome,
                              filtering_method = "kmeans",
                              filter_stats_dir = sample_wise_filter_stats_dir,
-                             plot_ext = "pdf")
+                             plot_ext         = "pdf")
 
   if (is.null(read_res)) return(NULL)
 

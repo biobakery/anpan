@@ -8,6 +8,7 @@ anpan_batch(
   bug_dir,
   meta_file,
   out_dir,
+  genomes_dir = NULL,
   prefiltered_dir = NULL,
   model_type = "fastglm",
   covariates = c("age", "gender"),
@@ -37,6 +38,8 @@ anpan_batch(
 
 \item{out_dir}{path to the desired output directory}
 
+\item{genomes_dir}{an optional directory of genome files}
+
 \item{prefiltered_dir}{an optional directory to pre-filtered data from an
 earlier run to skip the filtering step}
 
@@ -48,21 +51,19 @@ earlier run to skip the filtering step}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
-\item{filtering_method}{method to use for filtering samples. Either "kmeans"
-or "none"}
+\item{filtering_method}{method to use for filtering samples. Either "kmeans" or "none"}
 
-\item{discretize_inputs}{logical indicating whether to discretize the input
-abundance measurements (0/nonzero --> FALSE/TRUE) before passing them to
-the modelling function}
+\item{discretize_inputs}{logical indicating whether to discretize the input abundance
+measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function}
 
 \item{discard_absent_samples}{logical indicating whether to discard samples
 when a bug is labelled as completely absent}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes.
-Only used when model_type = "horseshoe".}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
+model_type = "horseshoe".}
 
-\item{save_fit}{logical indicating whether to save horseshoe fit objects.
-Only used when model_type = "horseshoe".}
+\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when
+model_type = "horseshoe".}
 
 \item{annotation_file}{a path to a file giving annotations for each gene}
 
@@ -92,4 +93,9 @@ This function calls anpan() on each gene family file in the
   abundance files, one for each bug.
 
   \code{annotation} file must have two columns named "gene" and "annotation"
+
+  See \code{?anpan()} for the format / usage if providing genome files.
+}
+\seealso{
+[anpan()]
 }

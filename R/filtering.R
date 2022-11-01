@@ -79,8 +79,34 @@ get_samp_stats = function(gf){
   return(res)
 }
 
+get_genomes_stats = function(genomes_file) {
+  genomes_df = fread(genomes_file,
+                     header = TRUE,
+                     showProgress = FALSE)
+
+  gene_counts = genomes_df[,-1][,lapply(.SD, function(.x) sum((.x + 0) != 0))] |>
+    unlist()
+  # ^ The "+ 0" is to convert logicals to numeric if necessary
+
+  n_genomes = ncol(genomes_df) - 1
+
+  if (n_genomes >= 5) {
+    lt = mean(gene_counts) - 2*sd(gene_counts)
+    lt_source = "2 SDs below mean genome size"
+  } else {
+    lt = mean(gene_counts)*2/3
+    lt_source = "2/3 mean genome size"
+  }
+
+  data.table(n_genomes = n_genomes,
+             mean_genes = mean(gene_counts),
+             lower_threshold = lt,
+             lt_source = lt_source)
+}
+
 filter_with_kmeans = function(gf,
                               samp_stats,
+                              genomes_stats = NULL,
                               save_filter_stats,
                               filter_stats_dir,
                               bug_name,
@@ -117,7 +143,6 @@ filter_with_kmeans = function(gf,
   } else {
     em_input$n_nz = scale(em_input$n_nz)
 
-
     scrunch = 2 # Scrunch the y-axis of the plots to make sure k-means doesn't accidentally produce a horizontal decision boundary. (i.e cut off the top of the U shape)
     # TODO make sure this doesn't mess up anything downstream
     em_input$q50 = scale(em_input$q50) / scrunch
@@ -127,11 +152,18 @@ filter_with_kmeans = function(gf,
 
     samp_stats$in_right = NA
     samp_stats$clust = NA
+
     present_clust = which.max(km_res$centers[,1])
     absent_clust = which.min(km_res$centers[,1])
 
     samp_stats$clust[!is.na(samp_stats$q50)] = km_res$cluster
     samp_stats$clust[is.na(samp_stats$q50)] = absent_clust
+
+    if (!is.null(genomes_stats)) {
+      n_flipped = samp_stats[n_nz < genomes_stats$lower_threshold & clust == present_clust] |> nrow()
+      genomes_stats$flipped = n_flipped
+      samp_stats[n_nz < genomes_stats$lower_threshold, clust := absent_clust]
+    }
 
     samp_stats$in_right = samp_stats$clust == present_clust
     samp_stats$clust = NULL
@@ -141,13 +173,19 @@ filter_with_kmeans = function(gf,
                        plot_dir = file.path(filter_stats_dir, "plots"),
                        bug_name,
                        was_logged = log_it,
-                       plot_ext = plot_ext)
+                       plot_ext = plot_ext,
+                       genomes_stats = genomes_stats)
     }
   }
 
   filtered_gf = samp_stats[,.(sample_id, in_right)][gf, on = "sample_id"]
   filtered_gf$abd[!filtered_gf$in_right] = 0
   filtered_gf$present = filtered_gf$abd > 0
+
+  if (!is.null(genomes_stats)) {
+    # Set those below the threshold to "absent"
+    # TODO
+  }
 
   filtered_gf
 }
@@ -158,6 +196,7 @@ filter_gf = function(gf,
                      filtering_method = "kmeans",
                      covariates = NULL,
                      outcome = NULL,
+                     genomes_file = NULL,
                      discard_absent_samples = TRUE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
@@ -167,8 +206,16 @@ filter_gf = function(gf,
   if (!(filtering_method %in% c("kmeans", "none"))) stop("Specified filtering method not implemented")
 
   if (filtering_method == 'kmeans') {
+
+    if (!is.null(genomes_file)) {
+      genomes_stats = get_genomes_stats(genomes_file)
+    } else {
+      genomes_stats = NULL
+    }
+
     filtered_gf = filter_with_kmeans(gf = gf,
                                      samp_stats = samp_stats,
+                                     genomes_stats = genomes_stats,
                                      save_filter_stats = save_filter_stats,
                                      filter_stats_dir = filter_stats_dir,
                                      bug_name = bug_name,
@@ -301,6 +348,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                            minmax_thresh = 5, # TODO expose this higher up
                            covariates = NULL,
                            outcome = NULL,
+                           genomes_file = NULL,
                            filtering_method = "kmeans",
                            discretize_inputs = TRUE,
                            discard_absent_samples = TRUE,
@@ -358,14 +406,15 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   # absent, not just lacking specific genes.
 
   filtered_gf = filter_gf(gf,
-                          samp_stats = samp_stats,
-                          filtering_method = filtering_method,
-                          covariates = covariates,
-                          outcome = outcome,
+                          samp_stats        = samp_stats,
+                          filtering_method  = filtering_method,
+                          covariates        = covariates,
+                          outcome           = outcome,
+                          genomes_file      = genomes_file,
                           save_filter_stats = save_filter_stats,
-                          filter_stats_dir = filter_stats_dir,
-                          plot_ext = plot_ext,
-                          bug_name = bug_name)
+                          filter_stats_dir  = filter_stats_dir,
+                          plot_ext          = plot_ext,
+                          bug_name          = bug_name)
 
   if (filtering_method != "none") { # TODO separate these four blocks out to a distinct function
     sample_labels = unique(filtered_gf[,.(sample_id, bug_present = in_right)])

@@ -46,17 +46,16 @@ anpan_repeated_measures(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
-\item{filtering_method}{method to use for filtering samples. Either "kmeans"
-or "none"}
+\item{filtering_method}{method to use for filtering samples. Either "kmeans" or "none"}
 
 \item{discard_absent_samples}{logical indicating whether to discard samples
 when a bug is labelled as completely absent}
 
-\item{skip_large}{logical indicating whether to skip bugs with over 5k genes.
-Only used when model_type = "horseshoe".}
+\item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
+model_type = "horseshoe".}
 
-\item{save_fit}{logical indicating whether to save horseshoe fit objects.
-Only used when model_type = "horseshoe".}
+\item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when
+model_type = "horseshoe".}
 
 \item{annotation_file}{a path to a file giving annotations for each gene}
 
