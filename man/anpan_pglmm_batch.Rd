@@ -18,6 +18,7 @@ anpan_pglmm_batch(
   save_object = FALSE,
   verbose = TRUE,
   loo_comparison = TRUE,
+  run_diagnostics = FALSE,
   reg_noise = TRUE,
   plot_ext = "pdf",
   show_yrep = FALSE,
@@ -55,6 +56,9 @@ anpan_pglmm_batch(
 
 \item{loo_comparison}{logical indicating whether to compare the phylogenetic model against a base
 model (without the phylogenetic term) using \code{\link[loo:loo_compare]{loo::loo_compare()}}}
+
+\item{run_diagnostics}{logical indicating whether to run \code{\link[cmdstanr:fit-method-cmdstan_summary]{cmdstanr::cmdstan_diagnose()}} and
+\code{\link[loo:pareto-k-diagnostic]{loo::pareto_k_table()}} to check the MCMC and loo diagnostics respectively.}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid
 with a Gamma prior}

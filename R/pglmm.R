@@ -173,6 +173,8 @@ safely_chol = purrr::safely(chol)
 #' @param ... other arguments to pass to [cmdstanr::sample()]
 #' @param loo_comparison logical indicating whether to compare the phylogenetic model against a base
 #'   model (without the phylogenetic term) using [loo::loo_compare()]
+#' @param run_diagnostics logical indicating whether to run [cmdstanr::cmdstan_diagnose()] and
+#'   [loo::pareto_k_table()] to check the MCMC and loo diagnostics respectively.
 #' @param sigma_phylo_scale standard deviation of half-normal prior on \code{sigma_phylo} for
 #'   logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 #'   overfitting.
@@ -236,6 +238,7 @@ anpan_pglmm = function(meta_file,
                        save_object = FALSE,
                        verbose = TRUE,
                        loo_comparison = TRUE,
+                       run_diagnostics = TRUE,
                        reg_noise = TRUE,
                        reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
@@ -243,8 +246,7 @@ anpan_pglmm = function(meta_file,
                        sigma_phylo_scale = 0.333,
                        ...) {
 
-  n_steps = ifelse(loo_comparison,
-                   3, 2)
+  n_steps = 2 + loo_comparison + run_diagnostics
 
   if (verbose) message(paste0("(1/", n_steps, ") Checking inputs."))
 
@@ -648,6 +650,7 @@ anpan_pglmm = function(meta_file,
     message(paste0(p1, p2, p3))
 
   } else {
+
     # outcome_signal = NULL
     # hyp = NULL
     base_fit = NULL
@@ -657,6 +660,15 @@ anpan_pglmm = function(meta_file,
     ll_mat = NULL
   }
 
+  if (run_diagnostics) {
+    if (verbose) message(paste0("(", n_steps, "/", n_steps, ") Running diagnostics:"))
+
+    pglmm_fit$cmdstan_diagnose() # No need for print(), it already does itself
+
+    if (loo_comparison) {
+      print(loo::pareto_k_table(pglmm_loo))
+    }
+  }
   if (!is.null(out_dir)) {
     save(model_input, cor_mat,
          file = file.path(out_dir, paste0(bug_name, "_inputs.RData")))
@@ -723,6 +735,7 @@ anpan_pglmm_batch = function(meta_file,
                              save_object = FALSE,
                              verbose = TRUE,
                              loo_comparison = TRUE,
+                             run_diagnostics = FALSE,
                              reg_noise = TRUE,
                              plot_ext = "pdf",
                              show_yrep = FALSE,
@@ -855,6 +868,7 @@ anpan_pglmm_batch = function(meta_file,
                                                               save_object = save_object,
                                                               verbose = FALSE,
                                                               loo_comparison = loo_comparison,
+                                                              run_diagnostics = run_diagnostics,
                                                               reg_noise = reg_noise,
                                                               beta_sd = beta_sd,
                                                               reg_gamma_params = reg_gamma_params,

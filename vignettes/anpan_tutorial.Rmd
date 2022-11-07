@@ -71,9 +71,9 @@ The startup message points out that you can easily parallelize / show progress b
 
 A couple points to know about anpan function names:
 
-* All of the modeling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete prompt should show a list of all the modeling functions. This can help you find the function you need quickly without having to dig through the documentation. 
-  * Several functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
-* Same goes for the plotting functions and the `plot_` prefix. 
+* All of the modeling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete prompt should show a list of all the modeling functions. This can help you find the function you need quickly without having to dig through the documentation.
+* Several modeling functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
+* Plotting functions are prefixed with `plot_`. 
 
 This code chunk loads some other packages we'll use:
 
@@ -97,13 +97,13 @@ $$\epsilon \sim \text{Normal}(0, σ_R^2)$$
 
 The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\text{leaf})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_{phylo}$.
 
-To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the lower triangle of the correlation matrix it implies. You can see that the clade on the left (with low inter-leaf distances between its members) forms a bright sub-block of high correlation in the matrix. The tiny clade on the far right has high inter-leaf distance between its members and the rest of the tree, so its members generally have low correlation with the rest of the leaves, exhibited by the dark band on the right of the triangle. Note that the matrix is derived solely from the structure of the tree -- it is not influenced by the colored outcome dots. The correlation matrix numerically quantifies the "higher inter-leaf distance → lower correlation" principle.
+To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the lower triangle of the correlation matrix it implies. You can see that the clade on the left (with low inter-leaf distances between its members) forms a bright sub-block of high correlation in the matrix. The tiny clade on the far right has high inter-leaf distance between its members and the rest of the tree, so its members generally have low correlation with the rest of the leaves, exhibited by the dark band on the right of the triangle. Note that the matrix is derived solely from the structure of the tree (the black lines) -- it is not influenced by the colored outcome dots. The correlation matrix numerically quantifies the "higher inter-leaf distance → lower correlation" principle.
 
 ```{r echo=FALSE}
 knitr::include_graphics("vignette_figs/tree_hcm.png")
 ```
 
-We can see in the synthetic example above that the tree clearly does impact the outcome: the two well-separated clades clearly show very different outcome values. A PGLMM evaluated on this data would easily detect such a blazing signal, so in the remainder of this section we'll simulate a tree with an outcome that's realistically noisier and less visually obvious. After that we'll fit the PGLMM with `anpan_pglmm()` (or `anpan_pglmm_batch()`) then examine the results.
+We can see in the synthetic example above that the tree clearly does impact the outcome: the two well-separated clades clearly show very different outcome values. A PGLMM evaluated on this data would easily detect such a blazing signal, so in the remainder of this section we'll simulate a tree with an outcome that's realistically noisier and less visually obvious. After that we'll fit the PGLMM with `anpan_pglmm()` then examine the results.
 
 ## Simulate data
 
@@ -175,17 +175,18 @@ How do we *quantitatively* assess the impact of the phylogeny on the outcome whi
 The code chunk below shows how to use `anpan` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
 
 ```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE, out.width = "120%"}
-result = anpan_pglmm(meta_file      = metadata,
-                     tree_file      = tr,
-                     outcome        = "outcome",
-                     covariates     = "covariate",
-                     family         = "gaussian",
-                     bug_name       = "sim_bug",
-                     reg_noise      = TRUE,
-                     loo_comparison = TRUE,
-                     refresh        = 500,
-                     show_plot_tree = FALSE,
-                     show_post      = FALSE)
+result = anpan_pglmm(meta_file       = metadata,
+                     tree_file       = tr,
+                     outcome         = "outcome",
+                     covariates      = "covariate",
+                     family          = "gaussian",
+                     bug_name        = "sim_bug",
+                     reg_noise       = TRUE,
+                     loo_comparison  = TRUE,
+                     run_diagnostics = FALSE,
+                     refresh         = 500,
+                     show_plot_tree  = FALSE,
+                     show_post       = FALSE)
 ```
 
 Aside from fitting the model, this command prints a plot (and a lot of console output with messages about the progression of the MCMC sampler). This plots shows the correlation matrix implied by the tree. This is how the PGLMM sees the correlation structure of the leaves. (Side note: the randomized tree name shows up because we didn’t provide one explicitly and the function wasn’t able to pull one from the tree input either).
@@ -277,6 +278,44 @@ This means that the noise parameter during one of the warmup iterations escaped 
     * `comparison` - a [loo_compare()](https://mc-stan.org/loo/reference/loo_compare.html) result comparing the two models by leave-one-out predictive performance.
     
 The  `pglmm_fit` part of the result is the model fit produced by `cmdstanr` for the PGLMM. Any method applicable to [CmdStanMCMC objects](https://mc-stan.org/cmdstanr/reference/CmdStanMCMC.html) works on this, but of particular interest is the `summary()` method which we'll use to inspect model fit.
+
+### Check diagnostics
+
+If you run `anpan_pglmm(run_diagnostics = TRUE)`, the function will run the diagnostic checking functions for the MCMC and loo results as applicable. In the example above, the output will look something like this:
+
+```
+(4/4) Running diagnostics:
+Processing csv files: /var/folders/g8/22sdpptx451fng3nbj7c45vw0000gq/T/RtmpZqhitZ/cont_pglmm_noise_reg-202211071429-1-59c385.csv, /var/folders/g8/22sdpptx451fng3nbj7c45vw0000gq/T/RtmpZqhitZ/cont_pglmm_noise_reg-202211071429-2-59c385.csv, /var/folders/g8/22sdpptx451fng3nbj7c45vw0000gq/T/RtmpZqhitZ/cont_pglmm_noise_reg-202211071429-3-59c385.csv, /var/folders/g8/22sdpptx451fng3nbj7c45vw0000gq/T/RtmpZqhitZ/cont_pglmm_noise_reg-202211071429-4-59c385.csv
+
+Checking sampler transitions treedepth.
+Treedepth satisfactory for all transitions.
+
+Checking sampler transitions for divergences.
+No divergent transitions found.
+
+Checking E-BFMI - sampler transitions HMC potential energy.
+E-BFMI satisfactory.
+
+Effective sample size satisfactory.
+
+Split R-hat values satisfactory all parameters.
+
+Processing complete, no problems detected.
+Pareto k diagnostic values:
+                         Count Pct.    Min. n_eff
+(-Inf, 0.5]   (good)     119   99.2%   720       
+ (0.5, 0.7]   (ok)         1    0.8%   1654      
+   (0.7, 1]   (bad)        0    0.0%   <NA>      
+   (1, Inf)   (very bad)   0    0.0%   <NA>      
+
+All Pareto k estimates are ok (k < 0.7).
+Warning message:
+Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.
+```
+
+You can see that the MCMC diagnostics all came out well in this case. You'll get a link to the [Stan warnings guide](https://mc-stan.org/misc/warnings.html) if your sampler hits any issues. If you do get convergence issues, the two simplest things to try first are usually setting `adapt_delta` to a higher-than-default value (e.g. 0.95) and increasing the number of iterations with e.g. `iter_warmup = 2000` and `iter_sampling = 2000`.
+
+In the example above we got one ok (but not good) Pareto k value, which is more-or-less fine. Running more iterations with a higher `adapt_delta` can sometimes help improve this, but for `anpan_pglmm()` the occurrence of bad / very bad Pareto k values are usually more indicative of a dataset problem than a model problem. Low N, correlation matrices that are close to the identity, and/or imbalanced binary outcomes can make it impossible to estimate accurate loo results. The [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#17_What_to_do_if_I_have_many_high_Pareto_(hat{k})%E2%80%99s) has more information. The parameter of interest in a PGLMM is really `sigma_phylo` anyway, so loo results aren't absolutely necessary to assess the impact of the phylogeny on the outcome. If you aren't interested in the model comparison, you can just set `loo_comparison = FALSE` and ignore the issue. 
 
 ### Inspect model fit
 
@@ -736,7 +775,7 @@ You can see the clear visual separation between the two groups in the first two 
 
 # Advanced topics
 
-This section isn't done.
+The devil is in the details. 
 
 ## Genome comparisons
 
@@ -810,10 +849,37 @@ If you don't have a phylogeny for your data, you can get a very rough estimate i
 ```{r eval = FALSE}
 gene_tree = gene_pres_abs_matrix |> 
   vegan::vegdist(method = "jaccard") |> 
-  ape::bionj()
+  ape::fastme.bal() # or ape::nj() or ape::bionj()
 ```
 
-This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader. 
+This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
+
+The method in the code block above can sometimes yield trees that in turn yield correlation matrices that are not positive definite. If that happens, another method to try is to subset the raw abundance data to samples where the bug is present, then build the tree from those raw values:
+
+```{r eval = FALSE}
+sample_labels = fread("filter_stats/labels/sample_labels_bug.tsv.gz")
+
+select_cols = sample_labels[bug_present == TRUE]$sample_id
+
+abd_mat = fread("path/to/bug.genefamilies.tsv.gz")[ , ..select_cols] |> 
+  as.matrix() |> 
+  t()
+
+half_min = min(abd_mat[abd_mat != 0]) / 2
+
+abd_mat[abd_mat == 0] = half_min
+
+labd_mat = log(abd_mat)
+
+labd_phylo = labd_mat |> 
+  dist(method = "euclidean") |> 
+  ape::fastme.bal() |> 
+  ape::ladderize()
+```
+
+If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. 
+
+However, it's usually preferable to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)). There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The two preceding code blocks are mainly intended for quick-and-dirty, "good enough" method to get a quick look at how gene patterns affect the outcome overall.
 
 ## Picking out clade members
 
@@ -888,18 +954,19 @@ handlers(global=TRUE)
 From there, you can set up additional handlers to customize the progress reporting. My favorite is:
 
 ```{r eval=FALSE}
-handlers(handler_progress(
-  format   = "[:bar] :current/:total (:percent) in :elapsed ETA: :eta"
-))
+handlers(handler_progress(format = "[:bar] :current/:total (:percent) in :elapsed ETA: :eta"),
+         handler_beepr(initiate = NA,
+                       update   = NA,
+                       finish   = 1))
 ```
 
 There are also some that are more exciting:
 
 ```{r eval = FALSE}
 # let's do the fork in the garbage disposal!
-handlers(handler_beepr(initiate = 1,
+handlers(handler_beepr(initiate = NA,
                        update = 1,
-                       finish = 1,
+                       finish = NA,
                        intrusiveness = 1)) 
 ```
 
@@ -907,6 +974,16 @@ Once you've set your preferred handler(s), you can test the reporting with this 
 
 ```{r eval=FALSE}
 progressr::slow_sum(1:5)
+```
+
+
+
+## Other anpan functions
+
+This vignette doesn't overview the usage of every single anpan function (it's already too long). Here are the other user-accessible anpan functions. They _should_ each have a help page, and you can of course ask additional questions on [the bioBakery help forum](https://forum.biobakery.org/).
+
+```{r, echo = FALSE}
+getNamespaceExports("anpan") |> sort()
 ```
 
 
