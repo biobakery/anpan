@@ -313,7 +313,7 @@ Warning message:
 Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic') for details.
 ```
 
-You can see that the MCMC diagnostics all came out well in this case. You'll get a link to the [Stan warnings guide](https://mc-stan.org/misc/warnings.html) if your sampler hits any issues. If you do get convergence issues, the two simplest things to try first are usually setting `adapt_delta` to a higher-than-default value (e.g. 0.95) and increasing the number of iterations with e.g. `iter_warmup = 2000` and `iter_sampling = 2000`.
+You can see that the MCMC diagnostics all came out well in this case. You'll get a link to the [Stan warnings guide](https://mc-stan.org/misc/warnings.html) if your sampler hits any issues. If you do get convergence issues, the two simplest things to try first are usually setting `adapt_delta` to a higher-than-default value (e.g. 0.95) and increasing the number of iterations with e.g. `iter_warmup = 2000` and `iter_sampling = 2000`. Another common issue is that if you accidentally use `family = "gaussian"` where you meant `family = "binomial"`, you'll get E-BFMI warnings.
 
 In the example above we got one ok (but not good) Pareto k value, which is more-or-less fine. Running more iterations with a higher `adapt_delta` can sometimes help improve this, but for `anpan_pglmm()` the occurrence of bad / very bad Pareto k values are usually more indicative of a dataset problem than a model problem. Low N, correlation matrices that are close to the identity, and/or imbalanced binary outcomes can make it impossible to estimate accurate loo results. The [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#17_What_to_do_if_I_have_many_high_Pareto_(hat{k})%E2%80%99s) has more information. The parameter of interest in a PGLMM is really `sigma_phylo` anyway, so loo results aren't absolutely necessary to assess the impact of the phylogeny on the outcome. If you aren't interested in the model comparison, you can just set `loo_comparison = FALSE` and ignore the issue. 
 
@@ -797,11 +797,13 @@ plot_genome_intersections(unistrain_path)
 knitr::include_graphics("vignette_figs/fprau_ints.png")
 ```
 
+Another method for detecting this phenomenon is to compute a phylogeny based on the gene profiles (see the [Estimating phylogenies from gene matrices] section), then look for a large-scale, species-wide pattern in the distribution of phylogenetic effects.
+
 We leave the approach to handling this to the user. If the blocking is driven by a single outlier genome, it may make sense to remove the genes unique to that outlier. More complicated cases like the example shown above may require more ad hoc measures, such as separating out the separate genomes and running them through the gene model separately.
 
 ## Horseshoe gene model
 
-The default model type for the gene model runs a simple glm for every gene in every bug, then FDR corrects the p-values after the fact. Why conceptually and computationally simple, this approach has a few disadvantages:
+The default model type for the gene model runs a simple glm for every gene in every bug, then FDR corrects the p-values after the fact. While conceptually and computationally simple, this approach has a few disadvantages:
 
 * the dependence between genes is ignored
 * the gene coefficients are unregularized
@@ -809,7 +811,7 @@ The default model type for the gene model runs a simple glm for every gene in ev
 
 By setting `model_type = "horseshoe"` in a call to `anpan()`, it is possible to use a "regularized horseshoe" model instead. This type of model is described in detail in @piironen_sparsity_2017. Basically, instead of running many small models then FDR correcting, it fits a single model per bug. This has a number of advantages:
 
-* the coefficients for additional covariates (e.g. age, gender) are only estimated once, reducing the chance of finding genes that are confounded with/by covariates
+* the coefficients for additional covariates (e.g. age, gender) are only estimated once, reducing the chance of finding genes that are confounded with covariates
 * the horseshoe incorporates the strong prior knowledge that only a very small proportion of bacterial genes will affect the outcome
 * the strong regularization from the horseshoe will tend to pick out the most explanatory genes from sets of collinear genes (if the effects are sufficiently identifiable)
 
@@ -825,7 +827,7 @@ $$\beta_j \vert \lambda_j, \tau , c  \sim N\left(0 , \tau^2 \tilde{\lambda}^2_j 
 * $\tau$ is a global shrinkage parameter
 * $c$ controls the degree of regularization on non-zero coefficients
 
-The Stan code used under the hood is adapted from code originally produced by the `brms` package @burkner_brms. 
+The Stan code used under the hood is adapted from code originally produced by the `brms` package (@burkner_brms). 
 
 ```{r eval = FALSE}
 anpan(model_type = "horseshoe")
@@ -841,6 +843,15 @@ The outputs of this model will look largely the same as `model_type = "fastglm"`
 
 The main disadvantage of the horseshoe model is that it is much more computationally expensive. 
 
+## Repeated measures models
+
+If you have data with multiple samples per subject, you can run a subject-wise gene model using `anpan_repeated_measures()`, and a subject-wise PGLMM using `anpan_subjectwise_pglmm()`. These functions require providing a `subject_sample_map` data frame listing the `subject_id` that goes with each `sample_id`.
+
+`anpan_repeated_measures()` performs the standard anpan filtering on all samples, then uses the subject-sample map to compute the proportion of samples with the bug. This gives a gene _proportion_ matrix (instead of a presence/absence matrix) which is then passed to `anpan_batch(..., filtering_method = "none", discretize_inputs = FALSE)`.
+
+If you have a dataset where multiple samples come from the same individual, running a PGLMM on all the samples without accounting for this will return a strong, spurious signal because samples from the same individual will (usually) be right next to each other on the tree and all show the same outcome value. `anpan_subjectwise_pglmm()` aggregates samples by subject to derive a subject-wise correlation matrix, then runs a PGLMM on that.
+
+Both of these functions aggregate covariate/outcome metadata by subject when applicable. Numerical covariates are averaged, while character, logical, and factor covariates are tabulated, with the most common value selected as the representative. Ties can be re-ordered with factor levels.
 
 ## Estimating phylogenies from gene matrices
 
@@ -852,7 +863,7 @@ gene_tree = gene_pres_abs_matrix |>
   ape::fastme.bal() # or ape::nj() or ape::bionj()
 ```
 
-This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
+This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
 
 The method in the code block above can sometimes yield trees that in turn yield correlation matrices that are not positive definite. If that happens, another method to try is to subset the raw abundance data to samples where the bug is present, then build the tree from those raw values:
 
@@ -918,7 +929,7 @@ The details of finding which theme/aes parameters that are needed for additional
 
 ## Configuring parallelization and progress reporting
 
-anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code my display progress" and the configuration of the parallelization and progress reporting is left to the user's preference. 
+anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code might display progress". The user can configure the parallelization plan and progress reporting to their preference. 
 
 ### `furrr`
 
@@ -940,16 +951,15 @@ anpan_pglmm_batch(...,
 
 This is sequential over bugs but parallelizes the 4 MCMC chains for each model and parallelizes the loo calculations over iterations. However depending on the ratio of MCMC time to loo time (and the amount of memory you have available), it might be faster to use a non-nested future topology and simply parallelize over bugs.
 
-There are many future configuration methods that I haven't tried e.g. `future.batchtools::batchtools_slurm()`, so let me know how it goes if you try them out.
+There are many future configuration methods that I haven't tried (e.g. `future.batchtools::batchtools_slurm()`), so let me know how it goes if you try out something exotic.
 
 ### `progressr`
 
 Turning on all global progress reporting is done with this command:
 
 ```{r eval = FALSE}
-handlers(global=TRUE)
+handlers(global = TRUE)
 ```
-
 
 From there, you can set up additional handlers to customize the progress reporting. My favorite is:
 
@@ -964,9 +974,9 @@ There are also some that are more exciting:
 
 ```{r eval = FALSE}
 # let's do the fork in the garbage disposal!
-handlers(handler_beepr(initiate = NA,
-                       update = 1,
-                       finish = NA,
+handlers(handler_beepr(initiate      = NA,
+                       update        = 1,
+                       finish        = NA,
                        intrusiveness = 1)) 
 ```
 
