@@ -197,7 +197,7 @@ filter_gf = function(gf,
                      covariates = NULL,
                      outcome = NULL,
                      genomes_file = NULL,
-                     discard_absent_samples = TRUE,
+                     discard_poorly_covered_samples = TRUE,
                      save_filter_stats = FALSE,
                      filter_stats_dir = NULL,
                      plot_ext = "pdf",
@@ -267,11 +267,12 @@ initial_prevalence_filter = function(gf,
   if (verbose) message(paste0("* Initial prevalence filter dropped ", n_start - n_end, " genes out of ", n_start, " present in the input file."))
   initial_prev_filter = file.path(filter_stats_dir, "initial_prevalence_filter.tsv.gz")
   drop_df = data.table(bug = bug_name,
-                       n_dropped_initial_prevalence_filter = n_start - n_end) # TODO write out to file
-  if (!file.exists(initial_prev_filter)) {
+                       n_dropped_initial_prevalence_filter = n_start - n_end)
+
+  if (!is.null(filter_stats_dir) && !file.exists(initial_prev_filter)) {
     write_tsv_no_progress(drop_df,
                      file = initial_prev_filter)
-  } else {
+  } else if (!is.null(filter_stats_dir)) {
     write_tsv_no_progress(drop_df,
                      file = initial_prev_filter, append = TRUE)
   }
@@ -311,18 +312,21 @@ final_prevalence_filter = function(filtered_gf,
 
   if (any(!to_check$varies_enough)) {
     n_drop = nrow(to_check[!(varies_enough)])
-    if (verbose) message(paste0("* Final prevalence filter dropped ", n_drop, " genes."))
-    final_filter_file = file.path(filter_stats_dir, "final_prevalence_filter.tsv.gz")
-    if (!file.exists(final_filter_file)) {
-      write_tsv_no_progress(data.table(bug_name = bn,
-                                  n_dropped = n_drop),
-                       file = final_filter_file)
 
-    } else {
+    if (verbose) message(paste0("* Final prevalence filter dropped ", n_drop, " genes."))
+
+    final_filter_file = file.path(filter_stats_dir, "final_prevalence_filter.tsv.gz")
+
+    if (!is.null(filter_stats_dir) && !file.exists(final_filter_file)) {
       write_tsv_no_progress(data.table(bug_name = bn,
-                                  n_dropped = n_drop),
-                       file = final_filter_file,
-                       append = TRUE)
+                                       n_dropped = n_drop),
+                            file = final_filter_file)
+
+    } else if (!is.null(filter_stats_dir)){
+      write_tsv_no_progress(data.table(bug_name = bn,
+                                       n_dropped = n_drop),
+                            file = final_filter_file,
+                            append = TRUE)
     }
   }
 
@@ -335,9 +339,7 @@ final_prevalence_filter = function(filtered_gf,
 #' @inheritParams anpan
 #' @param minmax_thresh genes must have at least this many (or N - this many)
 #'   non-zero observations or else be discarded
-#' @param discard_absent_samples Discard samples that are labelled as missing
-#'   the bug according to the filtering strategy (otherwise keep them as
-#'   observations of absence)
+#' @param discard_poorly_covered_samples logical indicating whether to discard samples where the genes of a bug are poorly covered
 #' @param pivot_wide logical indicating whether to return data in wide format
 #' @param filtering_method either "kmeans" or "none"
 #' @param filter_stats_dir directory to save filtering statistics to
@@ -351,7 +353,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                            genomes_file = NULL,
                            filtering_method = "kmeans",
                            discretize_inputs = TRUE,
-                           discard_absent_samples = TRUE,
+                           discard_poorly_covered_samples = TRUE,
                            save_filter_stats = TRUE,
                            filter_stats_dir = NULL,
                            plot_ext = "pdf",
@@ -371,6 +373,8 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   }
 
   bug_name = get_bug_name(bug_file)
+
+  if (verbose) message(paste0("* Reading " , bug_file))
 
   gf = read_bug(bug_file, meta = metadata)
 
@@ -417,12 +421,12 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                           bug_name          = bug_name)
 
   if (filtering_method != "none") { # TODO separate these four blocks out to a distinct function
-    sample_labels = unique(filtered_gf[,.(sample_id, bug_present = in_right)])
-    n_absent = sum(!sample_labels$bug_present)
+    sample_labels = unique(filtered_gf[,.(sample_id, bug_well_covered = in_right)])
+    n_poorly_covered = sum(!sample_labels$bug_well_covered)
   }
 
-  if (verbose && filtering_method != "none" && n_absent > 0) {
-    message(paste0("* ", n_absent, " samples out of ", nrow(sample_labels), " were determined to not have ", bug_name, " present."))
+  if (verbose && filtering_method != "none" && n_poorly_covered > 0) {
+    message(paste0("* ", n_poorly_covered, " samples out of ", nrow(sample_labels), " had poor coverage of the genes of ", bug_name))
   }
 
   if (save_filter_stats && filtering_method != "none") {
@@ -430,9 +434,9 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
                           file = file.path(filter_stats_dir, 'labels', paste0('sample_labels_', bug_name, '.tsv.gz')))
   }
 
-  if (discard_absent_samples && filtering_method != "none") {
+  if (discard_poorly_covered_samples && filtering_method != "none") {
     filtered_gf = filtered_gf[(in_right)]
-    if (n_absent != 0 & verbose) message("* Samples with no ", bug_name, " discarded.")
+    if (n_poorly_covered != 0 & verbose) message("* Samples with ", bug_name, " poorly covered have been discarded.")
   }
 
   # third filter: final prevalence filter -----------------------------------
@@ -561,7 +565,7 @@ filter_batch = function(bug_dir, meta_file,
                         outcome = NULL,
                         filtering_method = "kmeans",
                         discretize_inputs = TRUE,
-                        discard_absent_samples = TRUE,
+                        discard_poorly_covered_samples = TRUE,
                         omit_na = FALSE,
                         plot_ext = "pdf",
                         verbose = TRUE) {
@@ -606,7 +610,7 @@ filter_batch = function(bug_dir, meta_file,
                                                                  outcome = outcome,
                                                                  filtering_method = filtering_method,
                                                                  discretize_inputs = discretize_inputs,
-                                                                 discard_absent_samples = discard_absent_samples,
+                                                                 discard_poorly_covered_samples = discard_poorly_covered_samples,
                                                                  save_filter_stats = TRUE,
                                                                  filter_stats_dir = filter_stats_dir,
                                                                  plot_ext = plot_ext,

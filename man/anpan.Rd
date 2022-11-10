@@ -18,7 +18,7 @@ anpan(
   discretize_inputs = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
-  discard_absent_samples = TRUE,
+  discard_poorly_covered_samples = TRUE,
   plot_ext = "png",
   save_filter_stats = TRUE,
   verbose = TRUE,
@@ -56,15 +56,14 @@ model_type = "horseshoe".}
 \item{save_fit}{logical indicating whether to save horseshoe fit objects. Only used when
 model_type = "horseshoe".}
 
-\item{discard_absent_samples}{logical indicating whether to discard samples when a bug is
-labelled as completely absent}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 
 \item{save_filter_stats}{logical indicating whether to save filter statistics}
 
 \item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }
 \description{
-Run the anpan model on a single bug
+Run the anpan gene model on a single bug
 }
 \details{
 The specified metadata file must contain columns matching "sample_id" and the specified

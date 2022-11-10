@@ -14,7 +14,7 @@ anpan_repeated_measures(
   outcome = "crc",
   omit_na = FALSE,
   filtering_method = "kmeans",
-  discard_absent_samples = TRUE,
+  discard_poorly_covered_samples = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
   annotation_file = NULL,
@@ -48,8 +48,7 @@ anpan_repeated_measures(
 
 \item{filtering_method}{method to use for filtering samples. Either "kmeans" or "none"}
 
-\item{discard_absent_samples}{logical indicating whether to discard samples
-when a bug is labelled as completely absent}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
 model_type = "horseshoe".}

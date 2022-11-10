@@ -14,7 +14,7 @@ filter_batch(
   outcome = NULL,
   filtering_method = "kmeans",
   discretize_inputs = TRUE,
-  discard_absent_samples = TRUE,
+  discard_poorly_covered_samples = TRUE,
   omit_na = FALSE,
   plot_ext = "pdf",
   verbose = TRUE
@@ -41,9 +41,7 @@ non-zero observations or else be discarded}
 \item{discretize_inputs}{logical indicating whether to discretize the input abundance
 measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function}
 
-\item{discard_absent_samples}{Discard samples that are labelled as missing
-the bug according to the filtering strategy (otherwise keep them as
-observations of absence)}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 

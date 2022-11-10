@@ -39,8 +39,8 @@ plot_lines = function(bug_file = NULL,
   }
 
   plot_df = fgf[is.finite(labd)][order(-labd)][, i := 1:(nrow(.SD)), by = sample_id][] |>
-    dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
-                                       levels = c("present", "absent")))
+    dplyr::mutate(labelled_as = factor(c('poorly covered', 'well covered')[in_right + 1],
+                                       levels = c("well covered", "poorly covered")))
 
   if (subset_line != 0) {
     plot_df = plot_df[,.SD[unique(floor(seq(1, nrow(.SD), length.out = subset_line)))], by = sample_id]
@@ -61,7 +61,7 @@ plot_lines = function(bug_file = NULL,
   if (!is.null(plot_dir)) {
     ggsave(p,
            filename = file.path(plot_dir, paste0(bug_name, "_labelled_lines.", plot_ext)),
-           width = 8, height = 7)
+           width = 6, height = 4)
   }
 
   p
@@ -106,7 +106,7 @@ plot_kmeans_dots = function(samp_stats,
                              hjust = -.02,
                              label = "Mean genome size",
                              color = "#E41A1C")
-    caption_str = paste0(genomes_stats$flipped, " samples marked absent by genome size threshold")
+    caption_str = paste0(genomes_stats$flipped, " samples marked poorly covered by genome size threshold")
   } else {
     lt_geom = NULL
     lt_annotate = NULL
@@ -116,8 +116,8 @@ plot_kmeans_dots = function(samp_stats,
   }
 
   p = na_omit_samp_stats |>
-    dplyr::mutate(labelled_as = factor(c('absent', 'present')[in_right + 1],
-                                       levels = c("present", "absent"))) |>
+    dplyr::mutate(labelled_as = factor(c('poorly covered', 'well covered')[in_right + 1],
+                                       levels = c("well covered", "poorly covered"))) |>
     ggplot(aes(n_nz, q50)) +
     lt_geom +
     mean_geom +
@@ -127,8 +127,9 @@ plot_kmeans_dots = function(samp_stats,
     scale_x +
     mean_annotate +
     lt_annotate +
-    labs(title = paste0(bug_name, " - labelled by kmeans"),
+    labs(title = bug_name,
          x = "Number of non-zero observations",
+         subtitle = "labelled by kmeans",
          y = 'Median log abundance',
          color = NULL,
          caption = caption_str) +
@@ -829,6 +830,10 @@ plot_outcome_tree = function(tree_file,
           panel.background = element_blank(),
           panel.grid = element_blank())
 
+  if (nrow(terminal_seg_df) > 150) {
+    p$layers[[1]]$aes_params$size = .25
+  }
+
   if (return_tree_df) {
     return(list(tree_plot = p,
                 seg_df = seg_df,
@@ -898,6 +903,10 @@ plot_tree_with_post = function(tree_file,
           panel.grid.minor.x = element_blank()) +
     labs(y = "phylo_effect posterior",
          x = NULL)
+
+  if (nrow(tree_plot$terminal_seg_df) > 150) {
+    post_plot$layers[[2]]$aes_params$size = .25
+  }
 
   p = (tree_plot$tree_plot + theme(axis.text.x = element_blank())) / post_plot + plot_layout(heights = c(2,1))
 
@@ -1036,6 +1045,10 @@ plot_tree_with_post_pred = function(tree_file,
                                        size = 3),
             panel.grid = element_blank(),
             panel.background = element_blank())
+
+    if (nrow(yrep_df) > 150) {
+      yrep_plot$layers[[2]]$aes_params$size = .25
+    }
 
   }
 

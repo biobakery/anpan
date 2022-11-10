@@ -205,7 +205,7 @@ fit_horseshoe = function(model_input,
 
 #' Run anpan
 #'
-#' @description Run the anpan model on a single bug
+#' @description Run the anpan gene model on a single bug
 #' @param bug_file path to a gene family file (usually probably from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
@@ -219,8 +219,7 @@ fit_horseshoe = function(model_input,
 #'   model_type = "horseshoe".
 #' @param save_fit logical indicating whether to save horseshoe fit objects. Only used when
 #'   model_type = "horseshoe".
-#' @param discard_absent_samples logical indicating whether to discard samples when a bug is
-#'   labelled as completely absent
+#' @param discard_poorly_covered_samples logical indicating whether to discard samples where the genes of a bug are poorly covered
 #' @param omit_na logical indicating whether to omit incomplete cases of the metadata
 #' @param filtering_method method to use for filtering samples. Either "kmeans" or "none"
 #' @param discretize_inputs logical indicating whether to discretize the input abundance
@@ -253,7 +252,7 @@ anpan = function(bug_file,
                  discretize_inputs = TRUE,
                  skip_large = TRUE,
                  save_fit = TRUE,
-                 discard_absent_samples = TRUE,
+                 discard_poorly_covered_samples = TRUE,
                  plot_ext = "png",
                  save_filter_stats = TRUE,
                  verbose = TRUE,
@@ -351,7 +350,7 @@ anpan = function(bug_file,
                                   genomes_file           = genomes_file,
                                   filtering_method       = filtering_method,
                                   discretize_inputs      = discretize_inputs,
-                                  discard_absent_samples = discard_absent_samples,
+                                  discard_poorly_covered_samples = discard_poorly_covered_samples,
                                   save_filter_stats      = save_filter_stats,
                                   filter_stats_dir       = filter_stats_dir,
                                   plot_ext               = plot_ext,
@@ -444,8 +443,7 @@ safely_anpan = purrr::safely(anpan)
 #' @param covariates character vector of covariates to include in the model
 #' @param prefiltered_dir an optional directory to pre-filtered data from an
 #'   earlier run to skip the filtering step
-#' @param discard_absent_samples logical indicating whether to discard samples
-#'   when a bug is labelled as completely absent
+#' @param discard_poorly_covered_samples logical indicating whether to discard samples where the genes of a bug are poorly covered
 #' @param annotation_file a path to a file giving annotations for each gene
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
 #' @details \code{bug_dir} should be a directory of gene (or SNV or pathway)
@@ -469,7 +467,7 @@ anpan_batch = function(bug_dir,
                        omit_na = FALSE,
                        filtering_method = "kmeans",
                        discretize_inputs = TRUE,
-                       discard_absent_samples = TRUE,
+                       discard_poorly_covered_samples = TRUE,
                        skip_large = TRUE,
                        save_fit = TRUE,
                        annotation_file = NULL,
@@ -553,7 +551,7 @@ anpan_batch = function(bug_dir,
                                                  save_fit = save_fit,
                                                  filtering_method = filtering_method,
                                                  discretize_inputs = discretize_inputs,
-                                                 discard_absent_samples = discard_absent_samples,
+                                                 discard_poorly_covered_samples = discard_poorly_covered_samples,
                                                  covariates = covariates,
                                                  outcome = outcome,
                                                  omit_na = omit_na,
@@ -684,16 +682,16 @@ aggregate_by_subject = function(filtered_sample_file,
     melt(id.vars = c(covariates, outcome, "sample_id"),
          variable.name = "gene", value.name = "present")
 
-  subject_sample_map[, bug_present := sample_id %in% sample_df$sample_id]
+  subject_sample_map[, bug_well_covered := sample_id %in% sample_df$sample_id]
   subject_sample_map[, n_samples := .N, by = subject_id]
 
   joined = merge(subject_sample_map,
         sample_df, by = "sample_id",
         all = TRUE)
 
-  joined$present[!joined$bug_present] = FALSE
+  joined$present[!joined$bug_well_covered] = FALSE
 
-  prop_df = joined[, .(present_prop = sum(bug_present & present) / n_samples[1]), by = c("subject_id", "gene")][!is.na(gene)] |>
+  prop_df = joined[, .(present_prop = sum(bug_well_covered & present) / n_samples[1]), by = c("subject_id", "gene")][!is.na(gene)] |>
     dcast(subject_id ~ gene, value.var = "present_prop")
 
   select_cols = c(covariates, outcome, "sample_id")
@@ -765,7 +763,7 @@ anpan_repeated_measures = function(subject_sample_map,
                                    outcome = "crc",
                                    omit_na = FALSE,
                                    filtering_method = "kmeans",
-                                   discard_absent_samples = TRUE,
+                                   discard_poorly_covered_samples = TRUE,
                                    skip_large = TRUE,
                                    save_fit = TRUE,
                                    annotation_file = NULL,

@@ -16,7 +16,7 @@ anpan_batch(
   omit_na = FALSE,
   filtering_method = "kmeans",
   discretize_inputs = TRUE,
-  discard_absent_samples = TRUE,
+  discard_poorly_covered_samples = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
   annotation_file = NULL,
@@ -56,8 +56,7 @@ earlier run to skip the filtering step}
 \item{discretize_inputs}{logical indicating whether to discretize the input abundance
 measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function}
 
-\item{discard_absent_samples}{logical indicating whether to discard samples
-when a bug is labelled as completely absent}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
 model_type = "horseshoe".}
