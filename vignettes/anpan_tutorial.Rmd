@@ -656,18 +656,18 @@ The relevant functions to fit the model are `anpan_pwy_ranef()` and `anpan_pwy_r
 
 A few notes on this model:
 
-* Because we're working with log abundances, zeros are discarded. (side note: we once tried a censored model that didn't discard zeros but instead modeled them as unknown low values. It added a lot of complexity and made no practical difference in the results unfortunately.)
+* Because we're working with log abundances, zeros are discarded. (side note: we once tried a censored model that didn't discard zeros but instead modeled them as unknown low values. It added a lot of complexity and made no practical difference in the results.)
 * The relationship between species abundance and pathway abundance is measured globally using data from all pathways in the bug.
 * each pathway has its own intercept (that's the `(1|pwy)` term), but these intercepts are partially pooled across pathways
   * These terms come from a $Normal(0, \sigma_{int})$ distribution. The prior on $\sigma_{int}$ is a $t_{5, 0, 2.5}$ distribution
 * each pathway has its own group effect (that's the `(0+group|pwy)` term). These are also pooled across pathways, but they are independent of the pathway intercepts
   * These terms come from a $Normal(0, \sigma_{effects})$ distribution. The prior on $\sigma_{effects}$ is a relatively aggressive $exponential(3)$ distribution.
 * There are some additional weak priors on several parameters. The best place to inspect these in the model code itself in the installation folder `anpan/stan/pwy_ranef.stan`
-    * If you don't know where this file is located on your system, you can use `system.file('stan', 'pwy_ranef.stan', package = 'anpan')` to find it
+    * If you don't know where this file is located on your system, you can use `system.file('stan', 'pwy_ranef.stan', package = 'anpan')` to find it.
 
 ## Simulate data
 
-In this section we'll simulate pathway level data. For the sake of simplicity we'll simulate only 6 pathways, though many bugs usually have sufficient data for a dozen or more. Throughout this section we'll include "log10" in the name of some variables because that's how they'll be calculated in practice (by taking logarithms of real abundance measurments), even though we're not calculating any logarithms here.
+In this section we'll simulate pathway level data. For the sake of simplicity we'll simulate only 6 pathways, though many bugs usually have sufficient data for a dozen or more. Throughout this section we'll include "log10_" in the name of some variables because that's how they'll be calculated in practice (by taking logarithms of real abundance measurments), even though we're not calculating any logarithms here.
 
 First we generate the log10 species abundance with a simple call to `rnorm(n)`:
 
@@ -684,7 +684,7 @@ species_abd_df = data.table(log10_species_abd = rnorm(n),
                             sample_id         = paste0("sample", 1:n))
 ```
 
-Here we generate the true effects of the pathway intercepts/effects. We apply a true pathway effect of +/- 0.5 to the first two pathways (these will be the effects we try to detect) and 0 to everything else.
+Here we generate the true effects of the pathway intercepts/effects. We apply a true pathway effect of +/-0.5 to the first two pathways (these will be the effects we try to detect) and 0 to everything else.
 
 ```{r}
 pwy_true_params = data.table(pwy              = paste0("pwy", 1:n_pwy),
@@ -698,9 +698,12 @@ pwy_true_params
 Then we generate the log pathway abundances. Some things to note:
 
 * We subtract 3 from the lo10_pwy_abd mean as a global intercept just because real pathway abundance measurements are usually pretty low
-* We put a 0.85 global slope on the linear relationship between pathway abundance and species abundance. This implies that the pathway is less efficiently detectable than the species itself.
-* The true pathway effects only get applied to the cases in the last line
-
+* We put a 0.85 global slope on the linear relationship between pathway abundance and species abundance. This implies that the pathways in the species aren't detected as efficiently as the species itself.
+* The true pathway effects get applied to the cases in the last line. After `mean = `, the four terms in the sum are the four components of the linear predictor in the model, i.e. 
+  * the global intercept (-3)
+  * the global $log10_pwy ~ log10_species$ relationship (0.85)
+  * the pathway level intercepts 
+  * the pathway effects applied to cases
 
 ```{r}
 pwy_grid = expand.grid(sample_id = paste0("sample", 1:n),
@@ -734,7 +737,6 @@ bug_pwy_dat |>
 ```
 
 By chance the positive effect in the first pathway is fairly visually obvious. The negative effect in pwy2 is a bit harder to see. We'll see how well the model can detect these effects in the next section. 
-
 
 ## Fit the pathway model
 
