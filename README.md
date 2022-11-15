@@ -141,7 +141,7 @@ found in the vignette `vignette("anpan_tutorial", package = 'anpan')`.
 > I’m having installation issues, what’s wrong?
 
 There’s more to the installation than the `install_github()` command.
-Please ensure that you’ve read the [Installation](#installation) section
+Please ensure that you’ve read the [Dependencies](#dependencies) section
 fully. The relatively unusual installation steps are:
 
 - Installing `cmdstanr` from the Stan website

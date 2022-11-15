@@ -125,7 +125,7 @@ Detailed explanation and interpretation of all three model types can be found in
 
 > I'm having installation issues, what's wrong?
 
-There's more to the installation than the `install_github()` command. Please ensure that you've read the [Installation] section fully. The relatively unusual installation steps are:
+There's more to the installation than the `install_github()` command. Please ensure that you've read the [Dependencies] section fully. The relatively unusual installation steps are:
 
 * Installing `cmdstanr` from the Stan website
 * Using `cmdstanr` to install CmdStan
