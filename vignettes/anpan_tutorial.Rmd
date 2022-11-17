@@ -588,9 +588,9 @@ head(anpan_res)
 
 Before interpreting the model results, it's important to ensure that the filtering step didn't go awry. `anpan()` calls the function `read_and_filter()` internally, which applies:
 
-* an initial prevalence filter to genes 
+* an initial prevalence filter to genes (must be >5 & <(N-5) positives per group for the gene)
 * a sample filter to remove samples where the species in question is absent
-* and then a final prevalence filter to remove any marginal genes that don't pass the prevalence filter 
+* and then a final prevalence filter to remove any marginal genes that became almost constant during the sample filter 
 
 The outputs of the filtering step goes into the `filter_stats/` directory inside the specified `out_dir`. The final filtered data (which is the input to the modeling step) is in `filter_stats/filtered_*.tsv.gz` where * represents the bug name. The `filter_stats/labels/` directory contains the calls of which samples contained the bug. The `filter_stats/plots/` directory contains diagnostic plots from the filtering step. For a given bug, there are two plots to inspect: the gene profile lines plot and the k-means filtering dot plot. We'll look at the dot plot first:
 
@@ -701,7 +701,7 @@ Then we generate the log pathway abundances. Some things to note:
 * We put a 0.85 global slope on the linear relationship between pathway abundance and species abundance. This implies that the pathways in the species aren't detected as efficiently as the species itself.
 * The true pathway effects get applied to the cases in the last line. After `mean = `, the four terms in the sum are the four components of the linear predictor in the model, i.e. 
   * the global intercept (-3)
-  * the global $log10_pwy ~ log10_species$ relationship (0.85)
+  * the global `log10_pwy ~ log10_species` relationship (0.85)
   * the pathway level intercepts 
   * the pathway effects applied to cases
 
@@ -862,7 +862,7 @@ If you don't have a phylogeny for your data, you can get a very rough estimate i
 ```{r eval = FALSE}
 gene_tree = gene_pres_abs_matrix |> 
   vegan::vegdist(method = "jaccard") |> 
-  ape::fastme.bal() # or ape::nj() or ape::bionj()
+  ape::nj() # or ape::fastme.bal() or ape::bionj()
 ```
 
 This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
@@ -886,7 +886,7 @@ labd_mat = log(abd_mat)
 
 labd_phylo = labd_mat |> 
   dist(method = "euclidean") |> 
-  ape::fastme.bal() |> 
+  ape::nj() |> 
   ape::ladderize()
 ```
 
