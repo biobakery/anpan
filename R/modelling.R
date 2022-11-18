@@ -667,7 +667,7 @@ anpan_batch = function(bug_dir,
     if (any(hit_prop_df$prop_global > .01) || any(hit_prop_df$prop_bug > .01)) {
       warning_msg = paste0("The bug(s) listed below (and in warnings.txt) had more than 1% of their genes exhibit an association with an FDR q-value below ",
                            qt,
-                           " (either bug-wise or globally). This may indicate that there is some phylogenetic structure within the species confounded with the outcome. This might show up visually as large blocks on the results plot. You can try evaluating a PGLMM with anpan_pglmm() to quantify the phylogenetic signal. If you don't have a phylogeny for the species, see the \"Estimating phylogenies from gene matrices\" section of the vignette.\n") |>
+                           " (either bug-wise or globally). This may indicate that there is some phylogenetic structure within the species confounded with the outcome. This might show up visually as large blocks on the results plot. You can try evaluating a PGLMM with anpan_pglmm() (or anpan_pglmm_batch()) to quantify the phylogenetic signal. If you don't have a phylogeny for the species, see the \"Estimating phylogenies from gene matrices\" section of the vignette.\n") |>
         strwrap(initial = '\n    ') |>
         paste(collapse = "\n") |>
         paste(paste(capture.output(hit_prop_df[prop_global > .01 | prop_bug > .01]),
