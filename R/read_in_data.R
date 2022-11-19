@@ -53,6 +53,14 @@ read_bug = function(bug_file, meta = NULL,
 
   names(gf)[1] = "gene"
 
+  col_classes = gf |> sapply(class)
+
+  if (any(col_classes[-1] != "numeric")) {
+    for (i in (which(col_classes[-1] != "numeric") + 1)) {
+      gf[[i]] = as.numeric(gf[[i]])
+    }
+  }
+
   gf$gene = gsub("\\|(.*)", "", gf$gene)
   # ^ This removes the |species_id part of the identifier to make it easier to read
 

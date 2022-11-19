@@ -18,6 +18,14 @@ get_samp_stats_large = function(gf_file) {
       dplyr::select_all(~gsub("_Abundance-RPKs", "", .))
 
     names(gf)[1] = "gene"
+    col_classes = gf |> sapply(class)
+
+    if (any(col_classes[-1] != "numeric")) {
+      for (i in (which(col_classes[-1] != "numeric") + 1)) {
+        gf[[i]] = as.numeric(gf[[i]])
+      }
+    }
+
     gf = gf[, c("u", "s") := tstrsplit(gene, split = "\\|")][,-"gene"] |>
       dplyr::relocate(u, s)
 
