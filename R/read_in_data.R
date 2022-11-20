@@ -41,12 +41,7 @@ read_meta = function(meta_file,
 read_bug = function(bug_file, meta = NULL,
                     remove_pattern = "_Abundance-RPKs") {
 
-  nc = strsplit(readLines(bug_file,
-                          n = 1), '\t')[[1]] |>
-    length()
-
   gf = fread(bug_file,
-             colClasses = list(character = 1, numeric = 2:nc),
              showProgress = FALSE,
              header = TRUE) |>
     dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
