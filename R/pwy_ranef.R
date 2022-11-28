@@ -12,7 +12,7 @@
 #'   The group_ind column should be numeric with values in {0,1}
 #'
 #'   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
-#'   column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
+#'   column is defined by selecting the bug:pwy combinations where 1) 98\% posterior intervals for
 #'   the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
 #'   size threshold, and 3) the estimated fixed effect of log10_species_abd on log10_pwy_abd is positive.
 #' @param bug_pwy_dat a data frame with a row for each observation and columns "pwy",
@@ -20,6 +20,7 @@
 #'   \code{group_ind} argument
 #' @param group_ind a character giving the name of the column for the 0/1 group indicator variable
 #'   in \code{bug_pwy_dat}
+#' @param group_exp_rate rate parameter of the exponential distribution prior on group effects
 #' @param effect_size_threshold effect size threshold for hit-calling pathway:group effects
 #' @param ... other arguments to pass to cmdstanr::sample()
 #' @returns a list containing the CmdStanMCMC object of the model fit and a summary data frame.
@@ -28,6 +29,7 @@
 anpan_pwy_ranef = function(bug_pwy_dat,
                            group_ind = "crc",
                            effect_size_threshold = log10(1.5),
+                           group_exp_rate = 3,
                            ...) {
 
   if (!all(c("pwy", "log10_species_abd", "log10_pwy_abd", group_ind) %in% names(bug_pwy_dat))) {
@@ -51,7 +53,8 @@ anpan_pwy_ranef = function(bug_pwy_dat,
                    intercept_species = model.matrix(~log10_species_abd, data = bug_pwy_dat),
                    N_pwy = dplyr::n_distinct(bug_pwy_dat$pwy),
                    pwy_ind = as.integer(factor(bug_pwy_dat$pwy)),
-                   group_ind = bug_pwy_dat[[group_ind]])
+                   group_ind = bug_pwy_dat[[group_ind]],
+                   group_exp_rate = group_exp_rate)
 
   pwy_ind_map = tibble(index = 1:data_list$N_pwy,
                        pwy_group_effect = paste("pwy_effects[", index, "]", sep = ""),
@@ -125,6 +128,7 @@ safely_anpan_pwy_ranef = purrr::safely(anpan_pwy_ranef)
 anpan_pwy_ranef_batch = function(bug_pwy_dat,
                                  group_ind = "crc",
                                  out_dir = NULL,
+                                 group_exp_rate = 3,
                                  ...) {
 
   if (!all(c("bug", "pwy", "log10_species_abd", "log10_pwy_abd", group_ind) %in% names(bug_pwy_dat))) {
@@ -157,6 +161,7 @@ anpan_pwy_ranef_batch = function(bug_pwy_dat,
   res = split(x = bug_pwy_dat, by = "bug") |>
     furrr::future_imap(function(.x, .y) {bug_res = safely_anpan_pwy_ranef(bug_pwy_dat = .x,
                                                                           group_ind = group_ind,
+                                                                          group_exp_rate = group_exp_rate,
                                                                           ...)
                                          p()
                                          if (is.null(bug_res$error)) {

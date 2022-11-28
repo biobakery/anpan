@@ -8,6 +8,7 @@ anpan_pwy_ranef(
   bug_pwy_dat,
   group_ind = "crc",
   effect_size_threshold = log10(1.5),
+  group_exp_rate = 3,
   ...
 )
 }
@@ -20,6 +21,8 @@ anpan_pwy_ranef(
 in \code{bug_pwy_dat}}
 
 \item{effect_size_threshold}{effect size threshold for hit-calling pathway:group effects}
+
+\item{group_exp_rate}{rate parameter of the exponential distribution prior on group effects}
 
 \item{...}{other arguments to pass to cmdstanr::sample()}
 }
@@ -42,7 +45,7 @@ The priors are as follows: A) student_t(3, mean(log10_pwy_abd), 2.5) on the inte
   The group_ind column should be numeric with values in {0,1}
 
   The main parameter of interest are the elements of the  \code{pwy_effects} parameter. The "hit"
-  column is defined by selecting the bug:pwy combinations where 1) 98% posterior intervals for
+  column is defined by selecting the bug:pwy combinations where 1) 98\% posterior intervals for
   the pwy:group effect exclude 0, 2) the absolute posterior mean exceeds the specified effect
   size threshold, and 3) the estimated fixed effect of log10_species_abd on log10_pwy_abd is positive.
 }

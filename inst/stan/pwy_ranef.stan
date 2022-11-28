@@ -6,6 +6,7 @@ data {
   int<lower=1> N_pwy;
   array[N] int<lower=1, upper = N_pwy> pwy_ind;
   array[N] int<lower=0, upper = 1> group_ind; // 0 = ctl, 1 = case
+  real<lower=0> group_exp_rate;
 }
 transformed data {
   matrix[N, 1] centered_species_abd;
@@ -42,7 +43,7 @@ transformed parameters {
 
   // half std_normal on case effects
   // lprior += normal_lpdf(sd_pwy_effects | 0, .333) - 1 * normal_lccdf(0 | 0, .333);
-  lprior += exponential_lpdf(sd_pwy_effects | 3);
+  lprior += exponential_lpdf(sd_pwy_effects | group_exp_rate);
   // lprior += gamma_lpdf(sd_pwy_effects | .5, 1);
 
 }

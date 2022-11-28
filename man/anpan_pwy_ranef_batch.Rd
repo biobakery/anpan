@@ -4,7 +4,13 @@
 \alias{anpan_pwy_ranef_batch}
 \title{Fit the pathway random effects model for multiple bugs}
 \usage{
-anpan_pwy_ranef_batch(bug_pwy_dat, group_ind = "crc", out_dir = NULL, ...)
+anpan_pwy_ranef_batch(
+  bug_pwy_dat,
+  group_ind = "crc",
+  out_dir = NULL,
+  group_exp_rate = 3,
+  ...
+)
 }
 \arguments{
 \item{bug_pwy_dat}{a data frame with a row for each observation and columns "pwy",
@@ -15,6 +21,8 @@ anpan_pwy_ranef_batch(bug_pwy_dat, group_ind = "crc", out_dir = NULL, ...)
 in \code{bug_pwy_dat}}
 
 \item{out_dir}{output directory}
+
+\item{group_exp_rate}{rate parameter of the exponential distribution prior on group effects}
 
 \item{...}{other arguments to pass to cmdstanr::sample()}
 }
