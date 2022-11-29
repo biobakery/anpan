@@ -86,29 +86,29 @@ overfitting.}
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
 \value{
-a data frame for each file in input directory that fit successfully.
-  Columns give the PGLMM results, "base" model results, and loo comparisons
-  in list columns.
+a data frame for each file in input directory that fit successfully. Columns give the
+  number of leaves on the tree, diagnostic values, loo comparison values, formatted input data,
+  correlation matrices, PGLMM and "base" model fits, and loo objects (in list columns where
+  appropriate).
 }
 \description{
-This function fits phylogenetic generalized linear mixed models
-  on a batch of tree files, using the same outcome and covariate arguments.
+This function fits phylogenetic generalized linear mixed models on a batch of tree
+  files, using the same outcome and covariate arguments.
 }
 \details{
-\code{tree_dir} must contain ONLY tree files readable by
-  ape::read.tree()
+\code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
 
-  If any trees cause an error while fitting, these are saved into a data
-  frame in a file \code{pglmm_errors.RData} in the output directory.
+  If any trees cause an error while fitting, these are saved into a data frame in a file
+  \code{pglmm_errors.RData} in the output directory.
 
-  The Stan model fitting can't be parallelized via futures, so the most
-  effective way to parallelize the model fitting AND the importance weight
-  calculations is a nested future topology (e.g. \code{plan(list(sequential,
-  tweak(multisession, workers = 4)))} ) and set parallel_chains = 4 . This
-  will run sequentially over the trees, running the model fits with parallel
-  chains for each tree, then compute the importance weights in the future
-  multisession for each tree.
+  The Stan model fitting can't be parallelized via futures, so the most effective way to
+  parallelize the model fitting AND the importance weight calculations is a nested future
+  topology (e.g. \code{plan(list(sequential, tweak(multisession, workers = 4)))} ) and set
+  parallel_chains = 4 . This will run sequentially over the trees, running the model fits with
+  parallel chains for each tree, then compute the importance weights in the future multisession
+  for each tree.
 }
 \seealso{
-\code{\link[ape:read.tree]{ape::read.tree}}, \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
+\code{\link[ape:read.tree]{ape::read.tree}},
+  \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
 }

@@ -669,6 +669,7 @@ anpan_pglmm = function(meta_file,
       print(loo::pareto_k_table(pglmm_loo))
     }
   }
+
   if (!is.null(out_dir)) {
     save(model_input, cor_mat,
          file = file.path(out_dir, paste0(bug_name, "_inputs.RData")))
@@ -699,28 +700,28 @@ anpan_pglmm = function(meta_file,
 safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 
 #' Run PGLMMs on a batch of tree files
-#' @description This function fits phylogenetic generalized linear mixed models
-#'   on a batch of tree files, using the same outcome and covariate arguments.
+#' @description This function fits phylogenetic generalized linear mixed models on a batch of tree
+#'   files, using the same outcome and covariate arguments.
 #' @param tree_dir string giving the path to a directory of tree files
 #' @param seed random seed to pass to furrr_options()
-#' @details \code{tree_dir} must contain ONLY tree files readable by
-#'   ape::read.tree()
+#' @details \code{tree_dir} must contain ONLY tree files readable by ape::read.tree()
 #'
-#'   If any trees cause an error while fitting, these are saved into a data
-#'   frame in a file \code{pglmm_errors.RData} in the output directory.
+#'   If any trees cause an error while fitting, these are saved into a data frame in a file
+#'   \code{pglmm_errors.RData} in the output directory.
 #'
-#'   The Stan model fitting can't be parallelized via futures, so the most
-#'   effective way to parallelize the model fitting AND the importance weight
-#'   calculations is a nested future topology (e.g. \code{plan(list(sequential,
-#'   tweak(multisession, workers = 4)))} ) and set parallel_chains = 4 . This
-#'   will run sequentially over the trees, running the model fits with parallel
-#'   chains for each tree, then compute the importance weights in the future
-#'   multisession for each tree.
-#' @returns a data frame for each file in input directory that fit successfully.
-#'   Columns give the PGLMM results, "base" model results, and loo comparisons
-#'   in list columns.
+#'   The Stan model fitting can't be parallelized via futures, so the most effective way to
+#'   parallelize the model fitting AND the importance weight calculations is a nested future
+#'   topology (e.g. \code{plan(list(sequential, tweak(multisession, workers = 4)))} ) and set
+#'   parallel_chains = 4 . This will run sequentially over the trees, running the model fits with
+#'   parallel chains for each tree, then compute the importance weights in the future multisession
+#'   for each tree.
+#' @returns a data frame for each file in input directory that fit successfully. Columns give the
+#'   number of leaves on the tree, diagnostic values, loo comparison values, formatted input data,
+#'   correlation matrices, PGLMM and "base" model fits, and loo objects (in list columns where
+#'   appropriate).
 #' @inheritParams anpan_pglmm
-#' @seealso \code{\link[ape:read.tree]{ape::read.tree}}, \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
+#' @seealso \code{\link[ape:read.tree]{ape::read.tree}},
+#'   \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}
 #' @export
 anpan_pglmm_batch = function(meta_file,
                              tree_dir,
@@ -902,12 +903,12 @@ anpan_pglmm_batch = function(meta_file,
   res_df = dplyr::bind_cols(worked["input_file"],
                             as_tibble(purrr::transpose(worked$result))) |>
     mutate(n                      = purrr::map_int(model_input, nrow),
-           prop_bad_k_diagnostics = purrr::map_dbl(loo, ~mean(.x$pglmm_loo$diagnostics$pareto_k > .7)),
+           prop_bad_pareto_k      = purrr::map_dbl(loo, ~mean(.x$pglmm_loo$diagnostics$pareto_k > .7)),
+           n_divergences          = purrr::map_dbl(pglmm_fit, ~sum(as.matrix(.x$sampler_diagnostics()[,,"divergent__"]))),
            best_model             = gsub("_fit", "", purrr::map_chr(loo, ~rownames(.x$comparison)[1])),
            elpd_diff              = purrr::map_dbl(loo, ~.x$comparison[2,1]),
            elpd_se                = purrr::map_dbl(loo, ~.x$comparison[2,2])) |>
     dplyr::select(input_file, n:elpd_se, model_input:loo)
-
 
   return(res_df)
 
