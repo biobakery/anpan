@@ -315,7 +315,7 @@ Some Pareto k diagnostic values are slightly high. See help('pareto-k-diagnostic
 
 You can see that the MCMC diagnostics all came out well in this case. You'll get a link to the [Stan warnings guide](https://mc-stan.org/misc/warnings.html) if your sampler hits any issues. If you do get convergence issues, the two simplest things to try first are usually setting `adapt_delta` to a higher-than-default value (e.g. 0.95) and increasing the number of iterations with e.g. `iter_warmup = 2000` and `iter_sampling = 2000`. Another common issue is that if you accidentally use `family = "gaussian"` where you meant `family = "binomial"`, you'll get E-BFMI warnings.
 
-In the example above we got one ok (but not good) Pareto k value, which is more-or-less fine. Running more iterations with a higher `adapt_delta` can sometimes help improve this, but for `anpan_pglmm()` the occurrence of bad / very bad Pareto k values are usually more indicative of a dataset problem than a model problem. Low N, correlation matrices that are close to the identity, and/or imbalanced binary outcomes can make it impossible to estimate accurate loo results. The [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#17_What_to_do_if_I_have_many_high_Pareto_(hat{k})%E2%80%99s) has more information. The parameter of interest in a PGLMM is really `sigma_phylo` anyway, so loo results aren't absolutely necessary to assess the impact of the phylogeny on the outcome. If you aren't interested in the model comparison, you can just set `loo_comparison = FALSE` and ignore the issue. 
+In the example above we got one ok (but not good) Pareto k value, which is more-or-less fine. Running more iterations with a higher `adapt_delta` can sometimes help improve this, but for `anpan_pglmm()` the occurrence of bad / very bad Pareto k values are usually more indicative of a dataset problem than a model problem. Low N, correlation matrices that are close to the identity, and/or imbalanced binary outcomes can make it impossible to estimate accurate loo results. The [Cross-validation FAQ](https://avehtari.github.io/modelselection/CV-FAQ.html#17_What_to_do_if_I_have_many_high_Pareto_(hat{k})%E2%80%99s) has more information. The parameter of interest in a PGLMM is really `sigma_phylo` anyway (see next section), so loo results aren't absolutely necessary to assess the impact of the phylogeny on the outcome. If you aren't interested in the model comparison, you can just set `loo_comparison = FALSE` and ignore the issue. 
 
 ### Inspect model fit
 
@@ -342,7 +342,9 @@ post_summary[-c(4:113),] |>
 
 Most of the phylogenetic effects are cut from the plot for the sake of visibility. We can see that the posterior mean for beta[1] (the effect of the covariate) is fairly close to the true value (1), as are the intercept (0) and noise terms (1 and 1). Importantly, the 90% posterior intervals capture the true values.
 
-So we mostly recaptured our simulation parameters, but how well does the model really fit the data overall? We can use `anpan::plot_tree_with_post_pred()` to overlay the posterior predictive distribution for each leaf and show that, if held out, our model's predictions for that point would usually capture the true observation:
+Another thing to note on the above plot is the posterior interval of `sigma_phylo`. This parameter is the estimated marginal "spread" of leaf effects. It's about 1, and clearly quite far from zero. This means that leaf effects are allowed to be quite large, depending on where a leaf is in the tree. If the `sigma_phylo` estimate is near zero, that means leaf effects are all small, meaning the tree structure doesn't explain variation in the outcome well.
+
+So we mostly recaptured our simulation parameters, but how well does the model really fit the data overall? We can use `anpan::plot_tree_with_post_pred()` to overlay the posterior predictive distribution for each leaf and show that the predictive distribution for each observation usually covers the true value:
 
 ```{r out.width = "120%"}
 anpan::plot_tree_with_post_pred(tree_file  = tr,
@@ -353,7 +355,7 @@ anpan::plot_tree_with_post_pred(tree_file  = tr,
                                 labels     = metadata$sample_id,
                                 verbose    = FALSE)
 ```
-So when observations (the colored dots) are held out, the posterior predictive distribution for each leaf (the boxplots) generally capture the true value, showing that our model generally fits the data well.
+So when observations (the colored dots) are held out, the posterior predictive distribution for each leaf (the boxplots) generally capture the true value, showing that our model generally fits the data well. 
 
 What about the posterior on the linear model component? We can visualize that by taking some of the posterior draws (with `cmdstanr::draws()`) of the line (the parameters `beta[1]` and `intercept`) and overlay those onto the `outcome ~ covariate` scatterplot:
 
@@ -423,6 +425,7 @@ In this section we'll obtain a small simulated dataset for a single bug. If you 
 ```{r eval = TRUE}
 meta_path = system.file("extdata", "fake_metadata.tsv", 
                         package = "anpan", mustWork = TRUE)
+
 bug_path  = system.file("extdata", "g__Madeuppy.s__Madeuppy_Fakerii.genefamilies.tsv.gz", 
                         package = "anpan", mustWork = TRUE)
 ```
