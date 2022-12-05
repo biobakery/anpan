@@ -67,7 +67,8 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     dplyr::filter(term == bug_term_name) |>
     dplyr::arrange(p.value) |>
     dplyr::mutate(q_bug_wise = p.adjust(p.value, method = 'fdr')) |>
-    dplyr::select(-term)
+    dplyr::select(-term) |>
+    data.table::as.data.table()
 
   write_tsv_no_progress(bug_terms,
                    file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv.gz")))
