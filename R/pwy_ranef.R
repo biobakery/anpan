@@ -28,7 +28,7 @@
 #' @export
 anpan_pwy_ranef = function(bug_pwy_dat,
                            group_ind = "crc",
-                           effect_size_threshold = log10(1.5),
+                           effect_size_threshold = .25,
                            group_exp_rate = 3,
                            ...) {
 
@@ -405,8 +405,9 @@ plot_pwy_ranef = function(bug_pwy_dat,
                     intercept = int,
                     color = group_var),
                 alpha = .33) +
-    geom_point(aes(color = group_var)) +
-    facet_wrap(c("bug", "pwy"), scales = 'free') +
+    geom_point(aes(color = group_var),
+               size = 1) +
+    facet_wrap(c("bug", "pwy"), scales = 'free_y') +
     scale_color_manual(values = color_vec) +  # pals::cols25(2) |> dput()
     theme_light() +
     theme(strip.text = element_text(color = 'grey20', margin = margin(.5, .5, .9, .5, unit = 'pt'),

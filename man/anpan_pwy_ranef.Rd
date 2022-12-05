@@ -7,7 +7,7 @@
 anpan_pwy_ranef(
   bug_pwy_dat,
   group_ind = "crc",
-  effect_size_threshold = log10(1.5),
+  effect_size_threshold = 0.25,
   group_exp_rate = 3,
   ...
 )
