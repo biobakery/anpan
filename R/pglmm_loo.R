@@ -1,9 +1,8 @@
-# Standard loo doesn't work with PGLMMs because of the high number of random
-# effects + high number of constraints. You have to integrate the likelihood for
-# each phylogenetic effect to get the "integrated importance weights" from
-# section 3.6.1 from here: Vehtari, Aki, Tommi Mononen, Ville Tolvanen, Tuomas
-# Sivula, and Ole Winther. “Bayesian Leave-One-Out Cross-Validation
-# Approximations for Gaussian Latent Variable Models,” n.d., 38.
+# Standard loo doesn't work with PGLMMs because of the high number of random effects + high number
+# of constraints. You have to integrate out the phylogenetic effect for the likelihood of each
+# observation to get the "integrated importance weights" from section 3.6.1 from here: Vehtari, Aki,
+# Tommi Mononen, Ville Tolvanen, Tuomas Sivula, and Ole Winther. “Bayesian Leave-One-Out
+# Cross-Validation Approximations for Gaussian Latent Variable Models,” n.d., 38.
 
 # The integral is relatively simple, but needs to be evaluated numerically for non-Gaussian
 # outcomes. It has to integrate the likelihood on the identity scale (not the log scale), so you
