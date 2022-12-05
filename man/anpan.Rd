@@ -62,6 +62,9 @@ model_type = "horseshoe".}
 
 \item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }
+\value{
+a data.table of model statistics for each gene
+}
 \description{
 Run the anpan gene model on a single bug
 }

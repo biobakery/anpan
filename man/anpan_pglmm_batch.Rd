@@ -86,10 +86,10 @@ overfitting.}
 \item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
 }
 \value{
-a data frame for each file in input directory that fit successfully. Columns give the
-  number of leaves on the tree, diagnostic values, loo comparison values, formatted input data,
-  correlation matrices, PGLMM and "base" model fits, and loo objects (in list columns where
-  appropriate).
+a tibble listing results for each tree file in input directory that fit successfully.
+  Columns give the number of leaves on the tree, diagnostic values, loo comparison values,
+  formatted input data, correlation matrices, PGLMM and "base" model fits, and loo objects (in
+  list columns where appropriate).
 }
 \description{
 This function fits phylogenetic generalized linear mixed models on a batch of tree

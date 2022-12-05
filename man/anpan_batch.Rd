@@ -82,6 +82,9 @@ model_type = "horseshoe".}
 
 \item{...}{arguments to pass to [cmdstanr::sample()] if applicable}
 }
+\value{
+a data.table of model statistics for each bug:gene combination
+}
 \description{
 This function calls anpan() on each gene family file in the
   \code{bug_dir} directory and makes a composite data + results plot for

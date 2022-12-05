@@ -178,7 +178,7 @@ safely_chol = purrr::safely(chol)
 #' @param sigma_phylo_scale standard deviation of half-normal prior on \code{sigma_phylo} for
 #'   logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 #'   overfitting.
-#' @return A list containing the model input (in the order passed to the model), estimated
+#' @returns A list containing the model input (in the order passed to the model), estimated
 #'   correlation matrix, the pglmm fit object, and (if \code{loo_comparison} is on) the base fit
 #'   object and the associated loo objects.
 #' @details the tip labels of the tree must be the sample ids from the metadata. You can use the
@@ -715,10 +715,10 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'   parallel_chains = 4 . This will run sequentially over the trees, running the model fits with
 #'   parallel chains for each tree, then compute the importance weights in the future multisession
 #'   for each tree.
-#' @returns a data frame for each file in input directory that fit successfully. Columns give the
-#'   number of leaves on the tree, diagnostic values, loo comparison values, formatted input data,
-#'   correlation matrices, PGLMM and "base" model fits, and loo objects (in list columns where
-#'   appropriate).
+#' @returns a tibble listing results for each tree file in input directory that fit successfully.
+#'   Columns give the number of leaves on the tree, diagnostic values, loo comparison values,
+#'   formatted input data, correlation matrices, PGLMM and "base" model fits, and loo objects (in
+#'   list columns where appropriate).
 #' @inheritParams anpan_pglmm
 #' @seealso \code{\link[ape:read.tree]{ape::read.tree}},
 #'   \code{\link[ape:write.tree]{ape::write.tree}}, \code{\link[=anpan_pglmm]{anpan_pglmm()}}

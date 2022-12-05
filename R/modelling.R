@@ -237,6 +237,7 @@ fit_horseshoe = function(model_input,
 #'   strain of the species and a lower threshold on the number of acceptable gene observations. If
 #'   >=5 isolate genomes are available, the lower threshold is 2 standard deviations below the mean,
 #'   otherwise it is 2/3 of the mean.
+#' @returns a data.table of model statistics for each gene
 #' @seealso [anpan_batch()]
 #' @export
 anpan = function(bug_file,
@@ -454,6 +455,7 @@ safely_anpan = purrr::safely(anpan)
 #'   See \code{?anpan()} for the format / usage if providing genome files.
 #' @inheritParams plot_results
 #' @inheritParams anpan
+#' @returns a data.table of model statistics for each bug:gene combination
 #' @seealso [anpan()]
 #' @export
 anpan_batch = function(bug_dir,
