@@ -48,7 +48,7 @@ h3 { /* Header 3 */
 
 # Introduction
 
-It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, anpan, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
+It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, `anpan`, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
 
 * Modeling the association between outcome variables and microbial gene presence while accounting for covariates
   * Including adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
@@ -172,7 +172,7 @@ How do we *quantitatively* assess the impact of the phylogeny on the outcome whi
 
 ## Fit the PGLMM
 
-The code chunk below shows how to use `anpan` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
+The code chunk below shows how to use `anpan_pglmm()` to fit a PGLMM that examines this data for phylogenetic patterns while adjusting for our covariate. It will take a couple minutes to run. By default `anpan_pglmm` regularizes the noise ratio `sigma_phylo / sigma_resid` with a Gamma(1,2) prior and runs a leave-one-out model comparison against a "base" model that doesn't have the phylogenetic component. The default `family = "gaussian"` argument means the residual error is normally distributed. This can be changed to `family = "binomial"` with a binary outcome to run a phylogenetic logistic regression. 
 
 ```{r eval = TRUE, message=FALSE, results = "hide", warning=FALSE, out.width = "120%"}
 result = anpan_pglmm(meta_file       = metadata,
@@ -197,7 +197,7 @@ If you want to tl;dr the rest of the PGLMMs section, look at the model compariso
 result$loo$comparison
 ```
 
-The PGLMM is the best fitting model, and the difference in ELPD (i.e. predictive performance score) for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_{phylo} > 0$, that is the correct conclusion.
+The PGLMM is the best fitting model, the difference in ELPD (predictive performance score) is relatively large (> -4), and the difference in ELPD for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_{phylo} > 0$, that is the correct conclusion.
 
 If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()` (or leave `show_post` at its default `TRUE` value in the above call to `anpan_pglmm()`):
 
