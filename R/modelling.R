@@ -184,11 +184,7 @@ fit_horseshoe = function(model_input,
                    prior_only = 0)
 
   ushoe_fit = ushoe_model$sample(data = data_list,
-                                 iter_sampling = 1000, # TODO make these options user-accessible
-                                 iter_warmup = 500,
-                                 parallel_chains = 4,
-                                 adapt_delta = .9,
-                                 refresh = 0)
+                                 ...)
 
   res = clean_ushoe_summary(ushoe_fit,
                             colnames(X_covariates),
