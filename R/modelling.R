@@ -1,7 +1,9 @@
 get_bug_name = function(bug_file,
                         remove_pattern = ".genefamilies.tsv$|.genefamilies.tsv.gz$|.tsv$|.tsv.gz$") {
   # TODO make this function smarter.
-  gsub(remove_pattern, "", basename(bug_file))
+  gsub("^filtered_", "",
+       gsub(remove_pattern, "",
+            basename(bug_file)))
 }
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
@@ -555,7 +557,6 @@ anpan_batch = function(bug_dir,
                                                  outcome = outcome,
                                                  omit_na = omit_na,
                                                  save_filter_stats = save_filter_stats,
-                                                 annotation_file = annotation_file,
                                                  plot_ext = plot_ext,
                                                  verbose = verbose,
                                                  ...)
