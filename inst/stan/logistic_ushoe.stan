@@ -18,7 +18,7 @@ functions {
 }
 data {
   int<lower=1> N;  // total number of observations
-  int Y[N];  // response variable
+  array[N] int Y;  // response variable
   int<lower=1> K_covariates;  // number of population-level effects
   matrix[N, K_covariates] X_covariates;  // population-level design matrix
   int<lower=1> K_genes;  // number of population-level effects
