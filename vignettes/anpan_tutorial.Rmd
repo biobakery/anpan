@@ -904,9 +904,9 @@ labd_phylo = labd_mat |>
   ape::ladderize()
 ```
 
-If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. It can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences.
+If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences.
 
-However, it's usually preferable to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)). There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The two preceding code blocks are mainly intended for quick-and-dirty, "good enough" method to get a quick look at how gene patterns affect the outcome overall.
+However, it's usually best to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)). There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The two preceding code blocks are mainly intended for quick-and-dirty, "good enough" method to get a quick look at how gene patterns affect the outcome overall.
 
 ## Picking out clade members
 
