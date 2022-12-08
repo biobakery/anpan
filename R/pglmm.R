@@ -577,6 +577,7 @@ anpan_pglmm = function(meta_file,
   # loo section ----
   if (loo_comparison) {
     if (verbose) message(paste0("(3/", n_steps, ") Evaluating loo comparison."))
+    if (verbose) message("- 0/2 preparing loo inputs")
 
     if (!reg_noise && family == "gaussian") {
       warning("loo-based model comparison is unstable and/or anti-conservative without regularized noise. Do not trust the results if there are bad Pareto k diagnostic values.")
