@@ -51,7 +51,7 @@ h3 { /* Header 3 */
 It's difficult to find associations between microbial strains and host health outcomes due to their fine resolution and non-recurrence across individuals. This package, `anpan`, aims to make inferring those relationships a bit easier by providing an interface to our strain analysis functionality. This functionality covers three main points:
 
 * Modeling the association between outcome variables and microbial gene presence while accounting for covariates
-  * Including adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is not present
+  * Including adaptive sample filtering of per-bug microbial gene profiles to identify and discard samples in which the bug is poorly covered
 * Modeling the association between outcome variables and the phylogeny of strains within a given microbial species
 * Modeling the difference in microbial pathways between experimental groups while controlling for species abundance.
 
