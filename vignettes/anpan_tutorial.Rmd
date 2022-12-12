@@ -284,7 +284,7 @@ The outputs of the filtering step goes into the `filter_stats/` directory inside
 knitr::include_graphics("vignette_figs/g__Madeuppy.s__Madeuppy_Fakerii_kmeans.png") #show lines and kmeans plots
 ```
 
-Recall the original input file: genes are rows and columns are samples. Here, each dot represents a sample, meaning a column in the original input. The x axis is the number of non-zero entries in that column, and the y axis is the median log abundance of the non-zero entries. Meaning if a sample has many non-zero entries and high median log abundance, the bug in question is probably present in the sample. A simple k-means clustering is applied to the dots on this scatterplot, which is used to define the presence/absence calls (i.e. provide the coloring of the dots). In this particular example, only two samples are misclassified. If the dot plot doesn't show two well separated populations, it might make sense to do some initial manual curation of the data as appropriate and then set `filtering_method = "none"` when calling anpan() to turn off the kmeans filtering.
+Recall the original input file: genes are rows and columns are samples. Here, each dot represents a sample, meaning a column in the original input. The x axis is the number of non-zero entries in that column, and the y axis is the median log abundance of the non-zero entries. Meaning if a sample has many non-zero entries and high median log abundance, the bug in question is probably well-covered in the sample. A simple k-means clustering is applied to the dots on this scatterplot, which is used to define the presence/absence calls (i.e. provide the coloring of the dots). In this particular example, only two samples are misclassified. If the dot plot doesn't show two well separated populations, it might make sense to do some initial manual curation of the data as appropriate and then set `filtering_method = "none"` when calling anpan() to turn off the kmeans filtering.
 
 Next we'll look at the gene profile lines plot:
 
@@ -881,7 +881,7 @@ gene_tree = gene_pres_abs_matrix |>
 
 This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
 
-The method in the code block above can sometimes yield trees that in turn yield correlation matrices that are not positive definite. If that happens, another method to try is to subset the raw abundance data to samples where the bug is present, then build the tree from those raw values:
+The method in the code block above can sometimes yield trees that in turn yield correlation matrices that are not positive definite. If that happens, another method to try is to subset the raw abundance data to samples where the bug is well-covered, then build the tree from those raw values:
 
 ```{r eval = FALSE}
 sample_labels = fread("filter_stats/labels/sample_labels_bug.tsv.gz")
