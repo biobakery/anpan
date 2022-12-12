@@ -619,16 +619,16 @@ anpan::plot_tree_with_post_pred(tree_file  = tr,
 ```
 So when observations (the colored dots) are held out, the posterior predictive distribution for each leaf (the boxplots) generally capture the true value, showing that our model generally fits the data well. 
 
-What about the posterior on the linear model component? We can visualize that by taking some of the posterior draws (with `cmdstanr::draws()`) of the line (the parameters `beta[1]` and `intercept`) and overlay those onto the `outcome ~ covariate` scatterplot:
+What about the posterior on the linear model component? We can visualize that by taking some of the posterior draws (with `cmdstanr::draws()`) of the line (the parameters `beta[1]` and `centered_cov_intercept`) and overlay those onto the `outcome ~ covariate` scatterplot. The covariate is centered with `scale(scale=FALSE)` since that is how the Stan model uses the data:
 
 ```{r}
 line_draws = result$pglmm_fit$draws(format = 'data.frame') |> 
   as_tibble() |> 
-  select(beta = `beta[1]`, intercept) |> 
+  select(beta = `beta[1]`, intercept = centered_cov_intercept) |> 
   slice_sample(n = 40)
 
 result$model_input |> 
-  ggplot(aes(covariate, outcome)) + 
+  ggplot(aes(scale(covariate, scale = FALSE), outcome)) + 
   geom_point() + 
   geom_abline(data = line_draws,
               aes(slope = beta,
