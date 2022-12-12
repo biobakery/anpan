@@ -96,7 +96,7 @@ There are two key problems here:
 
 The gene model (implemented in the function `anpan()`) handles these issues respectively by:
 
-* applying adaptive sample filtering to classify samples as "bug present" and "bug absent", so that the modeling can be run only using samples where the bug is present
+* applying adaptive sample filtering to classify samples as having the bug's genes "well covered" or "poorly covered", so that the modeling can be run only using samples where there is data that can speak to the inferential goal
 * applying logistic regression models that use either FDR correction or a horseshoe prior to pick out the small number of "hit" genes that associate with the outcome
 
 In this section, you'll get some example data (either by reading the data included with the package or by simulating it yourself), run both steps with a single call to `anpan()` (or `anpan_batch()`), examine the filtering diagnostics, then examine the model results.
@@ -275,7 +275,7 @@ head(anpan_res)
 Before interpreting the model results, it's important to ensure that the filtering step didn't go awry. `anpan()` calls the function `read_and_filter()` internally, which applies:
 
 * an initial prevalence filter to genes (must be >5 & <(N-5) positives per group for the gene)
-* a sample filter to remove samples where the species in question is absent
+* a sample filter to remove samples where the species in question is poorly covered
 * and then a final prevalence filter to remove any marginal genes that became almost constant during the sample filter 
 
 The outputs of the filtering step goes into the `filter_stats/` directory inside the specified `out_dir`. The final filtered data (which is the input to the modeling step) is in `filter_stats/filtered_*.tsv.gz` where * represents the bug name. The `filter_stats/labels/` directory contains the calls of which samples contained the bug. The `filter_stats/plots/` directory contains diagnostic plots from the filtering step. For a given bug, there are two plots to inspect: the gene profile lines plot and the k-means filtering dot plot. We'll look at the dot plot first:
@@ -294,7 +294,7 @@ knitr::include_graphics("vignette_figs/g__Madeuppy.s__Madeuppy_Fakerii_labelled_
 
 This shows a monotonic decreasing line for each sample. The x-axis is the rank of genes in that sample, while the y-axis is the log-abundance value of the ith-ranked gene in that sample. Ideally there should be good separation between red and blue lines. In this simulated data they seem to decrease linearly, but in more realistic data it usually looks more like a plateau. If a particular sample contains a mixture of strains, there may even be multiple plateau steps as the profile decreases, representing different groups of genes dropping out between strains.  
 
-If the groups of samples that the filter step identifies as "present" and "absent" aren't clearly separated that's cause for concern. That means you're potentially throwing out or including samples you shouldn't. If the automated filtering doesn't work out, you can filter your samples manually on your own then turn off the automated filtering with `filtering_method = "none"`.
+If the two groups of samples identified by the filtering step aren't clearly separated, that's cause for concern. That means you're potentially throwing out or including samples you shouldn't. If the automated filtering doesn't work out, you can filter your samples manually on your own then turn off the automated filtering with `filtering_method = "none"`.
 
 ## Examine gene model results
 
