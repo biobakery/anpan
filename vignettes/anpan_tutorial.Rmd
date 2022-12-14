@@ -750,7 +750,7 @@ bug_pwy_dat |>
   theme_bw()
 ```
 
-By chance the positive effect in the first pathway is fairly visually obvious. The negative effect in pwy2 is a bit harder to see. We'll see how well the model can detect these effects in the next section. 
+Both effects are fairly visually obvious. We'll see how well the model can detect these effects in the next section. 
 
 ## Fit the pathway model
 
