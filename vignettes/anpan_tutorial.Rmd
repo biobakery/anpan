@@ -922,18 +922,18 @@ p
 
 The labels are a bit too small. Another common problem with these plots is that for large datasets the tree gets too crowded to see the individual tips.
 
-These can mostly be addressed after the fact with the usal means of altering ggplot. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
+These can mostly be addressed after the fact with the usual means of altering ggplot. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
 
 * make the lines thinner on the tree (first sub-plot)
-* make the labels bigger and right-justified on the posterior box plots (second sub-plot)
+* make the labels bigger and left-justified on the posterior box plots (second sub-plot)
 * make the points bigger on the tree
 
 ```{r eval = TRUE}
 # Thinner lines on the tree
 p[[1]]$layers[[1]]$aes_params$size = .2
 
-# Make the sample labels smaller
-p[[2]]$theme$axis.text.x = element_text(size = 4.5, angle = 90, hjust = 1)
+# Make the sample labels bigger
+p[[2]]$theme$axis.text.x = element_text(size = 4.5, angle = 90, hjust = 0)
 
 # Make the points bigger
 p[[1]]$layers[[2]]$aes_params$size = 3
