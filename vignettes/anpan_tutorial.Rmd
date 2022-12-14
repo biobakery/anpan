@@ -701,12 +701,12 @@ species_abd_df = data.table(log10_species_abd = rnorm(n),
                             sample_id         = paste0("sample", 1:n))
 ```
 
-Here we generate the true effects of the pathway intercepts/effects. We apply a true pathway effect of +/-0.5 to the first two pathways (these will be the effects we try to detect) and 0 to everything else.
+Here we generate the true effects of the pathway intercepts/effects. We apply a true pathway effect of +/-0.67 to the first two pathways (these will be the effects we try to detect) and 0 to everything else.
 
 ```{r}
 pwy_true_params = data.table(pwy              = paste0("pwy", 1:n_pwy),
                              pwy_intercept    = rnorm(n_pwy),
-                             pwy_group_effect = c(c(0.5, -0.5),
+                             pwy_group_effect = c(c(0.67, -0.67),
                                                   rep(0, n_pwy - 2)))
 pwy_true_params
 ```
