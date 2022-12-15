@@ -159,8 +159,8 @@ true_effects = data.table(gene   = paste0("UniRef90_ABC", 1:(n_gene)),
                           effect = c(rnorm(5, sd = 2), 
                                      rep(0, (n_gene - 5))))
 
-sim_grid = sim_dat = expand.grid(gene      = paste0("UniRef90_ABC", 1:(n_gene)),
-                                 sample_id = paste0(     "sample_", 1:(2*n_per_group))) |>
+sim_grid = expand.grid(gene      = paste0("UniRef90_ABC", 1:(n_gene)),
+                       sample_id = paste0(     "sample_", 1:(2*n_per_group))) |>
   as.data.table()
 ```
 
