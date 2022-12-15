@@ -72,8 +72,8 @@ The startup message points out that you can easily parallelize / show progress b
 A couple points to know about anpan function names:
 
 * All of the modeling functions in anpan are prefixed with `anpan_`, so if you type that into the RStudio console the auto-complete prompt should show a list of all the modeling functions. This can help you find the function you need quickly without having to dig through the documentation.
-* Several modeling functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
 * Plotting functions are prefixed with `plot_`. 
+* Several modeling functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
 
 This code chunk loads some other packages we'll use:
 
