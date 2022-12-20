@@ -21,8 +21,7 @@ are available through CRAN (the exception being cmdstanr):
 
 ``` r
 install.packages(c("ape", 
-                   "data.table", 
-                   "devtools",
+                   "data.table",
                    "dplyr", 
                    "fastglm",
                    "furrr", 
@@ -35,6 +34,7 @@ install.packages(c("ape",
                    "posterior",
                    "progressr",
                    "purrr", 
+                   "remotes",
                    "R.utils",
                    "stringr",
                    "tibble",
@@ -63,7 +63,7 @@ library prior to installing CmdStan.
 Once you have the dependencies, you can install anpan from github with:
 
 ``` r
-devtools::install_github("biobakery/anpan")
+remotes::install_github("biobakery/anpan")
 ```
 
 If you would like to read the walkthrough vignette, you will need to set

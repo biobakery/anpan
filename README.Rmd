@@ -31,8 +31,7 @@ anpan depends on R ≥4.1.0 and the following R packages, most of which are avai
 
 ```{r eval = FALSE}
 install.packages(c("ape", 
-                   "data.table", 
-                   "devtools",
+                   "data.table",
                    "dplyr", 
                    "fastglm",
                    "furrr", 
@@ -45,6 +44,7 @@ install.packages(c("ape",
                    "posterior",
                    "progressr",
                    "purrr", 
+                   "remotes",
                    "R.utils",
                    "stringr",
                    "tibble",
@@ -70,7 +70,7 @@ On some servers it may also be necessary to install / load the GNU MPFR library 
 Once you have the dependencies, you can install anpan from github with:
 
 ```{r, eval = FALSE}
-devtools::install_github("biobakery/anpan")
+remotes::install_github("biobakery/anpan")
 ```
 
 If you would like to read the walkthrough vignette, you will need to set `build_vignettes = TRUE` in the `install_github()` command. Once it's installed, you can view the vignette with `vignette("anpan_tutorial", package = 'anpan')`. There is also a static (and probably out-of-date) version of the tutorial available on [the biobakery wiki GitHub page](https://github.com/biobakery/biobakery/wiki/anpan-tutorial).

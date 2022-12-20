@@ -356,7 +356,7 @@ We can see in the synthetic example above that the tree clearly does impact the 
 
 ## Simulate data
 
-To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 100`, `sigma_phylo = 1` and `sigma_resid = 1`. 
+To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 120`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
 The code chunk below sets a randomization seed and the parameters we'll use, then generates a random tree:
 
