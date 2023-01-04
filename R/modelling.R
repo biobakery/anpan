@@ -72,6 +72,14 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     dplyr::select(-term) |>
     data.table::as.data.table()
 
+  if (discretized_inputs && dplyr::n_distinct(model_input[[outcome]]) == 2) {
+    base_rate_weights = model_input[, .(p = mean(present)),
+                                    by = c("gene", outcome)][,.(most_extreme_prop = p[which.max(abs(p - 0.5))]),
+                                                             by = "gene"][, base_rate_value := dbeta(most_extreme_prop, 5, 5)][,!"most_extreme_prop"]
+
+    bug_terms = bug_terms[base_rate_weights, on = 'gene', nomatch = 0]
+  }
+
   write_tsv_no_progress(bug_terms,
                    file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv.gz")))
 
@@ -610,6 +618,11 @@ anpan_batch = function(bug_dir,
         dplyr::relocate(bug_name, gene) |>
         dplyr::relocate(annotation, .after = dplyr::last_col())
     }
+  }
+
+  if (discretize_inputs && dplyr::n_distinct(metadata[[outcome]]) == 2 && model_type == 'fastglm') {
+    all_bug_terms[,metarank_bugwise := (data.table::frank(p.value) + data.table::frank(-base_rate_value))/2, by = bug_name]
+    all_bug_terms[,metarank_global  := (data.table::frank(p.value) + data.table::frank(-base_rate_value))/2]
   }
 
   write_tsv_no_progress(all_bug_terms,
