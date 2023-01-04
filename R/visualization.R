@@ -291,14 +291,17 @@ plot_results = function(res, covariates, outcome, model_input,
 
   binary_outcome = dplyr::n_distinct(model_input[[outcome]]) == 2
 
-  if (!is.null(annotation_file)) {
-    # TODO allow annotations to get passed from higher up so you only have to read the (potentially large) annotation file once)
+  if (!is.null(annotation_file) && !("annotation" %in% names(res))) {
     anno = fread(annotation_file, header = TRUE) # must have two columns: gene and annotation
   } else {
     anno = NULL
   }
 
   n_top = min(n_top, dplyr::n_distinct(res$gene))
+
+  if ("metarank_global" %in% names(res)){
+    res = res[order(metarank_global)]
+  }
 
   if (!is.null(q_threshold)) {
     gene_levels = res[q_global < q_threshold]$gene
@@ -401,7 +404,7 @@ plot_results = function(res, covariates, outcome, model_input,
   anno_plot = plot_color_bars(color_bars, model_input,
                              covariates, outcome, binary_outcome)
 
-  if (!is.null(annotation_file)) {
+  if (!is.null(annotation_file) && !("annotation" %in% names(res))) {
     plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
   } else {
     plot_data = as.data.table(res)[plot_data, on = 'gene']
@@ -412,7 +415,7 @@ plot_results = function(res, covariates, outcome, model_input,
   plot_data$gene = factor(plot_data$gene,
                           levels = rev(gene_levels))
 
-  if (!is.null(annotation_file)) {
+  if (!is.null(annotation_file) || ("annotation" %in% names(res))) {
     plot_data$g_lab = paste(plot_data$gene, plot_data$annotation, sep = ": ")
     no_annotation = is.na(plot_data$annotation)
     plot_data$g_lab[no_annotation] = as.character(plot_data$gene[no_annotation])
