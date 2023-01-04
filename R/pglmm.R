@@ -178,6 +178,8 @@ safely_chol = purrr::safely(chol)
 #' @param sigma_phylo_scale standard deviation of half-normal prior on \code{sigma_phylo} for
 #'   logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 #'   overfitting.
+#' @param int_prior_scale standard deviation of the 0-centered normal prior for the intercept of the
+#'   model (with centered covariates)
 #' @returns A list containing the model input (in the order passed to the model), estimated
 #'   correlation matrix, the pglmm fit object, and (if \code{loo_comparison} is on) the base fit
 #'   object and the associated loo objects.
@@ -209,6 +211,9 @@ safely_chol = purrr::safely(chol)
 #'   If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
 #'   package, you'll need to convert it to a matrix with \code{as.matrix()}. It's converted to a
 #'   tibble internally so that it prints nicely.
+#'
+#'   If \code{int_prior_scale} isn't specified, it defaults to 1 for binary outcomes and 1 standard
+#'   deviation of the outcome for gaussian outcomes.
 #' @examples
 #' meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
 #' tr = ape::rtree(100)
@@ -243,6 +248,7 @@ anpan_pglmm = function(meta_file,
                        reg_gamma_params = c(1,2),
                        plot_ext = "pdf",
                        beta_sd = NULL,
+                       int_prior_scale = 1,
                        sigma_phylo_scale = 0.333,
                        ...) {
 
@@ -344,19 +350,6 @@ anpan_pglmm = function(meta_file,
     bug_name = basename(tempfile()) #
   }
 
-  if (show_plot_cor_mat) {
-    p = plot_cor_mat(cor_mat,
-                     bug_name)
-    if (verbose) message("Plotting correlation matrix...")
-
-    if (verbose) print(p)
-    if (!is.null(out_dir)) {
-      ggsave(p,
-             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.", plot_ext)),
-             width = 6, height = 5)
-    }
-  }
-
   # Prepare model formulae
   if (!is.null(covariates)) {
     cov_str = paste(covariates, collapse = " + ")
@@ -439,26 +432,49 @@ anpan_pglmm = function(meta_file,
   model_input = model_input |>
     arrange(sample_id)
 
+  if (show_plot_cor_mat) {
+    mat_for_plot = cor_mat
+    mat_for_plot = mat_for_plot[model_input$sample_id, model_input$sample_id]
+
+    if (verbose) message("Plotting correlation matrix...")
+    p = plot_cor_mat(mat_for_plot,
+                     bug_name)
+
+    if (verbose) print(p)
+    if (!is.null(out_dir)) {
+      ggsave(p,
+             filename = file.path(out_dir, paste0(bug_name, "_cor_mat.", plot_ext)),
+             width = 6, height = 5)
+    }
+  }
+
   # data_list preparation section ----
 
   model_mat = model.matrix(base_formula, data = model_input)
 
   if (family == "gaussian") {
+
     data_list = list(N = nrow(model_input),
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
                      Lcov = Lcov,
                      int_mean = outcome_mean,
+                     int_prior_scale = ifelse(!is.null(int_prior_scale), int_prior_scale, outcome_sd),
                      resid_scale = outcome_sd)
+
     if (reg_noise) data_list$reg_gamma_params = reg_gamma_params
+
   } else {
+
     data_list = list(N = nrow(model_input),
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
                      Lcov = Lcov,
-                     sigma_phylo_scale = sigma_phylo_scale)
+                     sigma_phylo_scale = sigma_phylo_scale,
+                     int_prior_scale = ifelse(!is.null(int_prior_scale), int_prior_scale, 1))
+
   }
 
   Xc = matrix(nrow = data_list$N,

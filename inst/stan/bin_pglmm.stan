@@ -5,6 +5,7 @@ data {
   matrix[N, K] X;  // population-level design matrix
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
   vector<lower=0>[K-1] beta_sd;
+  real<lower=0> int_prior_scale;
   real<lower=0> sigma_phylo_scale;
 }
 transformed data {
@@ -32,7 +33,8 @@ model {
   target += bernoulli_logit_glm_lpmf(Y | Xc, mu, beta);
 
   // priors
-  target += std_normal_lpdf(centered_cov_intercept);
+  // target += std_normal_lpdf(centered_cov_intercept);
+  target += normal_lpdf(centered_cov_intercept | 0, int_prior_scale);
 
   target += normal_lpdf(beta | 0, beta_sd);
 

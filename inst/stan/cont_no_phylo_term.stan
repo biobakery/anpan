@@ -6,6 +6,7 @@ data {
   real int_mean;
   real<lower=0> resid_scale;
   vector<lower=0>[K-1] beta_sd;
+  real<lower=0> int_prior_scale;
 }
 transformed data {
   int Kc = K - 1;
@@ -26,7 +27,7 @@ model {
   target += normal_id_glm_lpdf(Y | Xc, centered_cov_intercept, beta, sigma_resid);
 
   // priors
-  target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
+  target += normal_lpdf(centered_cov_intercept | int_mean, int_prior_scale);
   target += normal_lpdf(beta | 0, beta_sd);
 
   target += student_t_lpdf(sigma_resid | 5, 0, resid_scale)

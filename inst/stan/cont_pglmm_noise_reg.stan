@@ -9,6 +9,7 @@ data {
   real<lower=0> resid_scale;
   vector[2] reg_gamma_params;
   vector<lower=0>[K-1] beta_sd;
+  real<lower=0> int_prior_scale;
 }
 transformed data {
   int Kc = K - 1;
@@ -40,7 +41,7 @@ model {
   // priors
   target += gamma_lpdf(sigma_phylo / sigma_resid | reg_gamma_params[1], reg_gamma_params[2]);
 
-  target += normal_lpdf(centered_cov_intercept | int_mean, resid_scale);
+  target += normal_lpdf(centered_cov_intercept | int_mean, int_prior_scale);
   target += normal_lpdf(beta | 0, beta_sd);
 
   target += student_t_lpdf(sigma_resid | 5, 0, resid_scale)
