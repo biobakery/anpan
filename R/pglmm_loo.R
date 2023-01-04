@@ -212,50 +212,6 @@ log_lik_terms_i = function(i_df,
                   ll_ij_fun)
 }
 
-# Compute the log-likelihood of a single observation at a single iteration
-# i = posterior iteration
-# j = index over observations / phylogenetic effects
-log_lik_i_j = function(j, lm_mean, sigma12x22_inv, sigma21,
-                       effects_mj, # effects minus j
-                       sigma_resid, yj,
-                       effect_mean_j, cov_mat_jj) {
-
-  p = length(effects_mj) + 1
-  # ord = c(j, (1:p)[-j])
-
-  # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-  sigma_bar_j = cov_mat_jj - c(sigma12x22_inv %*% sigma21)
-
-  mu_bar_j = c(sigma12x22_inv %*% (effects_mj))
-  #^ a = the other phylo effects from iteration i, mu2 = 0
-
-  # Evaluate the log likelihood at 3 points then fit a parabola. This method
-  # likely won't work for non-gaussian outcomes.
-  parab_x_points = effect_mean_j + c(-.25,0,.25)
-  offset_j_terms = vec_integrand(phylo_effect_vec = parab_x_points,
-                                 mu_bar_j         = mu_bar_j,
-                                 sigma_bar_j      = sigma_bar_j,
-                                 sigma_resid      = sigma_resid,
-                                 yj               = yj,
-                                 lm_term          = lm_mean,
-                                 offset_term      = 0,
-                                 log              = TRUE)
-
-  A = parab_x_points |>
-    sapply(\(x) c(x^2, x, 1)) |>
-    t()
-
-  abc = solve(A, offset_j_terms) # max at -b/2a
-
-  ll_max = -abc[2] / (2*abc[1])
-
-  # Compute the integrated log-likelihood value directly from the parabola.
-  # https://www.wolframalpha.com/input?i=integrate+exp%28a*x%5E2+%2B+b*x+%2B+c%29+from+-inf+to+inf
-  lik = sqrt(pi) * exp(abc[3] - (abc[2]^2)/(4*abc[1])) / sqrt(-abc[1])
-
-  return(log(lik))
-}
-
 log_lik_i_j_gaussian = function(m1, s1, l, yj, s2) {
 
   # Get the coefficients of the quadratic log-likelihood of the two components of a gaussian PGLMM
