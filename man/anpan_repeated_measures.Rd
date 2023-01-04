@@ -22,7 +22,7 @@ anpan_repeated_measures(
   verbose = TRUE,
   plot_result = TRUE,
   plot_ext = "png",
-  q_threshold = NULL,
+  q_threshold = 0.1,
   n_top = 50,
   width = 10,
   height = 8,

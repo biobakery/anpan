@@ -27,6 +27,7 @@ anpan_pglmm(
   reg_gamma_params = c(1, 2),
   plot_ext = "pdf",
   beta_sd = NULL,
+  int_prior_scale = 1,
   sigma_phylo_scale = 0.333,
   ...
 )
@@ -81,6 +82,9 @@ Default: c(1,2)}
 \item{beta_sd}{prior standard deviation parameters on the normal distribution for each covariate
 in the GLM component}
 
+\item{int_prior_scale}{standard deviation of the 0-centered normal prior for the intercept of the
+model (with centered covariates)}
+
 \item{sigma_phylo_scale}{standard deviation of half-normal prior on \code{sigma_phylo} for
 logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 overfitting.}
@@ -124,6 +128,9 @@ MCMC chains in parallel).
 If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
 package, you'll need to convert it to a matrix with \code{as.matrix()}. It's converted to a
 tibble internally so that it prints nicely.
+
+If \code{int_prior_scale} isn't specified, it defaults to 1 for binary outcomes and 1 standard
+deviation of the outcome for gaussian outcomes.
 }
 \examples{
 meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
