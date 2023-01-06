@@ -6,6 +6,7 @@ output:
     toc_float: true
     toc_depth: 2
     code_folding: show
+    number_sections: true
 bibliography: anpan_vignette_refs.bib
 vignette: >
   %\VignetteIndexEntry{anpan_tutorial}
