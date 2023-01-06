@@ -18,12 +18,12 @@ transformed data {
 parameters {
   vector[1] species_beta;
   real centered_intercept;
-  real<lower=0> sigma; // dispersion parameter
+  real<lower=0> sigma;
 
-  real<lower=0> sd_pwy_int; // group-level standard deviations
-  vector[N_pwy] z_pwy_int; // standardized group-level effects
-  real<lower=0> sd_pwy_effects; // group-level standard deviations
-  vector[N_pwy] z_pwy_effects; // standardized group-level effects
+  real<lower=0> sd_pwy_int; // pwy standard deviation of intercepts
+  vector[N_pwy] z_pwy_int; // standardized pwy intercepts
+  real<lower=0> sd_pwy_effects; // pwy standard deviation of group effects
+  vector[N_pwy] z_pwy_effects; // standardized pwy group effects
 }
 transformed parameters {
   vector[N_pwy] pwy_intercepts;
