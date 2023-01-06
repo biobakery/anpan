@@ -238,7 +238,8 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
       filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
       arrange(-abs(mean)) |>                    # sort by decreasing effect size
       mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
-                              levels = c("hit", "non-hit")))
+                              levels = c("hit", "non-hit")),
+             pwy = factor(pwy, levels = unique(pwy)))
 
     facets = facet_wrap("bug", scales = "free", ncol = ncol)
 
@@ -249,7 +250,8 @@ plot_pwy_ranef_intervals = function(pwy_ranef_res,
       filter(grepl("^pwy_eff", variable)) |>
       arrange(-abs(mean)) |>
       mutate(hit_lab = factor(c("non-hit", "hit")[hit + 1],
-                              levels = c("hit", "non-hit")))
+                              levels = c("hit", "non-hit")),
+             pwy = factor(pwy, levels = unique(pwy)))
 
     facets = NULL
   }
