@@ -1,9 +1,14 @@
 get_bug_name = function(bug_file,
                         remove_pattern = ".genefamilies.tsv$|.genefamilies.tsv.gz$|.tsv$|.tsv.gz$") {
-  # TODO make this function smarter.
-  gsub("^filtered_", "",
-       gsub(remove_pattern, "",
-            basename(bug_file)))
+  bn = gsub("^filtered_", "",
+            gsub(remove_pattern, "",
+                 basename(bug_file)))
+
+  if (grepl("s__", bn)) {
+    bn = bn |> stringr::str_extract(pattern = "(?<=s__).+")
+  }
+
+  return(bn)
 }
 
 fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
@@ -645,7 +650,7 @@ anpan_batch = function(bug_dir,
       covariates = covariates[1:2]
     }
 
-    plot_list = furrr::future_pmap(plotting_input,
+    plot_list = furrr::future_pmap(plotting_input[1:5,],
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
                                                                                         covariates = covariates,
@@ -665,7 +670,7 @@ anpan_batch = function(bug_dir,
                                                                                         show_trees = TRUE,
                                                                                         width = width,
                                                                                         height = height)
-                                                         p()
+                                                         #p()
                                                          return(plot_res)})
   }
 

@@ -528,7 +528,9 @@ plot_results = function(res, covariates, outcome, model_input,
   star_loc = min(int_plot_df$min_val) - .25*est_range
 
   if ("lsignif" %in% names(int_plot_df)) {
-    point_geom = geom_point(aes(color = lsignif))
+    point_geom = geom_point(aes(fill = lsignif),
+                            pch = 21,
+                            color = 'grey10')
   } else {
     point_geom = geom_point(color = 'grey10')
   }
@@ -549,7 +551,8 @@ plot_results = function(res, covariates, outcome, model_input,
                   label = p_group), hjust = 0, vjust = .7) +
     xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
            max(0, max(int_plot_df$max_val)))) +
-    labs(color = '-log10(Q)') +
+    labs(fill = '-log10(Q)') +
+    scale_fill_viridis_c(option = "plasma") +
     theme(panel.background = element_rect(fill = "white",
                                           colour = NA),
           panel.border = element_rect(fill = NA,
