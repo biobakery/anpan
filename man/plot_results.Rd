@@ -69,4 +69,7 @@ If included, \code{annotation_file} must be a tsv with two columns: "gene" and
   When signficance stars are shown, they encode the following (fairly standard) signficance
   thresholds: p.value < .001 ~ ***, p.value < .01  ~ **, p.value < .05  ~ *, p.value < .1   ~ .,
   p.value < 1    ~ " "
+
+  If applicable, the Q-value used to color the dot on the interval panel is q_global if present
+  in the input and q_bug_wise otherwise.
 }

@@ -239,6 +239,33 @@ plot_color_bars = function(color_bars, model_input,
   return(p)
 }
 
+get_int_plot_df = function(plot_dat) {
+
+  select_cols = c("estimate", "gene", "std.error", "p.value", grep("q_",
+                                                                   names(plot_dat),
+                                                                   value = TRUE))
+
+  int_plot_df = plot_dat[,..select_cols] |>
+    unique() |>
+    dplyr::mutate(max_val = estimate + 1.96*std.error,
+                  min_val = estimate - 1.96*std.error,
+                  p_group = dplyr::case_when(p.value < .001 ~ "***",
+                                             p.value < .01  ~ "**",
+                                             p.value < .05  ~ "*",
+                                             p.value < .1   ~ ".",
+                                             p.value < 1    ~ " "))
+
+  if (any(grepl("q_", names(plot_dat)))) {
+    signif_var = ifelse("q_global" %in% names(int_plot_df),
+                        'q_global',
+                        'q_bug_wise')
+
+    int_plot_df$lsignif = -log10(int_plot_df[[signif_var]])
+  }
+
+  return(int_plot_df)
+}
+
 #' Plot the data for top results
 #'
 #' @description This funciton makes a tile plot of the top results of a fit alongside another tile
@@ -269,6 +296,9 @@ plot_color_bars = function(color_bars, model_input,
 #'   When signficance stars are shown, they encode the following (fairly standard) signficance
 #'   thresholds: p.value < .001 ~ ***, p.value < .01  ~ **, p.value < .05  ~ *, p.value < .1   ~ .,
 #'   p.value < 1    ~ " "
+#'
+#'   If applicable, the Q-value used to color the dot on the interval panel is q_global if present
+#'   in the input and q_bug_wise otherwise.
 #' @export
 plot_results = function(res, covariates, outcome, model_input,
                         discretize_inputs = TRUE,
@@ -491,18 +521,17 @@ plot_results = function(res, covariates, outcome, model_input,
       coord_cartesian(expand = FALSE)
   }
 
-  int_plot_df = plot_data[,.(estimate, gene, std.error, `p.value`)] |> unique() |>
-    dplyr::mutate(max_val = estimate + 1.96*std.error,
-                  min_val = estimate - 1.96*std.error,
-                  p_group = dplyr::case_when(p.value < .001 ~ "***",
-                                             p.value < .01  ~ "**",
-                                             p.value < .05  ~ "*",
-                                             p.value < .1   ~ ".",
-                                             p.value < 1    ~ " "))
+  int_plot_df = get_int_plot_df(plot_data)
 
   est_range = max(int_plot_df$max_val) - min(int_plot_df$min_val)
 
   star_loc = min(int_plot_df$min_val) - .25*est_range
+
+  if ("lsignif" %in% names(int_plot_df)) {
+    point_geom = geom_point(aes(color = lsignif))
+  } else {
+    point_geom = geom_point(color = 'grey10')
+  }
 
   int_plot = int_plot_df |>
     ggplot(aes(estimate, gene)) +
@@ -511,7 +540,7 @@ plot_results = function(res, covariates, outcome, model_input,
                      x = min_val,
                      xend = max_val),
                  color = 'grey20') +
-    geom_point(color = "grey10") +
+    point_geom +
     geom_vline(xintercept = 0,
                lty = 2,
                color = 'grey70') +
@@ -520,6 +549,7 @@ plot_results = function(res, covariates, outcome, model_input,
                   label = p_group), hjust = 0, vjust = .7) +
     xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
            max(0, max(int_plot_df$max_val)))) +
+    labs(color = '-log10(Q)') +
     theme(panel.background = element_rect(fill = "white",
                                           colour = NA),
           panel.border = element_rect(fill = NA,
