@@ -650,7 +650,7 @@ anpan_batch = function(bug_dir,
       covariates = covariates[1:2]
     }
 
-    plot_list = furrr::future_pmap(plotting_input[1:5,],
+    plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
                                                                                         covariates = covariates,
