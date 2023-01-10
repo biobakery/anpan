@@ -681,7 +681,7 @@ safely_plot_results = purrr::safely(plot_results)
 #' @param all_bug_terms a data frame of bug:gene glm fits
 #' @param out_dir string giving the output directory
 #' @param plot_ext string giving the extension to use
-#' @details The plot will be written out to \code{aaa_p_value_histogram.<ext>}
+#' @details The plot will be written out to \code{p_value_histogram.<ext>}
 #'   in the specified output directory. The "aaa" is there for alphabetical
 #'   superiority.
 #'
@@ -705,7 +705,7 @@ plot_p_value_histogram = function(all_bug_terms,
 
   if (!is.null(out_dir)) {
     ggsave(plot = p,
-           filename = file.path(out_dir, paste0("aaa_p_value_histogram.", plot_ext)),
+           filename = file.path(out_dir, paste0("p_value_histogram.", plot_ext)),
            width = 8, height = 6)
   }
 

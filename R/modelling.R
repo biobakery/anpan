@@ -61,7 +61,8 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   # TODO add a check here if ^ is empty and exit gracefully. Necessary for anpan().
 
   write_tsv_no_progress(all_terms,
-                   file = file.path(out_dir, paste0(bug_name, "_all_terms.tsv.gz")))
+                        file = file.path(out_dir, "model_stats",
+                                         paste0(bug_name, "_all_terms.tsv.gz")))
   # TODO write this and the one two lines down to a "bug_results/" directory rather than the top level output directory
 
   if (!discretized_inputs) {
@@ -86,7 +87,8 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
   }
 
   write_tsv_no_progress(bug_terms,
-                   file = file.path(out_dir, paste0(bug_name, "_gene_terms.tsv.gz")))
+                        file = file.path(out_dir, "model_stats",
+                                         paste0(bug_name, "_gene_terms.tsv.gz")))
 
   return(bug_terms)
 }
@@ -209,6 +211,9 @@ fit_horseshoe = function(model_input,
     fit_dir = file.path(out_dir, "fits")
     if (!dir.exists(fit_dir)) dir.create(fit_dir)
     ushoe_fit$save_object(file = file.path(fit_dir, paste0(bug_name, "_fit.RDS")))
+    write_tsv_no_progress(res,
+                          file = file.path(out_dir, "model_stats",
+                                           paste0(bug_name, "_ushoe.tsv.gz")))
   }
 
   return(res)
@@ -413,7 +418,11 @@ anpan = function(bug_file,
 
 # Fitting -----------------------------------------------------------------
 
+  model_stats_dir = file.path(out_dir, 'model_stats')
+  if (!dir.exists(model_stats_dir)) dir.create(model_stats_dir)
+
   if (verbose) message(paste0("(3/", n_steps, ") Fitting models to filtered data"))
+
   res = switch(model_type,
                horseshoe = fit_horseshoe(model_input = model_input,
                                          out_dir = out_dir,

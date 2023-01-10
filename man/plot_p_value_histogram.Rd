@@ -23,7 +23,7 @@ This function makes a p-value histogram from a collection of
   bug:gene glm fits.
 }
 \details{
-The plot will be written out to \code{aaa_p_value_histogram.<ext>}
+The plot will be written out to \code{p_value_histogram.<ext>}
   in the specified output directory. The "aaa" is there for alphabetical
   superiority.
 
