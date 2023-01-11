@@ -551,7 +551,7 @@ plot_results = function(res, covariates, outcome, model_input,
                   label = p_group), hjust = 0, vjust = .7) +
     xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
            max(0, max(int_plot_df$max_val)))) +
-    labs(fill = '-log10(Q)') +
+    labs(fill = expression(paste("-log"[10], "(Q)"))) +
     scale_fill_viridis_c(option = "plasma") +
     theme(panel.background = element_rect(fill = "white",
                                           colour = NA),
