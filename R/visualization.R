@@ -313,6 +313,10 @@ plot_results = function(res, covariates, outcome, model_input,
                         height = NULL,
                         plot_ext = "pdf") {
 
+  # This function makes the big heatmap plot for a given bug. It creates each subplot with ggplot,
+  # then sticks them together with patchwork. There are some common axes between subplots (genes,
+  # samples), so it takes some initial steps to define the unique genes/samples that will be shown.
+
   if (cluster %in% c("none", "genes")) {
     show_trees = FALSE
   }
@@ -329,12 +333,17 @@ plot_results = function(res, covariates, outcome, model_input,
 
   n_top = min(n_top, dplyr::n_distinct(res$gene))
 
-  if ("metarank_global" %in% names(res)){
+  if ("metarank_global" %in% names(res)) {
     res = res[order(metarank_global)]
+    # Otherwise res is used in the order provided, which is sorted by increasing p-value from
+    # anpan() by default.
   }
 
   if (!is.null(q_threshold)) {
-    gene_levels = res[q_global < q_threshold]$gene
+    signif_var = ifelse("q_global" %in% names(res),
+                        'q_global',
+                        'q_bug_wise')
+    gene_levels = res[res[[signif_var]] < q_threshold]$gene
 
     if (length(gene_levels) == 0) {
       threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
@@ -350,6 +359,7 @@ plot_results = function(res, covariates, outcome, model_input,
     subtitle_str = paste0("Top ", n_top, " hits")
   }
 
+  # Get the order of the genes
   input_mat = model_input |> dplyr::select('sample_id', all_of(gene_levels)) |>
     tibble::column_to_rownames("sample_id") |>
     as.matrix()
@@ -362,6 +372,7 @@ plot_results = function(res, covariates, outcome, model_input,
     gene_levels = colnames(input_mat)[g_clust$order]
   }
 
+  # Get the order of samples, depending on the specified clustering
   select_cols = c("sample_id", covariates, outcome)
 
   if (cluster %in% c('samples', 'both') && nrow(input_mat) > 2) {
@@ -404,6 +415,8 @@ plot_results = function(res, covariates, outcome, model_input,
                                   levels = unique(color_bars$sample_id))
   }
 
+  # Handle fill scale for the central heatmap depending on whether its gene pres/abs or raw
+  # gene_labd values.
   if (!discretize_inputs) {
     bug_covariate = "abd"
     fill_scale = scale_fill_viridis_c(option = "magma")
