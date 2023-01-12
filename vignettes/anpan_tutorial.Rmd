@@ -189,7 +189,7 @@ We can visualize the results with `plot_results()` as in the code block below. T
 ```{r eval = TRUE}
 input_path = file.path(tempdir(), 
                        "anpan_output", "filter_stats",
-                       "filtered_g__Madeuppy.s__Madeuppy_Fakerii.tsv.gz")
+                       "filtered_Madeuppy_Fakerii.tsv.gz")
 
 model_input = fread(input_path)
 
