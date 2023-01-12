@@ -152,6 +152,43 @@ blank_tree = function(clust) {
     scale_x_continuous(expand = c(0,0))
 }
 
+ctl_case_trees = function(sample_clust, model_input, outcome) {
+
+  outcome_levels = sort(unique(model_input[[outcome]]))
+
+  ctls = model_input[model_input[[outcome]] == outcome_levels[1]]$sample_id
+  cases = model_input[model_input[[outcome]] == outcome_levels[2]]$sample_id
+
+  sample_phylo = sample_clust |>
+    ape::as.phylo()
+
+  ctl_phylo = sample_phylo |>
+    ape::drop.tip(cases)
+
+  case_phylo = sample_phylo |>
+    ape::drop.tip(ctls)
+
+  ctl_tree = ctl_phylo |>
+    phylogram::as.dendrogram() |>
+    blank_tree()
+
+  case_tree = case_phylo |>
+    phylogram::as.dendrogram() |>
+    blank_tree()
+
+  samp_order = sample_clust$labels[sample_clust$order]
+
+  s_levels = c(samp_order[samp_order %in% ctls],
+               samp_order[samp_order %in% cases])
+
+  res = list(ctl_tree,
+             case_tree,
+             s_levels)
+
+  return(res)
+
+}
+
 get_cov_color_map = function(unique_covs) {
 
   disc_scales = list(scale_fill_brewer(palette = "Set1"),
@@ -381,19 +418,18 @@ plot_results = function(res, covariates, outcome, model_input,
       unique()
 
     if (binary_outcome) {
-      ctls = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[1]])
-      ctl_clust = hclust(dist(input_mat[rownames(input_mat) %in% ctls,],
-                              method = "binary"))
-      ctl_tree = blank_tree(ctl_clust)
 
-      cases = unique(model_input$sample_id[model_input[[outcome]] == sort(unique(model_input[[outcome]]))[2]])
-      case_clust = hclust(dist(input_mat[rownames(input_mat) %in% cases,],
-                               method = "binary"))
+      sample_clust = input_mat |>
+        dist(method = 'binary') |>
+        hclust()
 
-      s_levels = c(rownames(input_mat)[rownames(input_mat) %in% ctls][ctl_clust$order],
-                   rownames(input_mat)[rownames(input_mat) %in% cases][case_clust$order])
+      tree_list = ctl_case_trees(sample_clust,
+                     model_input,
+                     outcome)
 
-      case_tree = blank_tree(case_clust)
+      ctl_tree = tree_list[[1]]
+      case_tree = tree_list[[2]]
+      s_levels = tree_list[[3]]
     } else {
       s_clust = hclust(dist(input_mat,
                             method = 'binary'))
