@@ -679,7 +679,7 @@ anpan_batch = function(bug_dir,
                                                                                         show_trees = TRUE,
                                                                                         width = width,
                                                                                         height = height)
-                                                         #p()
+                                                         p()
                                                          return(plot_res)})
   }
 
