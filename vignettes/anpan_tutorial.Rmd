@@ -104,7 +104,7 @@ In this section, you'll get some example data (either by reading the data includ
 
 ## Get example data
 
-In this section we'll obtain a small simulated dataset for a single bug that comes prepackaged with `anpan`. The [Simulate example data] sub-section further down shows exactly how this data was simulated if you would like to improve your understanding of the relationships in the data. You can get the paths to the data included with the package with these two commands:
+In this section we'll obtain a small simulated dataset for a single bug that comes prepackaged with `anpan`. The simulated data doesn't look realistically noisy (see the plots in the README / manuscript for that), but it incorporates the generative features anpan aims to pick up on. The [Simulate example data] sub-section further down shows exactly how this data was simulated if you would like to improve your understanding of the relationships in the data. You can get the paths to the data included with the package with these two commands:
 
 ```{r eval = TRUE}
 meta_path = system.file("extdata", "fake_metadata.tsv", 
