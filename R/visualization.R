@@ -160,20 +160,18 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
   cases = model_input[model_input[[outcome]] == outcome_levels[2]]$sample_id
 
   sample_phylo = sample_clust |>
-    ape::as.phylo()
+    phylogram::as.dendrogram()
 
-  ctl_phylo = sample_phylo |>
-    ape::drop.tip(cases)
+  ctl_dend = sample_phylo |>
+    phylogram::prune(pattern = paste(cases, collapse = "|"))
 
-  case_phylo = sample_phylo |>
-    ape::drop.tip(ctls)
+  case_dend = sample_phylo |>
+    phylogram::prune(pattern = paste(ctls, collapse = "|"))
 
-  ctl_tree = ctl_phylo |>
-    phylogram::as.dendrogram() |>
+  ctl_tree = ctl_dend |>
     blank_tree()
 
-  case_tree = case_phylo |>
-    phylogram::as.dendrogram() |>
+  case_tree = case_dend |>
     blank_tree()
 
   samp_order = sample_clust$labels[sample_clust$order]
@@ -303,6 +301,22 @@ get_int_plot_df = function(plot_dat) {
   return(int_plot_df)
 }
 
+pca = function(mat, k = 10) {
+  centered_mat = scale(mat, scale = FALSE)
+
+  svd_res = svd(centered_mat)
+
+  k = min(k, ncol(mat))
+
+  d = diag(svd_res$d)[,1:k]
+
+  res = svd_res$u %*% d
+
+  rownames(res) = rownames(mat)
+
+  return(res)
+}
+
 #' Plot the data for top results
 #'
 #' @description This funciton makes a tile plot of the top results of a fit alongside another tile
@@ -397,43 +411,49 @@ plot_results = function(res, covariates, outcome, model_input,
   }
 
   # Get the order of the genes
-  input_mat = model_input |> dplyr::select('sample_id', all_of(gene_levels)) |>
+  gene_mat = model_input |>
+    dplyr::select('sample_id', all_of(gene_levels)) |>
     tibble::column_to_rownames("sample_id") |>
     as.matrix()
 
-  input_mat = 1*input_mat # convert to numeric
+  gene_mat = 1*gene_mat # convert to numeric
 
-  if (cluster %in% c('genes', 'both') && ncol(input_mat) > 2) {
-    g_clust = hclust(dist(t(input_mat)))
+  if (cluster %in% c('genes', 'both') && ncol(gene_mat) > 2) {
+    g_clust = hclust(dist(t(gene_mat)))
 
-    gene_levels = colnames(input_mat)[g_clust$order]
+    gene_levels = colnames(gene_mat)[g_clust$order]
   }
 
   # Get the order of samples, depending on the specified clustering
   select_cols = c("sample_id", covariates, outcome)
 
-  if (cluster %in% c('samples', 'both') && nrow(input_mat) > 2) {
+  if (cluster %in% c('samples', 'both') && nrow(gene_mat) > 2) {
     color_bars = model_input |>
       dplyr::select(dplyr::all_of(select_cols)) |>
       unique()
 
     if (binary_outcome) {
 
-      sample_clust = input_mat |>
-        dist(method = 'binary') |>
+      sample_clust = gene_mat |>
+        pca()  |>
+        dist() |>
         hclust()
 
       tree_list = ctl_case_trees(sample_clust,
-                     model_input,
-                     outcome)
+                                 model_input,
+                                 outcome)
 
-      ctl_tree = tree_list[[1]]
+      ctl_tree  = tree_list[[1]]
       case_tree = tree_list[[2]]
-      s_levels = tree_list[[3]]
+      s_levels  = tree_list[[3]]
+
     } else {
-      s_clust = hclust(dist(input_mat,
-                            method = 'binary'))
-      s_levels = rownames(input_mat)[s_clust$order]
+      s_clust = gene_mat |>
+        pca() |>
+        dist() |>
+        hclust()
+
+      s_levels = rownames(gene_mat)[s_clust$order]
       s_tree = blank_tree(s_clust)
     }
 
@@ -619,7 +639,7 @@ plot_results = function(res, covariates, outcome, model_input,
     tree_plot = patchwork::wrap_plots(ctl_tree, case_tree) +
       patchwork::plot_layout(nrow = 1, widths = c(ctl_width, case_width))
   } else if (!binary_outcome && show_trees) {
-    n = nrow(input_mat)
+    n = nrow(gene_mat)
     tree_plot = patchwork::wrap_plots(s_tree) +
       patchwork::plot_layout(nrow = 1, widths = 5)
   }
