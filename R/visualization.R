@@ -542,7 +542,7 @@ plot_results = function(res, covariates, outcome, model_input,
   ng = length(gene_levels)
 
   glab_frac = ifelse(ng > 50,
-                     50^(1/2) / (ng^(1/2)),
+                     50^(.6) / (ng^(.6)),
                      1)
 
   if (binary_outcome) {
