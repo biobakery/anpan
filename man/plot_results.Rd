@@ -16,7 +16,8 @@ plot_results(
   cluster = "none",
   show_trees = FALSE,
   n_top = 50,
-  q_threshold = NULL,
+  q_threshold = 0.1,
+  beta_threshold = 0.5,
   show_intervals = TRUE,
   width = NULL,
   height = NULL,
@@ -46,6 +47,8 @@ the output written to *gene_terms.tsv.gz)}
 \item{n_top}{number of top elements to show from the results}
 
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
+
+\item{beta_threshold}{Regression coefficient threshold to use for inclusion in the plot. Set to 0 to include everything.}
 
 \item{width}{width of saved plot in inches}
 

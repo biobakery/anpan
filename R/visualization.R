@@ -332,6 +332,7 @@ pca = function(mat, k = 10) {
 #' @param plot_ext extension to use for plots
 #' @param n_top number of top elements to show from the results
 #' @param q_threshold FDR threshold to use for inclusion in the plot.
+#' @param beta_threshold Regression coefficient threshold to use for inclusion in the plot. Set to 0 to include everything.
 #' @param cluster axis to cluster. either "none", "samples", "genes", or "both"
 #' @param show_trees logical to show the trees for the samples (if clustered)
 #' @param width width of saved plot in inches
@@ -358,7 +359,8 @@ plot_results = function(res, covariates, outcome, model_input,
                         cluster = 'none',
                         show_trees = FALSE,
                         n_top = 50,
-                        q_threshold = NULL,
+                        q_threshold = .1,
+                        beta_threshold = 0.5,
                         show_intervals = TRUE,
                         width = NULL,
                         height = NULL,
@@ -394,7 +396,7 @@ plot_results = function(res, covariates, outcome, model_input,
     signif_var = ifelse("q_global" %in% names(res),
                         'q_global',
                         'q_bug_wise')
-    gene_levels = res[res[[signif_var]] < q_threshold]$gene
+    gene_levels = res[res[[signif_var]] < q_threshold][abs(estimate) >= beta_threshold]$gene
 
     if (length(gene_levels) == 0) {
       threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
@@ -405,7 +407,7 @@ plot_results = function(res, covariates, outcome, model_input,
       subtitle_str = paste0(length(gene_levels), " genes with Q below ", q_threshold)
     }
   } else {
-    gene_levels = res[1:n_top,]$gene
+    gene_levels = res[1:n_top,][abs(beta) >= beta_threshold]$gene
     threshold_warning_string = NULL
     subtitle_str = paste0("Top ", n_top, " hits")
   }

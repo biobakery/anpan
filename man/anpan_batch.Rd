@@ -25,6 +25,7 @@ anpan_batch(
   plot_result = TRUE,
   plot_ext = "png",
   q_threshold = 0.1,
+  beta_threshold = 0.5,
   n_top = 50,
   width = 10,
   height = 8,
@@ -73,6 +74,8 @@ model_type = "horseshoe".}
 \item{plot_ext}{extension to use for plots}
 
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
+
+\item{beta_threshold}{Regression coefficient threshold to use for inclusion in the plot. Set to 0 to include everything.}
 
 \item{n_top}{number of top elements to show from the results}
 
