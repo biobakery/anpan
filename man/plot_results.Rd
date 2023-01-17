@@ -79,5 +79,7 @@ If included, \code{annotation_file} must be a tsv with two columns: "gene" and
 
   Note that the beta_threshold uses the value of the estimate column directly, so it is
   interpreted according to the units of your outcome variable with a continuous outcome, and on
-  the log-odds scale with a binary outcome.
+  the log-odds scale with a binary outcome. So the default value of 1 is pretty big for a binary
+  outcome, but if the spread of your continuous outcome variable is ~5 the default value of 1
+  won't exclude very much.
 }
