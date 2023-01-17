@@ -17,7 +17,7 @@ plot_results(
   show_trees = FALSE,
   n_top = 50,
   q_threshold = 0.1,
-  beta_threshold = 0.5,
+  beta_threshold = 1,
   show_intervals = TRUE,
   width = NULL,
   height = NULL,
@@ -48,7 +48,8 @@ the output written to *gene_terms.tsv.gz)}
 
 \item{q_threshold}{FDR threshold to use for inclusion in the plot.}
 
-\item{beta_threshold}{Regression coefficient threshold to use for inclusion in the plot. Set to 0 to include everything.}
+\item{beta_threshold}{Regression coefficient threshold to use for inclusion in the plot. Set to 0
+to include everything.}
 
 \item{width}{width of saved plot in inches}
 
@@ -75,4 +76,8 @@ If included, \code{annotation_file} must be a tsv with two columns: "gene" and
 
   If applicable, the Q-value used to color the dot on the interval panel is q_global if present
   in the input and q_bug_wise otherwise.
+
+  Note that the beta_threshold uses the value of the estimate column directly, so it is
+  interpreted according to the units of your outcome variable with a continuous outcome, and on
+  the log-odds scale with a binary outcome.
 }
