@@ -406,12 +406,12 @@ plot_results = function(res, covariates, outcome, model_input,
     gene_levels = res[res[[signif_var]] < q_threshold][abs(estimate) >= beta_threshold]$gene
 
     if (length(gene_levels) == 0) {
-      threshold_warning_string = paste0("Note: no genes passed the specified q-value threshold. Displaying the top ", n_top, " genes instead.")
+      threshold_warning_string = paste0("Note: no genes passed the specified thresholds. Displaying the top ", n_top, " genes instead.")
       gene_levels = res[1:n_top,]$gene
       subtitle_str = paste0("Top ", n_top, " hits")
     } else {
       threshold_warning_string = NULL
-      subtitle_str = paste0(length(gene_levels), " genes with Q below ", q_threshold)
+      subtitle_str = paste0(length(gene_levels), " genes with Q below ", q_threshold, " and abs(coefficient) above ", beta_threshold)
     }
   } else {
     gene_levels = res[1:n_top,][abs(beta) >= beta_threshold]$gene
