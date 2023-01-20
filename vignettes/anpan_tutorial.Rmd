@@ -683,7 +683,7 @@ A few notes on this model:
 * The relationship between species abundance and pathway abundance is measured globally using data from all pathways in the bug.
 * each pathway has its own intercept (that's the `(1|pwy)` term), but these intercepts are partially pooled across pathways
   * These terms come from a $Normal(0, \sigma_{int})$ distribution. The prior on $\sigma_{int}$ is a $t_{5, 0, 2.5}$ distribution
-* each pathway has its own group effect (that's the `(0+group|pwy)` term). These are also pooled across pathways, but they are independent of the pathway intercepts
+* each pathway has its own group effect (that's the `(0+group|pwy)` term). These are also pooled across pathways, but they are independent of the pathway intercepts (that's what that `0` is signalling).
   * These terms come from a $Normal(0, \sigma_{effects})$ distribution. The prior on $\sigma_{effects}$ is a relatively aggressive $exponential(3)$ distribution.
 * There are some additional weak priors on several parameters. The best place to inspect these in the model code itself in the installation folder `anpan/stan/pwy_ranef.stan`
     * If you don't know where this file is located on your system, you can use `system.file('stan', 'pwy_ranef.stan', package = 'anpan')` to find it.
