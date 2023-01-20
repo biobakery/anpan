@@ -360,8 +360,9 @@ pca = function(mat, k = 10) {
 #'   won't exclude very much.
 #' @export
 plot_results = function(res, covariates, outcome, model_input,
+                        bug_name = NULL,
                         discretize_inputs = TRUE,
-                        plot_dir = NULL, bug_name,
+                        plot_dir = NULL,
                         annotation_file = NULL,
                         cluster = 'none',
                         show_trees = FALSE,
@@ -653,6 +654,12 @@ plot_results = function(res, covariates, outcome, model_input,
       patchwork::plot_layout(nrow = 1, widths = 5)
   }
 
+  title_str = if (!is.null(bug_name)) {
+    paste(bug_name, " (n = ", ns, ")", sep = "", collapse = "")
+  } else {
+    NULL
+  }
+
   if (show_intervals && !show_trees) {
 
     design_str = "
@@ -673,7 +680,7 @@ plot_results = function(res, covariates, outcome, model_input,
                               ncol = 2,
                               guides = 'collect',
                               design = design_str) +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+      patchwork::plot_annotation(title = title_str,
                                  theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
@@ -697,7 +704,7 @@ plot_results = function(res, covariates, outcome, model_input,
     p = patchwork::wrap_plots( anno_plot, heatmap_tile, int_plot, tree_plot,
                                guides = 'collect',
                                design = design_str) +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+      patchwork::plot_annotation(title = title_str,
                                  theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
@@ -722,7 +729,7 @@ plot_results = function(res, covariates, outcome, model_input,
     p = patchwork::wrap_plots( anno_plot, heatmap_tile, tree_plot,
                                guides = 'collect',
                                design = design_str) +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+      patchwork::plot_annotation(title = title_str,
                                  theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
@@ -732,7 +739,7 @@ plot_results = function(res, covariates, outcome, model_input,
                               ncol = 1,
                               heights = c(1, 11),
                               guides = 'collect') +
-      patchwork::plot_annotation(title = paste(bug_name, " (n = ", ns, ")", sep = "", collapse = ""),
+      patchwork::plot_annotation(title = title_str,
                                  theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
@@ -740,10 +747,18 @@ plot_results = function(res, covariates, outcome, model_input,
 
   if (!is.null(plot_dir)) {
     if (is.null(height)) height = 10
+
+    file_name = if (!is.null(bug_name)) {
+      paste0(bug_name, "_data.", plot_ext)
+    } else {
+      paste0(basename(tempfile()), "_data.", plot_ext)
+    }
+
     ggsave(plot = p,
            width = width,
            height = height,
-           filename = file.path(plot_dir, paste0(bug_name, "_data.", plot_ext)))
+           filename = file.path(plot_dir, file_name))
+
   }
 
   p

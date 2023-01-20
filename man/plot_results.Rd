@@ -9,9 +9,9 @@ plot_results(
   covariates,
   outcome,
   model_input,
+  bug_name = NULL,
   discretize_inputs = TRUE,
   plot_dir = NULL,
-  bug_name,
   annotation_file = NULL,
   cluster = "none",
   show_trees = FALSE,
@@ -34,9 +34,9 @@ the output written to *gene_terms.tsv.gz)}
 
 \item{model_input}{data frame of the model input}
 
-\item{plot_dir}{directory to write output to}
-
 \item{bug_name}{character string giving the name to use in the title/output file}
+
+\item{plot_dir}{directory to write output to}
 
 \item{annotation_file}{optional path file giving annotations}
 
