@@ -682,7 +682,20 @@ anpan_batch = function(bug_dir,
                                                                                         width = width,
                                                                                         height = height)
                                                          p()
-                                                         return(plot_res)})
+                                                         return(plot_res)}) |>
+      purrr::transpose() |>
+      tibble::as_tibble()
+
+    any_errors = sapply(plot_list$result,
+                        is.null) |> any()
+
+    if (any_errors) {
+      plot_errors = plot_list |>
+        dplyr::filter(sapply(result, is.null))
+
+      save(plot_errors,
+           file = file.path(plot_dir, 'plot_errors.RData'))
+    }
   }
 
 
