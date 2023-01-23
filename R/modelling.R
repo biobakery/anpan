@@ -684,14 +684,19 @@ anpan_batch = function(bug_dir,
                                                          p()
                                                          return(plot_res)}) |>
       purrr::transpose() |>
-      tibble::as_tibble()
+      tibble::as_tibble() |>
+      dplyr::mutate(bug_name = plotting_input$bug_name) |>
+      dplyr::relocate(bug_name)
 
     any_errors = sapply(plot_list$result,
                         is.null) |> any()
 
     if (any_errors) {
+      warning("There was at least one error when plotting the results. See plot_errors.RData for a data frame of the bugs that caused errors.")
+
       plot_errors = plot_list |>
-        dplyr::filter(sapply(result, is.null))
+        dplyr::filter(sapply(result, is.null)) |>
+        dplyr::select(-result)
 
       save(plot_errors,
            file = file.path(plot_dir, 'plot_errors.RData'))
