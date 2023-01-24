@@ -526,7 +526,13 @@ plot_results = function(res, covariates, outcome, model_input,
         hclust()
 
       s_levels = rownames(gene_mat)[s_clust$order]
-      s_tree = blank_tree(s_clust)
+      s_tree = safely_blank_tree(s_clust)
+      if (is.null(s_tree$result)) {
+        warning(paste0("Sample-wise tree plotting failed for bug ", bug_name, " , show_trees set to FALSE."))
+        show_trees = FALSE
+      } else {
+        s_tree = s_tree$result
+      }
     }
 
     color_bars$sample_id = factor(color_bars$sample_id,
