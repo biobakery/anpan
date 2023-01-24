@@ -152,6 +152,63 @@ blank_tree = function(clust) {
     scale_x_continuous(expand = c(0,0))
 }
 
+delete_leaf = function(tree, leaf_label){
+
+  og_n = length(tree$labels)
+
+  i = which(tree$labels == leaf_label)
+
+  del_row = which(tree$merge == -i, arr.ind = TRUE)
+  partner = del_row
+  partner[,2] = ifelse(partner[,2] == 1, 2, 1)
+  partner_i = tree$merge[partner]
+
+  old_node = del_row[1,1]
+
+  node_row = which(tree$merge == old_node, arr.ind = TRUE)
+
+  node_row
+
+  new_tree = tree
+  new_tree$merge[node_row] = partner_i
+
+  del_i = del_row[1,1]
+
+
+  new_tree$merge[which(new_tree$merge < -i)] = new_tree$merge[which(new_tree$merge < -i)] + 1
+
+  new_tree$merge = new_tree$merge[-del_i,]
+
+  new_tree$merge[which(new_tree$merge > del_row[1,1])] = new_tree$merge[which(new_tree$merge > del_row[1,1])] - 1
+
+  new_tree$height = new_tree$height[-del_i]
+
+  new_tree$labels = new_tree$labels[-i]
+
+  order_i = which(new_tree$order == i)
+
+  new_tree$order = new_tree$order[-order_i]
+  new_tree$order[new_tree$order > i] = new_tree$order[new_tree$order > i] - 1
+
+  return(new_tree)
+
+}
+
+delete_leaves = function(tree, leaves) {
+  # Any pruning function I've been able to find e.g. phylogram::prune() uses a recursive method that
+  # overloads the stack on big trees. Just delete one leaf at a time.
+
+  for (i in seq_along(leaves)) {
+    n = length(tree$order)
+    tree = delete_leaf(tree, leaves[i])
+    if (length(tree$order) != (n-1)) stop('order is wrong')
+  }
+
+  return(tree)
+}
+
+safely_blank_tree = purrr::safely(blank_tree)
+
 ctl_case_trees = function(sample_clust, model_input, outcome) {
 
   outcome_levels = sort(unique(model_input[[outcome]]))
@@ -159,20 +216,17 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
   ctls = model_input[model_input[[outcome]] == outcome_levels[1]]$sample_id
   cases = model_input[model_input[[outcome]] == outcome_levels[2]]$sample_id
 
-  sample_phylo = sample_clust |>
-    phylogram::as.dendrogram()
+  ctl_dend = sample_clust |>
+    delete_leaves(cases)
 
-  ctl_dend = sample_phylo |>
-    phylogram::prune(pattern = paste(cases, collapse = "|"))
-
-  case_dend = sample_phylo |>
-    phylogram::prune(pattern = paste(ctls, collapse = "|"))
+  case_dend = sample_clust |>
+    delete_leaves(ctls)
 
   ctl_tree = ctl_dend |>
-    blank_tree()
+    safely_blank_tree()
 
   case_tree = case_dend |>
-    blank_tree()
+    safely_blank_tree()
 
   samp_order = sample_clust$labels[sample_clust$order]
 
@@ -456,6 +510,14 @@ plot_results = function(res, covariates, outcome, model_input,
       ctl_tree  = tree_list[[1]]
       case_tree = tree_list[[2]]
       s_levels  = tree_list[[3]]
+
+      if (is.null(ctl_tree$result) || is.null(case_tree$result)) {
+        show_trees = FALSE
+        warning(paste0("Group-wise tree plotting failed for bug ", bug_name, " , show_trees set to FALSE."))
+      } else {
+        ctl_tree = ctl_tree$result
+        case_tree = case_tree$result
+      }
 
     } else {
       s_clust = gene_mat |>
