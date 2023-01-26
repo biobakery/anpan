@@ -904,7 +904,7 @@ abd_mat[abd_mat == 0] = half_min
 
 labd_mat = log(abd_mat)
 
-labd_phylo = labd_mat |> 
+labd_phylo = labd_mat |> # it can also be useful to add in "pca() |>" at this point 
   dist(method = "euclidean") |> 
   ape::nj() |> 
   ape::ladderize()
