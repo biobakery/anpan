@@ -624,9 +624,13 @@ plot_results = function(res, covariates, outcome, model_input,
                      1)
 
   if (binary_outcome) {
+    continuous_genes = dplyr::n_distinct(gene_mat) > 2
+    line_color = ifelse(continuous_genes,
+                        "grey",
+                        "black")
     black_vline = geom_vline(lwd = .5,
-               color = 'black',
-               xintercept = n_healthy + .5)
+                             color = line_color,
+                             xintercept = n_healthy + .5)
   } else {
     black_vline = NULL
   }
