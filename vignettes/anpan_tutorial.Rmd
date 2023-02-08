@@ -949,6 +949,16 @@ p
 
 The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign `p[[2]]$` then looking at the names suggested by RStudio auto-complete can get you pretty far. 
 
+You can also use the sub-plot accessor to pull out sub-plots that can then be rearranged in new ways with `patchwork::plot_layout()`. We have occasionally made huge mega plots with something like the code chunk below. 
+
+```
+outcome_tree + 
+effect_boxplots + 
+gene_heatmap + 
+half_correlation_matrix + 
+plot_layout(ncol = 1)
+```
+
 ## Configuring parallelization and progress reporting
 
 anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code might display progress". The user can configure the parallelization plan and progress reporting to their preference. 
