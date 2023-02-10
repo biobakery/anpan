@@ -624,7 +624,7 @@ plot_results = function(res, covariates, outcome, model_input,
                      1)
 
   if (binary_outcome) {
-    continuous_genes = dplyr::n_distinct(gene_mat) > 2
+    continuous_genes = dplyr::n_distinct(gene_mat |> as.vector()) > 2
     line_color = ifelse(continuous_genes,
                         "grey",
                         "black")
