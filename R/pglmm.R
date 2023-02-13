@@ -496,14 +496,14 @@ anpan_pglmm = function(meta_file,
     # TODO write this to a log file...
     if (length(covariates) > 0) {
       prior_df = data.table(linear_term = colnames(data_list$X)[-1],
-                            prior_sd = round(apply(Xc, 2, sd), digits = 3))
-      message("Prior scale on covariate effects aren't specified. Setting to 1 standard deviation for each centered covariate. These values are:\n")
+                            prior_sd = round(1/apply(Xc, 2, sd), digits = 3))
+      message("Prior scale on covariate effects aren't specified. Setting to 1 / (1 standard deviation) for each centered covariate. These values are:\n")
       message(paste0(capture.output(prior_df),
                      sep = "\n"))
       message("\n\nIt would be better to set the beta_sd argument based on scientific background knowledge.")
     }
     if (ncol(Xc) > 0) {
-      data_list$beta_sd = apply(Xc, 2, sd)
+      data_list$beta_sd = 1 / apply(Xc, 2, sd)
     } else {
       data_list$beta_sd = numeric()
     }
