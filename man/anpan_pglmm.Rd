@@ -118,7 +118,7 @@ This function tries to get the \code{bug_name} argument from the tree file, but 
 provided you may need to set it yourself.
 
 If using \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
-element in beta_sd. This appropriate element will get repeated as necessary.
+corresponding element in beta_sd. This appropriate element will get repeated as necessary.
 
 Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
 (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
