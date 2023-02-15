@@ -625,9 +625,11 @@ plot_results = function(res, covariates, outcome, model_input,
 
   if (binary_outcome) {
     continuous_genes = dplyr::n_distinct(gene_mat |> as.vector()) > 2
+
     line_color = ifelse(continuous_genes,
                         "grey",
                         "black")
+
     black_vline = geom_vline(lwd = .5,
                              color = line_color,
                              xintercept = n_healthy + .5)
@@ -1048,10 +1050,15 @@ plot_outcome_tree = function(tree_file,
 #' Plot a tree and the PGLMM posterior on phylogenetic effects
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
-#' @details The whiskers of each box plot are the 90% posterior intervals, the
-#'   box is the 50% interval, and the middle line is the posterior mean.
-#' @return either the plot or (if return_tree_df = TRUE) a list containing the
-#'   plot, the segment df, the terminal segment df, and the yrep df.
+#' @details The whiskers of each box plot are the 90% posterior intervals, the box is the 50%
+#'   interval, and the middle line is the posterior mean.
+#'
+#'   The \code{labels} needs to contain the leaf labels in the order produced by the Cholesky
+#'   factorization of the correlation matrix (which is how the data are passed to the sampler). This
+#'   is not necessarily the order of the leafs on the x-axis of the tree. The simplest way to get
+#'   this is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
+#' @return either the plot or (if return_tree_df = TRUE) a list containing the plot, the segment df,
+#'   the terminal segment df, and the yrep df.
 #' @inheritParams plot_outcome_tree
 #' @export
 plot_tree_with_post = function(tree_file,

@@ -40,13 +40,18 @@ segment data frame, and 3) the labelled terminal segment data frame.
 Otherwise, just return the plot.}
 }
 \value{
-either the plot or (if return_tree_df = TRUE) a list containing the
-  plot, the segment df, the terminal segment df, and the yrep df.
+either the plot or (if return_tree_df = TRUE) a list containing the plot, the segment df,
+  the terminal segment df, and the yrep df.
 }
 \description{
 Plot a tree and the PGLMM posterior on phylogenetic effects
 }
 \details{
-The whiskers of each box plot are the 90% posterior intervals, the
-  box is the 50% interval, and the middle line is the posterior mean.
+The whiskers of each box plot are the 90% posterior intervals, the box is the 50%
+  interval, and the middle line is the posterior mean.
+
+  The \code{labels} needs to contain the leaf labels in the order produced by the Cholesky
+  factorization of the correlation matrix (which is how the data are passed to the sampler). This
+  is not necessarily the order of the leafs on the x-axis of the tree. The simplest way to get
+  this is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
 }
