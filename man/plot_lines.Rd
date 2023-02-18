@@ -33,6 +33,8 @@ plot_lines(
 
 \item{bug_name}{name of the bug}
 
+\item{plot_ext}{extension to use for plots}
+
 \item{subset_line}{integer gives the number of points to take along the lines}
 }
 \description{

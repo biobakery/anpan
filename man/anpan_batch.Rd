@@ -16,6 +16,7 @@ anpan_batch(
   omit_na = FALSE,
   filtering_method = "kmeans",
   discretize_inputs = TRUE,
+  minmax_thresh = 5,
   discard_poorly_covered_samples = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
@@ -56,6 +57,9 @@ earlier run to skip the filtering step}
 
 \item{discretize_inputs}{logical indicating whether to discretize the input abundance
 measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function}
+
+\item{minmax_thresh}{genes must have at least this many (or N - this many)
+non-zero observations or else be discarded}
 
 \item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 

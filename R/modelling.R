@@ -223,7 +223,7 @@ fit_horseshoe = function(model_input,
 #' Run anpan
 #'
 #' @description Run the anpan gene model on a single bug
-#' @param bug_file path to a gene family file (usually probably from HUMAnN)
+#' @param bug_file path to a gene family file (usually from HUMAnN)
 #' @param meta_file path to a metadata tsv
 #' @param out_dir path to the desired output directory
 #' @param genomes_file optional file giving gene presence/absence of representative isolate genomes
@@ -255,6 +255,7 @@ fit_horseshoe = function(model_input,
 #'   >=5 isolate genomes are available, the lower threshold is 2 standard deviations below the mean,
 #'   otherwise it is 2/3 of the mean.
 #' @returns a data.table of model statistics for each gene
+#' @inheritParams read_and_filter
 #' @seealso [anpan_batch()]
 #' @export
 anpan = function(bug_file,
@@ -268,6 +269,7 @@ anpan = function(bug_file,
                  omit_na = FALSE,
                  filtering_method = "kmeans",
                  discretize_inputs = TRUE,
+                 minmax_thresh = 5,
                  skip_large = TRUE,
                  save_fit = TRUE,
                  discard_poorly_covered_samples = TRUE,
@@ -368,6 +370,7 @@ anpan = function(bug_file,
                                   genomes_file           = genomes_file,
                                   filtering_method       = filtering_method,
                                   discretize_inputs      = discretize_inputs,
+                                  minmax_thresh          = minmax_thresh,
                                   discard_poorly_covered_samples = discard_poorly_covered_samples,
                                   save_filter_stats      = save_filter_stats,
                                   filter_stats_dir       = filter_stats_dir,
@@ -490,6 +493,7 @@ anpan_batch = function(bug_dir,
                        omit_na = FALSE,
                        filtering_method = "kmeans",
                        discretize_inputs = TRUE,
+                       minmax_thresh = 5,
                        discard_poorly_covered_samples = TRUE,
                        skip_large = TRUE,
                        save_fit = TRUE,
@@ -575,6 +579,7 @@ anpan_batch = function(bug_dir,
                                                  save_fit = save_fit,
                                                  filtering_method = filtering_method,
                                                  discretize_inputs = discretize_inputs,
+                                                 minmax_thresh = minmax_thresh,
                                                  discard_poorly_covered_samples = discard_poorly_covered_samples,
                                                  covariates = covariates,
                                                  outcome = outcome,

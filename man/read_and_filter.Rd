@@ -22,7 +22,7 @@ read_and_filter(
 )
 }
 \arguments{
-\item{bug_file}{path to a gene family file (usually probably from HUMAnN)}
+\item{bug_file}{path to a gene family file (usually from HUMAnN)}
 
 \item{pivot_wide}{logical indicating whether to return data in wide format}
 

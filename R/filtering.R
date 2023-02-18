@@ -355,7 +355,7 @@ final_prevalence_filter = function(filtered_gf,
 #' @export
 read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
-                           minmax_thresh = 5, # TODO expose this higher up
+                           minmax_thresh = 5,
                            covariates = NULL,
                            outcome = NULL,
                            genomes_file = NULL,
