@@ -14,6 +14,7 @@ anpan_repeated_measures(
   outcome = "crc",
   omit_na = FALSE,
   filtering_method = "kmeans",
+  minmax_thresh = NULL,
   discard_poorly_covered_samples = TRUE,
   skip_large = TRUE,
   save_fit = TRUE,
@@ -47,6 +48,9 @@ anpan_repeated_measures(
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
 \item{filtering_method}{method to use for filtering samples. Either "kmeans" or "none"}
+
+\item{minmax_thresh}{genes must have at least this many (or N - this many)
+non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.}
 
 \item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
 

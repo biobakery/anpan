@@ -711,7 +711,7 @@ anpan_batch = function(bug_dir,
                         is.null) |> any()
 
     if (any_errors) {
-      warning("There was at least one error when plotting the results. See plot_errors.RData for a data frame of the bugs that caused errors.")
+      warning("There was at least one error when plotting the results. See top_n_plot_errors.RData for a data frame of the bugs that caused errors.")
 
       plot_errors = plot_list |>
         dplyr::filter(sapply(result, is.null)) |>
@@ -758,7 +758,7 @@ anpan_batch = function(bug_dir,
                         is.null) |> any()
 
     if (any_errors) {
-      warning("There was at least one error when plotting the results. See plot_errors.RData for a data frame of the bugs that caused errors.")
+      warning("There was at least one error when plotting the results. See has_hit_plot_errors.RData for a data frame of the bugs that caused errors.")
 
       plot_errors = plot_list |>
         dplyr::filter(sapply(result, is.null)) |>

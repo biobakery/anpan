@@ -16,7 +16,7 @@ anpan(
   omit_na = FALSE,
   filtering_method = "kmeans",
   discretize_inputs = TRUE,
-  minmax_thresh = 5,
+  minmax_thresh = NULL,
   skip_large = TRUE,
   save_fit = TRUE,
   discard_poorly_covered_samples = TRUE,
@@ -52,7 +52,7 @@ filtering step}
 measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling function}
 
 \item{minmax_thresh}{genes must have at least this many (or N - this many)
-non-zero observations or else be discarded}
+non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
 model_type = "horseshoe".}

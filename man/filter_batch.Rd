@@ -30,7 +30,7 @@ filter_batch(
 \item{pivot_wide}{logical indicating whether to return data in wide format}
 
 \item{minmax_thresh}{genes must have at least this many (or N - this many)
-non-zero observations or else be discarded}
+non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
 
