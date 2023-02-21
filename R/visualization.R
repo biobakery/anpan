@@ -423,6 +423,7 @@ plot_results = function(res, covariates, outcome, model_input,
                         q_threshold = .1,
                         beta_threshold = 1,
                         show_intervals = TRUE,
+                        max_anno_width = 70,
                         width = NULL,
                         height = NULL,
                         plot_ext = "pdf") {
@@ -588,7 +589,12 @@ plot_results = function(res, covariates, outcome, model_input,
                           levels = rev(gene_levels))
 
   if (!is.null(annotation_file) || ("annotation" %in% names(res))) {
-    plot_data$g_lab = paste(plot_data$gene, plot_data$annotation, sep = ": ")
+    plot_data$g_lab = paste(plot_data$gene,
+                            stringr::str_trunc(plot_data$annotation,
+                                               side = "center",
+                                               width = max_anno_width),
+                            sep = ": ")
+
     no_annotation = is.na(plot_data$annotation)
     plot_data$g_lab[no_annotation] = as.character(plot_data$gene[no_annotation])
 

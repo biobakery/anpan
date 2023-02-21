@@ -19,6 +19,7 @@ plot_results(
   q_threshold = 0.1,
   beta_threshold = 1,
   show_intervals = TRUE,
+  max_anno_width = 70,
   width = NULL,
   height = NULL,
   plot_ext = "pdf"
