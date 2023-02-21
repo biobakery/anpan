@@ -346,7 +346,7 @@ final_prevalence_filter = function(filtered_gf,
 #'
 #' @inheritParams anpan
 #' @param minmax_thresh genes must have at least this many (or N - this many)
-#'   non-zero observations or else be discarded
+#'   non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.
 #' @param discard_poorly_covered_samples logical indicating whether to discard samples where the genes of a bug are poorly covered
 #' @param pivot_wide logical indicating whether to return data in wide format
 #' @param filtering_method either "kmeans" or "none"

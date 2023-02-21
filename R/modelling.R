@@ -269,7 +269,7 @@ anpan = function(bug_file,
                  omit_na = FALSE,
                  filtering_method = "kmeans",
                  discretize_inputs = TRUE,
-                 minmax_thresh = 5,
+                 minmax_thresh = NULL,
                  skip_large = TRUE,
                  save_fit = TRUE,
                  discard_poorly_covered_samples = TRUE,
@@ -318,6 +318,10 @@ anpan = function(bug_file,
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
+
+  if (is.null(minmax_thresh)) {
+    minmax_thresh = floor(.005*nrow(metadata))
+  }
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
     error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
@@ -493,7 +497,7 @@ anpan_batch = function(bug_dir,
                        omit_na = FALSE,
                        filtering_method = "kmeans",
                        discretize_inputs = TRUE,
-                       minmax_thresh = 5,
+                       minmax_thresh = NULL,
                        discard_poorly_covered_samples = TRUE,
                        skip_large = TRUE,
                        save_fit = TRUE,
@@ -544,6 +548,10 @@ anpan_batch = function(bug_dir,
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
+
+  if (is.null(minmax_thresh)) {
+    minmax_thresh = floor(.005*nrow(metadata))
+  }
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
     error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
@@ -665,6 +673,13 @@ anpan_batch = function(bug_dir,
       covariates = covariates[1:2]
     }
 
+    top_n_dir = file.path(plot_dir, "top_n")
+    has_hits_dir = file.path(plot_dir, 'has_hits')
+
+    dir.create(top_n_dir)
+    dir.create(has_hits_dir)
+
+    message("Generating top N plots...")
     plot_list = furrr::future_pmap(plotting_input,
                                    function(bug_name, s){plot_res = safely_plot_results(res = s,
                                                                                         bug_name = bug_name,
@@ -676,11 +691,10 @@ anpan_batch = function(bug_dir,
                                                                                                             showProgress = FALSE,
                                                                                                             header = TRUE),
                                                                                         discretize_inputs = discretize_inputs,
-                                                                                        plot_dir = plot_dir,
+                                                                                        plot_dir = top_n_dir,
                                                                                         annotation_file = annotation_file,
                                                                                         plot_ext = plot_ext,
                                                                                         n_top = n_top,
-                                                                                        q_threshold = q_threshold,
                                                                                         beta_threshold = beta_threshold,
                                                                                         cluster = 'both',
                                                                                         show_trees = TRUE,
@@ -704,8 +718,56 @@ anpan_batch = function(bug_dir,
         dplyr::select(-result)
 
       save(plot_errors,
-           file = file.path(plot_dir, 'plot_errors.RData'))
+           file = file.path(plot_dir, 'top_n_plot_errors.RData'))
     }
+
+    hit_df = all_bug_terms[q_global < q_threshold & abs(estimate) > beta_threshold]
+    plotting_input = all_bug_terms[bug_name %in% hit_df$bug_name][,.(s = list(.SD)), by = bug_name]
+    p = progressr::progressor(steps = nrow(plotting_input))
+
+    message("Generating plots for bugs with hits...")
+    plot_list = furrr::future_pmap(plotting_input,
+                                   function(bug_name, s){plot_res = safely_plot_results(res = s,
+                                                                                        bug_name = bug_name,
+                                                                                        covariates = covariates,
+                                                                                        outcome = outcome,
+                                                                                        model_input = fread(grep(filtered_file_list,
+                                                                                                                 pattern = bug_name,
+                                                                                                                 value = TRUE),
+                                                                                                            showProgress = FALSE,
+                                                                                                            header = TRUE),
+                                                                                        discretize_inputs = discretize_inputs,
+                                                                                        plot_dir = top_n_dir,
+                                                                                        annotation_file = annotation_file,
+                                                                                        plot_ext = plot_ext,
+                                                                                        n_top = n_top,
+                                                                                        beta_threshold = beta_threshold,
+                                                                                        q_threshold = q_threshold,
+                                                                                        cluster = 'both',
+                                                                                        show_trees = TRUE,
+                                                                                        width = width,
+                                                                                        height = height)
+                                   p()
+                                   return(plot_res)}) |>
+      purrr::transpose() |>
+      tibble::as_tibble() |>
+      dplyr::mutate(bug_name = plotting_input$bug_name) |>
+      dplyr::relocate(bug_name)
+
+    any_errors = sapply(plot_list$result,
+                        is.null) |> any()
+
+    if (any_errors) {
+      warning("There was at least one error when plotting the results. See plot_errors.RData for a data frame of the bugs that caused errors.")
+
+      plot_errors = plot_list |>
+        dplyr::filter(sapply(result, is.null)) |>
+        dplyr::select(-result)
+
+      save(plot_errors,
+           file = file.path(plot_dir, 'has_hit_plot_errors.RData'))
+    }
+
   }
 
 
@@ -803,6 +865,7 @@ read_filter_write = function(.x,
                              covariates,
                              outcome,
                              filtering_method,
+                             minmax_thresh = 5,
                              sample_wise_filter_stats_dir,
                              plot_ext = "pdf") {
 
@@ -811,6 +874,7 @@ read_filter_write = function(.x,
                              covariates       = covariates,
                              outcome          = outcome,
                              filtering_method = "kmeans",
+                             minmax_thresh    = minmax_thresh,
                              filter_stats_dir = sample_wise_filter_stats_dir,
                              plot_ext         = "pdf")
 
@@ -843,6 +907,7 @@ anpan_repeated_measures = function(subject_sample_map,
                                    outcome = "crc",
                                    omit_na = FALSE,
                                    filtering_method = "kmeans",
+                                   minmax_thresh = NULL,
                                    discard_poorly_covered_samples = TRUE,
                                    skip_large = TRUE,
                                    save_fit = TRUE,
@@ -901,6 +966,10 @@ anpan_repeated_measures = function(subject_sample_map,
                        select_cols = c("sample_id", outcome, covariates),
                        omit_na = omit_na)
 
+  if (is.null(minmax_thresh)) {
+    minmax_thresh = floor(.005*nrow(metadata))
+  }
+
   sample_wise_filter_stats_dir = file.path(out_dir, "sample_wise_filter_stats_dir")
   dir.create(sample_wise_filter_stats_dir)
   dir.create(file.path(sample_wise_filter_stats_dir, "plots"))
@@ -913,6 +982,7 @@ anpan_repeated_measures = function(subject_sample_map,
                 covariates = covariates,
                 outcome = outcome,
                 filtering_method = "kmeans",
+                minmax_thresh = minmax_thresh,
                 sample_wise_filter_stats_dir = sample_wise_filter_stats_dir,
                 plot_ext = "pdf")
 
