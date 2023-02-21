@@ -244,23 +244,33 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
 get_cov_color_map = function(unique_covs) {
 
   disc_scales = list(scale_fill_brewer(palette = "Set1"),
-                     scale_fill_brewer(palette = "Set2"))
+                     scale_fill_brewer(palette = "Set2"),
+                     scale_fill_brewer(palette = "Set3"))
 
   cont_scales = list(scale_fill_viridis_c(),
-                     scale_fill_viridis_c(option = "magma"))
+                     scale_fill_viridis_c(option = "plasma"),
+                     scale_fill_viridis_c(option = "mako"))
 
   col_scales = list(discrete = disc_scales,
                     continuous = cont_scales)
 
   covs = names(unique_covs)
 
-  cov_types = unique_covs |>
+  cov_counts = unique_covs |>
     purrr::imap_dfr(function(.x, .y){tibble(covariate = .y,
-                                     is_num = is.numeric(.x),
-                                     n_uniq = dplyr::n_distinct(.x))}) |>
+                                            is_num = is.numeric(.x),
+                                            n_uniq = dplyr::n_distinct(.x))}) |>
     mutate(cov_type = c('discrete', 'continuous')[((n_uniq >= 5 & (is_num)) + 1)]) |>
     group_by(cov_type) |>
-    mutate(cov_i = 1:n()) |>
+    mutate(cov_i = 1:n())
+
+  if (any(cov_counts$cov_i > 3)) {
+    warning("Not enough color scales! You can supply at most 3 discrete and/or 3 continuous covariates. Truncating the covariate color bars to the allowable set.")
+    cov_counts = cov_counts |>
+      dplyr::filter(cov_i <= 3)
+  }
+
+  cov_types = cov_counts |>
     ungroup() |>
     mutate(color_scales = map2(cov_type, cov_i,
                                function(.x, .y){col_scales[[.x]][[.y]]}),
@@ -269,12 +279,12 @@ get_cov_color_map = function(unique_covs) {
   return(cov_types)
 }
 
-plot_color_bars = function(color_bars, model_input,
+plot_color_bars = function(color_bar_df, model_input,
                           covariates, outcome, binary_outcome) {
 
   if (binary_outcome) {
-    n_healthy = sum(color_bars[[outcome]] == 0)
-    n_case = sum(color_bars[[outcome]] == 1)
+    n_healthy = sum(color_bar_df[[outcome]] == 0)
+    n_case = sum(color_bar_df[[outcome]] == 1)
     outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
     outcome_fill_scale = scale_fill_manual(values = outcome_fill_values)
     # TODO add color scales too to avoid grey outlines around tiles
@@ -298,7 +308,7 @@ plot_color_bars = function(color_bars, model_input,
     covariate_color_map = get_cov_color_map(unique_covs)
   }
 
-  base_plot = color_bars |>
+  base_plot = color_bar_df |>
     ggplot(aes(x = sample_id)) +
     geom_tile(aes_string(y = 1, fill = outcome)) +
     outcome_fill_scale +
@@ -306,23 +316,12 @@ plot_color_bars = function(color_bars, model_input,
 
   p = base_plot
 
-  if (length(covariates) > 0) {
-    p = p +
-
-      ggnewscale::new_scale("fill") +
-      geom_tile(aes_string(x = "sample_id", y = covariate_color_map$y[1],
-                           fill = covariate_color_map$covariate[1])) +
-      covariate_color_map$color_scales[[1]]
-  }
-
-  if (length(covariates) > 1) {
-    p = p +
-
-      ggnewscale::new_scale("fill") +
+  for (i in seq_along(covariates)) {
+    p = p + ggnewscale::new_scale("fill") +
       geom_tile(aes_string(x = "sample_id",
-                           y = covariate_color_map$y[2],
-                           fill = covariate_color_map$covariate[2])) +
-      covariate_color_map$color_scales[[2]]
+                           y = covariate_color_map$y[i],
+                           fill = covariate_color_map$covariate[i])) +
+      covariate_color_map$color_scales[[i]]
   }
 
   return(p)
@@ -492,7 +491,7 @@ plot_results = function(res, covariates, outcome, model_input,
   select_cols = c("sample_id", covariates, outcome)
 
   if (cluster %in% c('samples', 'both') && nrow(gene_mat) > 2) {
-    color_bars = model_input |>
+    color_bar_df = model_input |>
       dplyr::select(dplyr::all_of(select_cols)) |>
       unique()
 
@@ -535,18 +534,18 @@ plot_results = function(res, covariates, outcome, model_input,
       }
     }
 
-    color_bars$sample_id = factor(color_bars$sample_id,
+    color_bar_df$sample_id = factor(color_bar_df$sample_id,
                                   levels = s_levels)
   } else {
     order_cols = c(outcome, rev(covariates))
 
-    color_bars = model_input |>
+    color_bar_df = model_input |>
       dplyr::select(dplyr::all_of(select_cols)) |>
       unique() |>
       setorderv(cols = order_cols, na.last = TRUE)
 
-    color_bars$sample_id = factor(color_bars$sample_id,
-                                  levels = unique(color_bars$sample_id))
+    color_bar_df$sample_id = factor(color_bar_df$sample_id,
+                                  levels = unique(color_bar_df$sample_id))
   }
 
   # Handle fill scale for the central heatmap depending on whether its gene pres/abs or raw
@@ -567,19 +566,15 @@ plot_results = function(res, covariates, outcome, model_input,
   plot_data = model_input |>
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
-                             levels = levels(color_bars$sample_id)))
+                             levels = levels(color_bar_df$sample_id)))
 
   if (binary_outcome) {
-    n_healthy = sum(color_bars[[outcome]] == 0)
-    n_case = sum(color_bars[[outcome]] == 1)
+    n_healthy = sum(color_bar_df[[outcome]] == 0)
+    n_case = sum(color_bar_df[[outcome]] == 1)
   }
 
-  if (length(covariates) > 2) {
-    stop("data plots can't handle more than two covariates right now")
-  }
-
-  anno_plot = plot_color_bars(color_bars, model_input,
-                             covariates, outcome, binary_outcome)
+  anno_plot = plot_color_bars(color_bar_df, model_input,
+                              covariates, outcome, binary_outcome)
 
   if (!is.null(annotation_file) && !("annotation" %in% names(res))) {
     plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
@@ -588,7 +583,7 @@ plot_results = function(res, covariates, outcome, model_input,
   }
 
   plot_data$sample_id = factor(plot_data$sample_id,
-                              levels = levels(color_bars$sample_id))
+                              levels = levels(color_bar_df$sample_id))
   plot_data$gene = factor(plot_data$gene,
                           levels = rev(gene_levels))
 

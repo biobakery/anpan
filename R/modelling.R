@@ -668,9 +668,13 @@ anpan_batch = function(bug_dir,
 
     filtered_file_list = list.files(filtered_data_dir, full.names = TRUE)
 
-    if (length(covariates) > 2) {
-      warning("Only using the first two covariates for annotation color bars on plots.")
-      covariates = covariates[1:2]
+    if (!is.null(covariates)) {
+      unique_covs = metadata |>
+        dplyr::select(dplyr::all_of(covariates)) |>
+        unique()
+      covariate_color_map = get_cov_color_map(unique_covs)
+
+      covariates = covariate_color_map$covariate
     }
 
     top_n_dir = file.path(plot_dir, "top_n")
