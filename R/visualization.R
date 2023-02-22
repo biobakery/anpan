@@ -761,7 +761,6 @@ plot_results = function(res, covariates, outcome, model_input,
                               guides = 'collect',
                               design = design_str) +
       patchwork::plot_annotation(title = title_str,
-                                 theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
   } else if (show_intervals && show_trees) {
@@ -785,7 +784,6 @@ plot_results = function(res, covariates, outcome, model_input,
                                guides = 'collect',
                                design = design_str) +
       patchwork::plot_annotation(title = title_str,
-                                 theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
 
@@ -810,7 +808,6 @@ plot_results = function(res, covariates, outcome, model_input,
                                guides = 'collect',
                                design = design_str) +
       patchwork::plot_annotation(title = title_str,
-                                 theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
 
@@ -820,10 +817,11 @@ plot_results = function(res, covariates, outcome, model_input,
                               heights = c(1, 11),
                               guides = 'collect') +
       patchwork::plot_annotation(title = title_str,
-                                 theme = theme(legend.position = "left"),
                                  caption = threshold_warning_string,
                                  subtitle = subtitle_str)
   }
+
+  p = p & theme(legend.position = 'bottom')
 
   if (!is.null(plot_dir)) {
     if (is.null(height)) height = 10
