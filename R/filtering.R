@@ -289,7 +289,7 @@ initial_prevalence_filter = function(gf,
 }
 
 check_table = function(outcome_presence_table,
-                       minmax_thresh = 5) {
+                       minmax_thresh) {
 
   if (!all(dim(outcome_presence_table) == c(2, 2))) return(FALSE)
 
@@ -303,7 +303,7 @@ check_table = function(outcome_presence_table,
 final_prevalence_filter = function(filtered_gf,
                                    outcome,
                                    bn, # bug_name
-                                   minmax_thresh = 5,
+                                   minmax_thresh,
                                    filter_stats_dir,
                                    verbose) {
 
@@ -311,7 +311,8 @@ final_prevalence_filter = function(filtered_gf,
 
   if (dplyr::n_distinct(filtered_gf[[outcome]]) <= 2) {
     to_check = filtered_gf[,..select_cols][,.(sd_table = list(table(.SD))), by = gene]
-    to_check$varies_enough = sapply(to_check$sd_table, check_table)
+    to_check$varies_enough = sapply(to_check$sd_table, check_table,
+                                    minmax_thresh = minmax_thresh)
   } else {
     to_check = filtered_gf[,..select_cols][,.(n_pres = sum(present),
                                               n_abs = sum(!present),
@@ -355,7 +356,7 @@ final_prevalence_filter = function(filtered_gf,
 #' @export
 read_and_filter = function(bug_file, metadata, # TODO make metadata optional for this step
                            pivot_wide = TRUE,
-                           minmax_thresh = 5,
+                           minmax_thresh,
                            covariates = NULL,
                            outcome = NULL,
                            genomes_file = NULL,
@@ -568,7 +569,7 @@ safely_read_and_filter = purrr::safely(read_and_filter)
 filter_batch = function(bug_dir, meta_file,
                         filter_stats_dir,
                         pivot_wide = TRUE,
-                        minmax_thresh = 5,
+                        minmax_thresh = NULL,
                         covariates = NULL,
                         outcome = NULL,
                         filtering_method = "kmeans",
@@ -618,6 +619,7 @@ filter_batch = function(bug_dir, meta_file,
                                                                  outcome = outcome,
                                                                  filtering_method = filtering_method,
                                                                  discretize_inputs = discretize_inputs,
+                                                                 minmax_thresh = minmax_thresh,
                                                                  discard_poorly_covered_samples = discard_poorly_covered_samples,
                                                                  save_filter_stats = TRUE,
                                                                  filter_stats_dir = filter_stats_dir,

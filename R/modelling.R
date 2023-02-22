@@ -870,7 +870,7 @@ read_filter_write = function(.x,
                              covariates,
                              outcome,
                              filtering_method,
-                             minmax_thresh = 5,
+                             minmax_thresh = NULL,
                              sample_wise_filter_stats_dir,
                              plot_ext = "pdf") {
 
