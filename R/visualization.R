@@ -454,11 +454,16 @@ plot_results = function(res, covariates, outcome, model_input,
     # anpan() by default.
   }
 
-  if (!is.null(q_threshold)) {
+  if (!is.null(q_threshold) || !is.null(beta_threshold)) {
     signif_var = ifelse("q_global" %in% names(res),
                         'q_global',
                         'q_bug_wise')
-    gene_levels = res[res[[signif_var]] < q_threshold][abs(estimate) >= beta_threshold]$gene
+    gene_level_df = res
+
+    if (!is.null(q_threshold)) gene_level_df    = gene_level_df[gene_level_df[[signif_var]] < q_threshold]
+    if (!is.null(beta_threshold)) gene_level_df = gene_level_df[abs(estimate) >= beta_threshold]
+
+    gene_levels = gene_level_df$gene
 
     if (length(gene_levels) == 0) {
       threshold_warning_string = paste0("Note: no genes passed the specified thresholds. Displaying the top ", n_top, " genes instead.")
@@ -469,7 +474,7 @@ plot_results = function(res, covariates, outcome, model_input,
       subtitle_str = paste0(length(gene_levels), " genes with Q below ", q_threshold, " and abs(coefficient) above ", beta_threshold)
     }
   } else {
-    gene_levels = res[1:n_top,][abs(beta) >= beta_threshold]$gene
+    gene_levels = res[1:n_top,]$gene
     threshold_warning_string = NULL
     subtitle_str = paste0("Top ", n_top, " hits")
   }
