@@ -244,8 +244,8 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
 get_cov_color_map = function(unique_covs) {
 
   disc_scales = list(scale_fill_brewer(palette = "Set1"),
-                     scale_fill_brewer(palette = "Set2"),
-                     scale_fill_brewer(palette = "Set3"))
+                     scale_fill_hue(),
+                     scale_fill_brewer(palette = "Dark2"))
 
   cont_scales = list(scale_fill_viridis_c(),
                      scale_fill_viridis_c(option = "plasma"),
