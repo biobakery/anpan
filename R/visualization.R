@@ -86,9 +86,9 @@ plot_kmeans_dots = function(samp_stats,
   if (!is.null(genomes_stats)) {
     text_y = min(na_omit_samp_stats$q50) - .1 * sd(na_omit_samp_stats$q50)
     lt_geom = geom_vline(data = genomes_stats,
-                           aes(xintercept = lower_threshold),
-                           lty = 2,
-                           color = "#E41A1C")
+                         aes(xintercept = lower_threshold),
+                         lty = 2,
+                         color = "#E41A1C")
     lt_annotate = annotate(geom = "text",
                            x = genomes_stats$lower_threshold,
                            y = text_y,
@@ -97,9 +97,9 @@ plot_kmeans_dots = function(samp_stats,
                            color = "#E41A1C")
 
     mean_geom = geom_vline(data = genomes_stats,
-                 aes(xintercept = mean_genes),
-                 lty = 1,
-                 color = "#E41A1C")
+                           aes(xintercept = mean_genes),
+                           lty = 1,
+                           color = "#E41A1C")
     mean_annotate = annotate(geom = "text",
                              x = genomes_stats$mean_genes,
                              y = text_y,
@@ -243,13 +243,19 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
 
 get_cov_color_map = function(unique_covs) {
 
-  disc_scales = list(scale_fill_brewer(palette = "Set1"),
-                     scale_fill_hue(),
-                     scale_fill_brewer(palette = "Dark2"))
+  disc_guide = guide_legend(title.position = 'bottom', title.hjust = .5)
+  disc_scales = list(scale_fill_brewer(palette = "Set1",
+                                       guide = disc_guide),
+                     scale_fill_hue(guide = disc_guide),
+                     scale_fill_brewer(palette = "Dark2",
+                                       guide = disc_guide))
 
-  cont_scales = list(scale_fill_viridis_c(),
-                     scale_fill_viridis_c(option = "plasma"),
-                     scale_fill_viridis_c(option = "mako"))
+  cont_guide = guide_colorbar(title.position = 'bottom', title.hjust = .5)
+  cont_scales = list(scale_fill_viridis_c(guide = cont_guide),
+                     scale_fill_viridis_c(guide = cont_guide,
+                                          option = "plasma"),
+                     scale_fill_viridis_c(guide = cont_guide,
+                                          option = "mako"))
 
   col_scales = list(discrete = disc_scales,
                     continuous = cont_scales)
@@ -280,21 +286,23 @@ get_cov_color_map = function(unique_covs) {
 }
 
 plot_color_bars = function(color_bar_df, model_input,
-                          covariates, outcome, binary_outcome) {
+                           covariates, outcome, binary_outcome) {
 
   if (binary_outcome) {
     n_healthy = sum(color_bar_df[[outcome]] == 0)
     n_case = sum(color_bar_df[[outcome]] == 1)
     outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
     outcome_fill_scale = scale_fill_manual(values = outcome_fill_values)
+    guide_obj = guides(fill = guide_legend(title.position = 'bottom', title.hjust = .5))
     # TODO add color scales too to avoid grey outlines around tiles
   } else{
     outcome_fill_scale = scale_fill_viridis_c(option = "cividis")
+    guide_obj = guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5))
   }
 
   coords = coord_cartesian(expand = FALSE)
   labs_obj = labs(y = NULL,
-              x = NULL)
+                  x = NULL)
   theme_obj = theme(axis.text.y = element_blank(),
                     axis.ticks.y = element_blank(),
                     axis.text.x = element_blank(),
@@ -312,6 +320,7 @@ plot_color_bars = function(color_bar_df, model_input,
     ggplot(aes(x = sample_id)) +
     geom_tile(aes_string(y = 1, fill = outcome)) +
     outcome_fill_scale +
+    guide_obj +
     coords + labs_obj + theme_obj
 
   p = base_plot
@@ -541,7 +550,7 @@ plot_results = function(res, covariates, outcome, model_input,
     }
 
     color_bar_df$sample_id = factor(color_bar_df$sample_id,
-                                  levels = s_levels)
+                                    levels = s_levels)
   } else {
     order_cols = c(outcome, rev(covariates))
 
@@ -551,7 +560,7 @@ plot_results = function(res, covariates, outcome, model_input,
       setorderv(cols = order_cols, na.last = TRUE)
 
     color_bar_df$sample_id = factor(color_bar_df$sample_id,
-                                  levels = unique(color_bar_df$sample_id))
+                                    levels = unique(color_bar_df$sample_id))
   }
 
   # Handle fill scale for the central heatmap depending on whether its gene pres/abs or raw
@@ -559,9 +568,11 @@ plot_results = function(res, covariates, outcome, model_input,
   if (!discretize_inputs) {
     bug_covariate = "abd"
     fill_scale = scale_fill_viridis_c(option = "magma")
+    guide_obj = guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5))
   } else {
     bug_covariate = "present"
     fill_scale = scale_fill_manual(values = c("FALSE"  = "dodgerblue4", "TRUE"  = "chartreuse"))
+    guide_obj = guides(fill = guide_legend(title.position = 'bottom', title.hjust = .5))
   }
 
   model_input = data.table::melt(model_input |> dplyr::select(all_of(select_cols), all_of(gene_levels)),
@@ -572,7 +583,7 @@ plot_results = function(res, covariates, outcome, model_input,
   plot_data = model_input |>
     mutate(gene = factor(gene, levels = gene_levels),
            sample_id = factor(sample_id,
-                             levels = levels(color_bar_df$sample_id)))
+                              levels = levels(color_bar_df$sample_id)))
 
   if (binary_outcome) {
     n_healthy = sum(color_bar_df[[outcome]] == 0)
@@ -589,7 +600,7 @@ plot_results = function(res, covariates, outcome, model_input,
   }
 
   plot_data$sample_id = factor(plot_data$sample_id,
-                              levels = levels(color_bar_df$sample_id))
+                               levels = levels(color_bar_df$sample_id))
   plot_data$gene = factor(plot_data$gene,
                           levels = rev(gene_levels))
 
@@ -655,6 +666,7 @@ plot_results = function(res, covariates, outcome, model_input,
       geom_tile(aes(fill = abd)) +
       black_vline +
       fill_scale +
+      guide_obj +
       y_scale +
       labs(x = "samples",
            y = NULL) +
@@ -670,6 +682,7 @@ plot_results = function(res, covariates, outcome, model_input,
       geom_tile(aes(fill = present)) +
       black_vline +
       fill_scale +
+      guide_obj +
       y_scale +
       labs(x = "samples",
            y = NULL) +
@@ -711,6 +724,7 @@ plot_results = function(res, covariates, outcome, model_input,
     xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
            max(0, max(int_plot_df$max_val)))) +
     labs(fill = expression(paste("-log"[10], "(Q)"))) +
+    guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5)) +
     scale_fill_viridis_c(option = "plasma") +
     theme(panel.background = element_rect(fill = "white",
                                           colour = NA),
@@ -885,7 +899,7 @@ plot_p_value_histogram = function(all_bug_terms,
 
 #' @export
 plot_cor_mat = function(cor_mat,
-                             bug_name = NULL) {
+                        bug_name = NULL) {
 
   if (!is.null(bug_name)) {
     title_str = paste0(bug_name, " tree\ncorrelation matrix")
@@ -898,14 +912,14 @@ plot_cor_mat = function(cor_mat,
     tibble::rownames_to_column('rn') |>
     tibble::as_tibble() |>
     dplyr::mutate(rn = factor(rn,
-                       levels = unique(rn))) |>
+                              levels = unique(rn))) |>
     as.data.table() |>
     data.table::melt(id.vars = "rn",
                      variable.name = 'V2',
                      value.name = 'cor') |>
     tibble::as_tibble() |>
     dplyr::mutate(V2 = factor(V2,
-                       levels = rev(levels(rn)))) |>
+                              levels = rev(levels(rn)))) |>
     ggplot(aes(rn, V2)) +
     geom_tile(aes(fill = cor,
                   color = cor)) +
@@ -1191,7 +1205,7 @@ plot_tree_with_post_pred = function(tree_file,
     yrep_df = left_join(tree_plot$terminal_seg_df, yrep_df, by = c("label" = "sample_id")) |>
       dplyr::rename('sample_id' = label) |>
       mutate(variable = factor(variable,
-                            levels = variable)) |>
+                               levels = variable)) |>
       select(variable, y_rep, all_of(outcome), sample_id, x) |>
       dplyr::rename(y = all_of(outcome))
 
@@ -1344,7 +1358,7 @@ plot_half_cor_mat = function(cor_mat,
 
   coord_df = cbind(coord_df, out_coords)
   coord_df[,`:=`(      i = .I,
-                 corners = mapply(get_corners, x, y, SIMPLIFY = FALSE))]
+                       corners = mapply(get_corners, x, y, SIMPLIFY = FALSE))]
 
   plot_input = coord_df[,rbindlist(corners), by = list(i, correlation)]
 
@@ -1431,7 +1445,7 @@ plot_elpd_diff = function(anpan_pglmm_res,
     geom_point(size = 2.5) +
     geom_point(size = 1.5,
                color = 'white') +
-  labs(x = expression("PGLMM ELPD difference")) +
+    labs(x = expression("PGLMM ELPD difference")) +
     theme_light() +
     theme(axis.title.y = element_blank(),
           axis.ticks.y = element_blank(),
@@ -1505,7 +1519,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
                                   lwd = 2)
 
     big_dot = geom_point(size = 2.5,
-                 aes_string(color = color_category))
+                         aes_string(color = color_category))
 
   } else {
     inner_interval = geom_segment(aes(yend = input_file,
