@@ -193,25 +193,28 @@ input_path = file.path(tempdir(),
 
 model_input = fread(input_path)
 
-plot_results(res         = anpan_res,
-             model_input = model_input,
-             covariates  = NULL, 
-             outcome     = "is_case",
-             bug_name    = "Madeuppy_Fakerii",
-             cluster     = "both",
-             show_trees  = TRUE)
+plot_results(res            = anpan_res,
+             model_input    = model_input,
+             covariates     = NULL, 
+             outcome        = "is_case",
+             bug_name       = "Madeuppy_Fakerii",
+             cluster        = "both",
+             show_trees     = TRUE,
+             n_top          = 20,
+             q_threshold    = NULL,
+             beta_threshold = NULL)
 ```
 
 Things to know about the results plot: 
 
 * The central blue/green tile plot shows the model inputs i.e. which genes (rows) are present in which samples (columns). 
 * The annotation bar at the top shows the outcome variable
-  * The color bars at the top can also show up to two additional covariates.
+  * The color bars at the top can also show up to three additional covariates.
 * the estimate intervals on the left show the coefficient estimates +/- 1.96 * standard error bars and nominal significance stars
   * In this case, you can see that really only the top two rows are obviously different between the two groups, despite the nominal significance stars on the lower rows. 
 * The genes are sorted by significance by default, but they and/or the samples may be clustered by setting `cluster = "samples"` or `"genes"` or `"both"`. 
   * In this case, because we didn't incorporate any linkage of genes or relatedness of samples, we don't get any interesting clustring structure. 
-* The plot shows the top 50 genes by default, but you can set the `n_top` or `q_threshold` arguments to override this behavior.
+* The plot shows the top 50 genes by default, but you can set the `n_top`, `beta_threshold`, and/or `q_threshold` arguments to override this behavior.
 
 Some additional outputs you'll get with `anpan_batch()`:
 
