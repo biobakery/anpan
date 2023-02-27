@@ -10,6 +10,7 @@ plot_outcome_tree(
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
+  ladderize = TRUE,
   verbose = TRUE,
   trim_pattern = NULL,
   return_tree_df = FALSE
@@ -26,6 +27,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{outcome}{the name of the outcome variable}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
+
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 

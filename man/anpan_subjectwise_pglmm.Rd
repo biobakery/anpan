@@ -13,6 +13,7 @@ anpan_subjectwise_pglmm(
   out_dir = NULL,
   trim_pattern = NULL,
   omit_na = FALSE,
+  ladderize = TRUE,
   family = "gaussian",
   show_plot_cor_mat = TRUE,
   show_plot_tree = TRUE,
@@ -48,6 +49,8 @@ leaves of the tree up to the trim_pattern) and subject_id}
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
+
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
 \item{family}{string giving the name of the distribution of the outcome variable (usually
 "gaussian" or "binomial")}

@@ -71,6 +71,7 @@ olap_tree_and_meta = function(tree_file,
                               covariates,
                               outcome,
                               omit_na = FALSE,
+                              ladderize = TRUE,
                               trim_pattern = NULL,
                               verbose = TRUE) {
 
@@ -79,6 +80,10 @@ olap_tree_and_meta = function(tree_file,
     bug_tree = tree_file
   } else{
     bug_tree = ape::read.tree(tree_file)
+  }
+
+  if (ladderize) {
+    bug_tree = ape::ladderize(bug_tree)
   }
 
   if (is.data.frame(meta_file)) {
@@ -153,6 +158,7 @@ safely_chol = purrr::safely(chol)
 #' @param meta_file either a data frame of metadata or a path to file containing the metadata
 #' @param cor_mat a correlation matrix provided as an alternative to a tree.
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
+#' @param ladderize logical indicating whether to run [ape::ladderize()] on the tree before running the model
 #' @param family string giving the name of the distribution of the outcome variable (usually
 #'   "gaussian" or "binomial")
 #' @param beta_sd prior standard deviation parameters on the normal distribution for each covariate
@@ -235,6 +241,7 @@ anpan_pglmm = function(meta_file,
                        trim_pattern = NULL,
                        bug_name = NULL,
                        omit_na = FALSE,
+                       ladderize = TRUE,
                        family = "gaussian",
                        show_plot_cor_mat = TRUE,
                        show_plot_tree = TRUE,
@@ -280,6 +287,7 @@ anpan_pglmm = function(meta_file,
                                    covariates,
                                    outcome,
                                    omit_na,
+                                   ladderize = ladderize,
                                    trim_pattern = trim_pattern,
                                    verbose)
 
@@ -541,6 +549,7 @@ anpan_pglmm = function(meta_file,
                           covariates = covariates,
                           outcome = outcome,
                           omit_na = omit_na,
+                          ladderize = ladderize,
                           trim_pattern = trim_pattern,
                           verbose = FALSE)
 
@@ -747,6 +756,7 @@ anpan_pglmm_batch = function(meta_file,
                              out_dir = NULL,
                              trim_pattern = NULL,
                              omit_na = FALSE,
+                             ladderize = TRUE,
                              family = "gaussian",
                              show_plot_cor_mat = TRUE,
                              show_plot_tree = TRUE,
@@ -828,6 +838,7 @@ anpan_pglmm_batch = function(meta_file,
                                  covariates,
                                  outcome,
                                  omit_na,
+                                 ladderize = ladderize,
                                  trim_pattern = trim_pattern,
                                  verbose = FALSE)
 
@@ -959,6 +970,7 @@ anpan_subjectwise_pglmm = function(tree_file,
                                    out_dir = NULL,
                                    trim_pattern = NULL,
                                    omit_na = FALSE,
+                                   ladderize = TRUE,
                                    family = "gaussian",
                                    show_plot_cor_mat = TRUE,
                                    show_plot_tree = TRUE,
@@ -978,7 +990,9 @@ anpan_subjectwise_pglmm = function(tree_file,
   if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
 
   olap_tree_map = olap_tree_and_meta(tree_file, subject_sample_map, covariates = "subject_id",
-                                     trim_pattern = trim_pattern, outcome = NULL, verbose = FALSE)
+                                     trim_pattern = trim_pattern,
+                                     ladderize = ladderize,
+                                     outcome = NULL, verbose = FALSE)
 
   tree = olap_tree_map[[1]]
   subject_sample_map = olap_tree_map[[2]]

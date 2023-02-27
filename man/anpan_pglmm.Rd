@@ -14,6 +14,7 @@ anpan_pglmm(
   trim_pattern = NULL,
   bug_name = NULL,
   omit_na = FALSE,
+  ladderize = TRUE,
   family = "gaussian",
   show_plot_cor_mat = TRUE,
   show_plot_tree = TRUE,
@@ -49,6 +50,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
+
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
 \item{family}{string giving the name of the distribution of the outcome variable (usually
 "gaussian" or "binomial")}

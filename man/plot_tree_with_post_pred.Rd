@@ -10,6 +10,7 @@ plot_tree_with_post_pred(
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
+  ladderize = TRUE,
   verbose = TRUE,
   fit,
   labels,
@@ -28,6 +29,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{outcome}{the name of the outcome variable}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
+
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
 \item{fit}{a pglmm fit from \code{anpan_pglmm()}}
 

@@ -11,6 +11,7 @@ plot_tree_with_post(
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
+  ladderize = TRUE,
   verbose = TRUE,
   labels,
   trim_pattern = NULL,
@@ -30,6 +31,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{outcome}{the name of the outcome variable}
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
+
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
 \item{labels}{the ordered tip labels from the tree}
 
