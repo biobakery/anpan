@@ -8,7 +8,7 @@ read_and_filter(
   bug_file,
   metadata,
   pivot_wide = TRUE,
-  minmax_thresh = 5,
+  minmax_thresh,
   covariates = NULL,
   outcome = NULL,
   genomes_file = NULL,

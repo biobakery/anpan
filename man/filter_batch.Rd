@@ -9,7 +9,7 @@ filter_batch(
   meta_file,
   filter_stats_dir,
   pivot_wide = TRUE,
-  minmax_thresh = 5,
+  minmax_thresh = NULL,
   covariates = NULL,
   outcome = NULL,
   filtering_method = "kmeans",
