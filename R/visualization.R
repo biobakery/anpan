@@ -1114,7 +1114,7 @@ plot_outcome_tree = function(tree_file,
   }
 
   if (color_bars) {
-    p = p / anno_plot + plot_layout(ncol = 1, heights = c(3,1))
+    p = p / anno_plot + plot_layout(ncol = 1, heights = c(3,1), guides = 'collect')
   }
 
   if (return_tree_df) {
@@ -1205,10 +1205,12 @@ plot_tree_with_post = function(tree_file,
     color_bar_plot = tree_plot$tree_plot[[2]]
 
     p = top_plot + color_bar_plot + post_plot + plot_layout(ncol = 1,
-                                                            heights = c(3,1,1))
+                                                            heights = c(3,1,1),
+                                                            guides = "collect")
   } else {
     top_plot = tree_plot$tree_plot + theme(axis.text.x = element_blank())
-    p = (top_plot) / post_plot + plot_layout(heights = c(3,1))
+    p = (top_plot) / post_plot + plot_layout(heights = c(3,1),
+                                             guides = 'collect')
   }
 
   if (return_tree_df) {
