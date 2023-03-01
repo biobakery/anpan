@@ -241,16 +241,16 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
 
 }
 
-get_cov_color_map = function(unique_covs) {
+get_cov_color_map = function(unique_covs, title_pos = 'bottom') {
 
-  disc_guide = guide_legend(title.position = 'bottom', title.hjust = .5)
+  disc_guide = guide_legend(title.position = title_pos, title.hjust = .5)
   disc_scales = list(scale_fill_brewer(palette = "Set1",
                                        guide = disc_guide),
                      scale_fill_hue(guide = disc_guide),
                      scale_fill_brewer(palette = "Dark2",
                                        guide = disc_guide))
 
-  cont_guide = guide_colorbar(title.position = 'bottom', title.hjust = .5)
+  cont_guide = guide_colorbar(title.position = title_pos, title.hjust = .5)
   cont_scales = list(scale_fill_viridis_c(guide = cont_guide),
                      scale_fill_viridis_c(guide = cont_guide,
                                           option = "plasma"),
@@ -286,26 +286,41 @@ get_cov_color_map = function(unique_covs) {
 }
 
 plot_color_bars = function(color_bar_df, model_input,
-                           covariates, outcome, binary_outcome) {
+                           covariates, outcome, binary_outcome,
+                           show_outcome_scale = TRUE,
+                           terminal_seg_df = NULL) {
+
+  title_pos = if (is.null(terminal_seg_df)) "bottom" else "top"
 
   if (binary_outcome) {
-    n_healthy = sum(color_bar_df[[outcome]] == 0)
-    n_case = sum(color_bar_df[[outcome]] == 1)
+
     outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
-    outcome_fill_scale = scale_fill_manual(values = outcome_fill_values)
-    guide_obj = guides(fill = guide_legend(title.position = 'bottom', title.hjust = .5))
-    # TODO add color scales too to avoid grey outlines around tiles
-  } else{
-    outcome_fill_scale = scale_fill_viridis_c(option = "cividis")
-    guide_obj = guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5))
+
+    fill_guide = if (show_outcome_scale) {
+      guide_legend(title.position = title_pos, title.hjust = .5)
+    } else {
+      guide_none()
+    }
+
+    outcome_fill_scale = scale_fill_manual(values = outcome_fill_values,
+                                           guide = fill_guide)
+  } else {
+
+    fill_guide = if (show_outcome_scale) {
+      guide_legend(title.position = title_pos, title.hjust = .5)
+    } else {
+      guide_none()
+    }
+    outcome_fill_scale = scale_fill_viridis_c(option = "cividis",
+                                              guide = fill_guide)
   }
 
   coords = coord_cartesian(expand = FALSE)
   labs_obj = labs(y = NULL,
                   x = NULL)
-  theme_obj = theme(axis.text.y = element_blank(),
+  theme_obj = theme(axis.text.y  = element_blank(),
                     axis.ticks.y = element_blank(),
-                    axis.text.x = element_blank(),
+                    axis.text.x  = element_blank(),
                     axis.ticks.x = element_blank(),
                     panel.border = element_blank())
 
@@ -313,21 +328,45 @@ plot_color_bars = function(color_bar_df, model_input,
     unique_covs = model_input |>
       dplyr::select(dplyr::all_of(covariates)) |>
       unique()
-    covariate_color_map = get_cov_color_map(unique_covs)
+    covariate_color_map = get_cov_color_map(unique_covs, title_pos)
+  }
+
+  if (is.null(terminal_seg_df)) {
+    x_var = "sample_id"
+    x_scale = scale_x_discrete()
+  } else {
+    # If a terminal segment df is provided, it's being called from plot_outcome_tree()
+    x_var = "x"
+    x_scale = scale_x_continuous(breaks = 1:nrow(terminal_seg_df),
+                                 expand = waiver())
+    coords = coord_cartesian()
+    theme_obj = theme(axis.text.y      = element_blank(),
+                      axis.ticks.y     = element_blank(),
+                      axis.text.x      = element_blank(),
+                      axis.ticks.x     = element_blank(),
+                      panel.border     = element_blank(),
+                      panel.grid       = element_blank(),
+                      panel.background = element_blank())
+
+    color_bar_df = color_bar_df |>
+      dplyr::left_join(terminal_seg_df |> dplyr::select(sample_id = label,
+                                                        x),
+                by = 'sample_id') |>
+      dplyr::arrange(x)
   }
 
   base_plot = color_bar_df |>
-    ggplot(aes(x = sample_id)) +
+    ggplot(aes_string(x = x_var)) +
     geom_tile(aes_string(y = 1, fill = outcome)) +
     outcome_fill_scale +
-    guide_obj +
-    coords + labs_obj + theme_obj
+    coords + labs_obj + theme_obj +
+    x_scale
 
   p = base_plot
 
   for (i in seq_along(covariates)) {
     p = p + ggnewscale::new_scale("fill") +
-      geom_tile(aes_string(x = "sample_id",
+      geom_tile(aes_string(x = x_var,
                            y = covariate_color_map$y[i],
                            fill = covariate_color_map$covariate[i])) +
       covariate_color_map$color_scales[[i]]
@@ -963,12 +1002,13 @@ check_meta = function(model_input,
 }
 
 #' Plot a tree file showing the outcome variable
-#' @description Plot a tree file, and show the outcome variable as a colored dot
-#'   on the end of each tip.
+#' @description Plot a tree file, and show the outcome variable as a colored dot on the end of each
+#'   tip.
 #' @details Showing the covariates as color bar annotations isn't supported yet.
-#' @param return_tree_df if true, return a list containing 1) the plot, 2) the
-#'   segment data frame, and 3) the labelled terminal segment data frame.
-#'   Otherwise, just return the plot.
+#' @param return_tree_df if true, return a list containing 1) the plot, 2) the segment data frame,
+#'   and 3) the labelled terminal segment data frame. Otherwise, just return the plot.
+#' @param color_bars if true, show color bars below the plot showing the covariates and outcome
+#'   variables.
 #' @inheritParams anpan_pglmm
 #' @export
 plot_outcome_tree = function(tree_file,
@@ -977,6 +1017,7 @@ plot_outcome_tree = function(tree_file,
                              outcome = 'crc',
                              omit_na = FALSE,
                              ladderize = TRUE,
+                             color_bars = FALSE,
                              verbose = TRUE,
                              trim_pattern = NULL,
                              return_tree_df = FALSE) {
@@ -1007,6 +1048,14 @@ plot_outcome_tree = function(tree_file,
   covariates = meta_check_result$covariates
   outcome = meta_check_result$outcome
 
+  select_cols = c("sample_id", outcome, covariates)
+
+  color_bar_df = model_input |>
+    dplyr::select(dplyr::all_of(select_cols)) |>
+    unique()
+
+  binary_outcome = dplyr::n_distinct(model_input[[outcome]]) == 2
+
   if (dplyr::n_distinct(model_input[[outcome]]) == 2) {
     outcome_color_values = c('#abd9e9', '#d73027')
     names(outcome_color_values) = sort(unique(model_input[[outcome]]))
@@ -1014,7 +1063,7 @@ plot_outcome_tree = function(tree_file,
     model_input[[outcome]] = factor(model_input[[outcome]],
                                     levels = names(outcome_color_values))
   } else {
-    outcome_color_scale = scale_color_viridis_c()
+    outcome_color_scale = scale_color_viridis_c(option = "cividis")
   }
 
   dend_df = ggdendro::dendro_data(bug_tree |> phylogram::as.dendrogram())
@@ -1033,6 +1082,13 @@ plot_outcome_tree = function(tree_file,
     ungroup() |>
     left_join(tip_df, by = "x") |> # join on tip labels
     left_join(model_input, by = c("label" = "sample_id")) # join on metadata
+
+  if (color_bars) {
+    anno_plot = plot_color_bars(color_bar_df, model_input,
+                                covariates, outcome, binary_outcome,
+                                show_outcome_scale = FALSE,
+                                terminal_seg_df = terminal_seg_df)
+  }
 
   n = nrow(model_input)
   leaf_label_size = if (n > 100) 2.33 else 4 # TODO make this more thoughtful
@@ -1055,6 +1111,10 @@ plot_outcome_tree = function(tree_file,
 
   if (nrow(terminal_seg_df) > 150) {
     p$layers[[1]]$aes_params$size = .25
+  }
+
+  if (color_bars) {
+    p = p / anno_plot + plot_layout(ncol = 1, heights = c(3,1))
   }
 
   if (return_tree_df) {
@@ -1088,6 +1148,7 @@ plot_tree_with_post = function(tree_file,
                                outcome = 'crc',
                                omit_na = FALSE,
                                ladderize = TRUE,
+                               color_bars = FALSE,
                                verbose = TRUE,
                                labels,
                                trim_pattern = NULL,
@@ -1099,6 +1160,7 @@ plot_tree_with_post = function(tree_file,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 ladderize = ladderize,
+                                color_bars = color_bars,
                                 verbose = verbose,
                                 trim_pattern = trim_pattern,
                                 return_tree_df = TRUE)
@@ -1138,8 +1200,16 @@ plot_tree_with_post = function(tree_file,
     post_plot$layers[[2]]$aes_params$size = .25
   }
 
-  p = (tree_plot$tree_plot + theme(axis.text.x = element_blank())) / post_plot + plot_layout(heights = c(2,1))
+  if (color_bars) {
+    top_plot = tree_plot$tree_plot[[1]] + theme(axis.text.x = element_blank())
+    color_bar_plot = tree_plot$tree_plot[[2]]
 
+    p = top_plot + color_bar_plot + post_plot + plot_layout(ncol = 1,
+                                                            heights = c(3,1,1))
+  } else {
+    top_plot = tree_plot$tree_plot + theme(axis.text.x = element_blank())
+    p = (top_plot) / post_plot + plot_layout(heights = c(3,1))
+  }
 
   if (return_tree_df) {
     return(list(tree_with_post  = p,
@@ -1168,6 +1238,7 @@ plot_tree_with_post_pred = function(tree_file,
                                     outcome = 'crc',
                                     omit_na = FALSE,
                                     ladderize = TRUE,
+                                    color_bars = FALSE,
                                     verbose = TRUE,
                                     fit,
                                     labels,
@@ -1180,6 +1251,7 @@ plot_tree_with_post_pred = function(tree_file,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 ladderize = ladderize,
+                                color_bars = color_bars,
                                 verbose = verbose,
                                 trim_pattern = trim_pattern,
                                 return_tree_df = TRUE)
@@ -1284,12 +1356,26 @@ plot_tree_with_post_pred = function(tree_file,
 
   }
 
-  tree_no_labels = tree_plot$tree_plot +
+  if (color_bars) {
+    top_plot = tree_plot$tree_plot[[1]]
+  } else {
+    top_plot = tree_plot$tree_plot
+  }
+
+  tree_no_labels = top_plot +
     theme(axis.text.x = element_blank(),
           axis.ticks.x = element_blank())
 
-  tree_with_post_pred = tree_no_labels / yrep_plot + plot_layout(heights = c(3,1),
-                                                                 guides = "collect")
+  if (color_bars) {
+    color_bar_panel = tree_plot$tree_plot[[2]]
+    tree_with_post_pred = tree_no_labels + color_bar_panel + yrep_plot +
+      plot_layout(heights = c(3,1,1),
+                  ncol = 1,
+                  guides = "collect")
+  } else {
+    tree_with_post_pred = tree_no_labels / yrep_plot + plot_layout(heights = c(3,1),
+                                                                   guides = "collect")
+  }
 
   if (return_tree_df) {
     return(list(tree_with_post_pred = tree_with_post_pred,

@@ -12,6 +12,7 @@ plot_tree_with_post(
   outcome = "crc",
   omit_na = FALSE,
   ladderize = TRUE,
+  color_bars = FALSE,
   verbose = TRUE,
   labels,
   trim_pattern = NULL,
@@ -34,13 +35,15 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
 
+\item{color_bars}{if true, show color bars below the plot showing the covariates and outcome
+variables.}
+
 \item{labels}{the ordered tip labels from the tree}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
-\item{return_tree_df}{if true, return a list containing 1) the plot, 2) the
-segment data frame, and 3) the labelled terminal segment data frame.
-Otherwise, just return the plot.}
+\item{return_tree_df}{if true, return a list containing 1) the plot, 2) the segment data frame,
+and 3) the labelled terminal segment data frame. Otherwise, just return the plot.}
 }
 \value{
 either the plot or (if return_tree_df = TRUE) a list containing the plot, the segment df,

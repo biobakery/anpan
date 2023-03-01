@@ -569,6 +569,7 @@ anpan_pglmm = function(meta_file,
                                  omit_na = omit_na,
                                  ladderize = ladderize,
                                  verbose = FALSE,
+                                 color_bars = TRUE,
                                  fit = pglmm_fit,
                                  trim_pattern = trim_pattern,
                                  labels = levels(model_input$sample_id))
@@ -590,6 +591,7 @@ anpan_pglmm = function(meta_file,
                                            ladderize = ladderize,
                                            verbose = FALSE,
                                            fit = pglmm_fit,
+                                           color_bars = TRUE,
                                            trim_pattern = trim_pattern,
                                            labels = levels(model_input$sample_id))
 
