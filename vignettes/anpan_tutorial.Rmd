@@ -478,6 +478,7 @@ p = plot_tree_with_post(tree_file  = tr,
                         fit        = result$pglmm_fit,
                         covariates = "covariate",
                         outcome    = "outcome",
+                        color_bars = TRUE,
                         labels     = metadata$sample_id)
 p
 ```
