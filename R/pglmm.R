@@ -938,6 +938,7 @@ anpan_pglmm_batch = function(meta_file,
     mutate(n                      = purrr::map_int(model_input, nrow),
            prop_bad_pareto_k      = purrr::map_dbl(loo, ~mean(.x$pglmm_loo$diagnostics$pareto_k > .7)),
            n_divergences          = purrr::map_dbl(pglmm_fit, ~sum(as.matrix(.x$sampler_diagnostics()[,,"divergent__"]))),
+           sigma_phylo            = purrr::map_dbl(pglmm_fit, ~.x$summary(variables = 'sigma_phylo')$mean),
            best_model             = gsub("_fit", "", purrr::map_chr(loo, ~rownames(.x$comparison)[1])),
            elpd_diff              = purrr::map_dbl(loo, ~.x$comparison[2,1]),
            elpd_se                = purrr::map_dbl(loo, ~.x$comparison[2,2])) |>
