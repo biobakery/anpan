@@ -823,7 +823,8 @@ aggregate_by_subject = function(filtered_sample_file,
                                 subject_dir,
                                 subject_sample_map,
                                 covariates,
-                                outcome) {
+                                outcome,
+                                out_dir) {
   sample_df = filtered_sample_file |>
     fread(header = TRUE) |>
     melt(id.vars = c(covariates, outcome, "sample_id"),
@@ -831,10 +832,26 @@ aggregate_by_subject = function(filtered_sample_file,
 
   subject_sample_map[, bug_well_covered := sample_id %in% sample_df$sample_id]
   subject_sample_map[, n_samples := .N, by = subject_id]
+  subject_sample_map[, prop_well_covered := mean(bug_well_covered), by = subject_id]
+
+  fwrite(subject_sample_map,
+         file = file.path(out_dir, 'coverage_calls.tsv.gz'),
+         sep = "\t")
+
+  to_drop = subject_sample_map[prop_well_covered < 0.5]
+
+  message(paste0("* Dropping ", to_drop$subject_id |> dplyr::n_distinct(),
+                 ' out of ', subject_sample_map$subject_id |> dplyr::n_distinct(),
+                 ' subjects with intermittent coverage in ',
+                 basename(filtered_sample_file)))
+
+  subject_sample_map = subject_sample_map[!(subject_id %in% to_drop$subject_id)]
+  sample_df = sample_df[!(sample_id %in% to_drop$sample_id)]
 
   joined = merge(subject_sample_map,
-        sample_df, by = "sample_id",
-        all = TRUE)
+                 sample_df,
+                 by = "sample_id",
+                 all = TRUE) # full join
 
   joined$present[!joined$bug_well_covered] = FALSE
 
@@ -895,7 +912,8 @@ read_filter_write = function(.x,
 #' @details This function performs the standard anpan filtering on all samples, then uses the
 #'   subject-sample map to compute the proportion of samples with the bug. This gives a gene
 #'   _proportion_ matrix (instead of a presence/absence matrix) which is then passed to
-#'   \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}.
+#'   \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}. Subjects that do not
+#'   have the bug present in at least half their samples are dropped.
 #'
 #'   In cases where subject metadata varies by sample, the mean is taken if the variable is numeric,
 #'   otherwise it is tabulated and the most frequent category is selected as the subject-level
@@ -1002,7 +1020,8 @@ anpan_repeated_measures = function(subject_sample_map,
            subject_dir = subject_dir,
            subject_sample_map = subject_sample_map,
            covariates = covariates,
-           outcome = outcome)
+           outcome = outcome,
+           out_dir = out_dir)
 
   # For each subject, multiply the proportion of samples that have the bug by the proportion of
   # samples that have the gene to get the final gene data. Pass that to anpan_batch with no

@@ -85,7 +85,8 @@ Use repeated measures to refine the gene model
 This function performs the standard anpan filtering on all samples, then uses the
   subject-sample map to compute the proportion of samples with the bug. This gives a gene
   _proportion_ matrix (instead of a presence/absence matrix) which is then passed to
-  \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}.
+  \code{anpan_batch(filtering_method = "none", discretize_inputs = FALSE)}. Subjects that do not
+  have the bug present in at least half their samples are dropped.
 
   In cases where subject metadata varies by sample, the mean is taken if the variable is numeric,
   otherwise it is tabulated and the most frequent category is selected as the subject-level
