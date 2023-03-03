@@ -51,7 +51,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
-\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running
+the model}
 
 \item{family}{string giving the name of the distribution of the outcome variable (usually
 "gaussian" or "binomial")}
@@ -107,7 +108,9 @@ the tip labels of the tree must be the sample ids from the metadata. You can use
 \code{trim_pattern} argument to automatically trim off any consistent pattern from the tip
 labels if necessary.
 
-The dots can be used to pass e.g. parallel_chains=4 to make the chains run in parallel.
+The model indexes the leaves according to the Cholesky factor of the correlation matrix. This
+likely won't be the same order as the input tree. The \code{model_input} that is returned as
+part of the output will have the samples in a factor with the model index order if needed.
 
 The prior for the intercept is a normal distribution centered on the mean of the outcome
 variable with a standard deviation of 3*sd(outcome variable)

@@ -167,7 +167,8 @@ safely_chol = purrr::safely(chol)
 #' @param meta_file either a data frame of metadata or a path to file containing the metadata
 #' @param cor_mat a correlation matrix provided as an alternative to a tree.
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
-#' @param ladderize logical indicating whether to run [ape::ladderize()] on the tree before running the model
+#' @param ladderize logical indicating whether to run [ape::ladderize()] on the tree before running
+#'   the model
 #' @param family string giving the name of the distribution of the outcome variable (usually
 #'   "gaussian" or "binomial")
 #' @param beta_sd prior standard deviation parameters on the normal distribution for each covariate
@@ -202,7 +203,9 @@ safely_chol = purrr::safely(chol)
 #'   \code{trim_pattern} argument to automatically trim off any consistent pattern from the tip
 #'   labels if necessary.
 #'
-#'   The dots can be used to pass e.g. parallel_chains=4 to make the chains run in parallel.
+#'   The model indexes the leaves according to the Cholesky factor of the correlation matrix. This
+#'   likely won't be the same order as the input tree. The \code{model_input} that is returned as
+#'   part of the output will have the samples in a factor with the model index order if needed.
 #'
 #'   The prior for the intercept is a normal distribution centered on the mean of the outcome
 #'   variable with a standard deviation of 3*sd(outcome variable)

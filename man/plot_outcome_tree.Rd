@@ -29,7 +29,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
-\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running
+the model}
 
 \item{color_bars}{if true, show color bars below the plot showing the covariates and outcome
 variables.}

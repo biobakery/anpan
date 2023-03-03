@@ -46,7 +46,8 @@ anpan_pglmm_batch(
 
 \item{omit_na}{logical indicating whether to omit incomplete cases of the metadata}
 
-\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running the model}
+\item{ladderize}{logical indicating whether to run \code{\link[ape:ladderize]{ape::ladderize()}} on the tree before running
+the model}
 
 \item{family}{string giving the name of the distribution of the outcome variable (usually
 "gaussian" or "binomial")}
