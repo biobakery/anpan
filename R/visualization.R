@@ -480,6 +480,10 @@ plot_results = function(res, covariates, outcome, model_input,
   # then sticks them together with patchwork. There are some common axes between subplots (genes,
   # samples), so it takes some initial steps to define the unique genes/samples that will be shown.
 
+  if ("bug_name" %in% names(res) && dplyr::n_distinct(res$bug_name) > 1) {
+    stop("The model results input (res) needs to be results for only a single bug.")
+  }
+
   if (cluster %in% c("none", "genes")) {
     show_trees = FALSE
   }
