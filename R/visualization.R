@@ -512,6 +512,11 @@ plot_results = function(res, covariates, outcome, model_input,
                         'q_bug_wise')
     gene_level_df = res
 
+    if (!(signif_var %in% names(res)) && "p.value" %in% names(res)) {
+      signif_var = "q_bug_wise"
+      res$q_bug_wise = p.adjust(res$p.value, method = "fdr")
+    }
+
     if (!is.null(q_threshold)) gene_level_df    = gene_level_df[gene_level_df[[signif_var]] < q_threshold]
     if (!is.null(beta_threshold)) gene_level_df = gene_level_df[abs(estimate) >= beta_threshold]
 
