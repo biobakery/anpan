@@ -136,6 +136,15 @@ olap_tree_and_meta = function(tree_file,
   return(res)
 }
 
+get_ordered_tips = function(tree) {
+  n_tip = length(tree$tip.label)
+  is_tip = tree$edge[,2] <= n_tip
+
+  tip_order = tree$edge[is_tip,2]
+
+  tree$tip.label[tip_order]
+}
+
 #' Get the correlation matrix of a tree
 #' @param bug_tree a tree object of class "phylo"
 #' @seealso [ape::read.tree()]
@@ -441,8 +450,8 @@ anpan_pglmm = function(meta_file,
     arrange(sample_id)
 
   if (show_plot_cor_mat) {
-    mat_for_plot = cor_mat
-    mat_for_plot = mat_for_plot[model_input$sample_id, model_input$sample_id]
+    ordered_tips = get_ordered_tips(bug_tree)
+    mat_for_plot = cor_mat[ordered_tips, ordered_tips]
 
     if (verbose) message("Plotting correlation matrix...")
     p = plot_cor_mat(mat_for_plot,
