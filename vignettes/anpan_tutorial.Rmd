@@ -885,7 +885,7 @@ If you don't have a phylogeny for your data, you can get a very rough estimate i
 
 ```{r eval = FALSE}
 gene_tree = gene_pres_abs_matrix |> 
-  vegan::vegdist(method = "jaccard") |> 
+  vegan::vegdist(method = "jaccard") |> # or just stats::dist(). possibly add "pca() |>" here
   ape::nj() # or ape::fastme.bal() or ape::bionj()
 ```
 
@@ -914,7 +914,7 @@ labd_phylo = labd_mat |> # it can also be useful to add in "pca() |>" at this po
   ape::ladderize()
 ```
 
-If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences.
+If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences. The number of principle components to use is debatable, but using the number that captures at least 50% of the input variation is a reasonable choice.
 
 However, it's usually best to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)). There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The two preceding code blocks are mainly intended for quick-and-dirty, "good enough" method to get a quick look at how gene patterns affect the outcome overall.
 
