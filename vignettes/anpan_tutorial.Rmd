@@ -154,7 +154,7 @@ A lot of stuff gets written out to `out_dir`, but let's look at the result that 
 head(anpan_res)
 ```
 
-`anpan()` returns a data.table with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a reasonable q-value threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. The regression statistics for all terms in the model (including non-gene covariate terms) are written to the output directory in `*all_terms.tsv.gz`. The stats for just the gene terms (i.e. the same data frame returned by `anpan()` in R) is written to `*gene_terms.tsv.gz`.
+`anpan()` returns a data.table with regression statistics for the effect of each gene on the outcome. We can see that the two top-ranked hits (and the only two that pass a reasonable q-value threshold) are the strongest genes from the list of true effects. We don't get the second through fourth genes with (weaker) true effects, meaning we likely didn't have enough power in this simulation to detect those. The regression statistics for all terms in the model (including non-gene covariate terms) are written to the output directory in `*all_terms.tsv.gz`. The stats for just the gene terms (i.e. the same data frame returned by `anpan()` in R) is written to `*gene_terms.tsv.gz`. For `anpan_batch()` those will both be in the `model_stats/` output directory, with a file called `all_bug_gene_terms.tsv.gz` in the top level of the output directory.
 
 ## Examine filtering diagnostics
 
