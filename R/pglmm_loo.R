@@ -116,6 +116,11 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   return(res)
 }
 
+s22_inv = function(cor_mat_inv, cor_mat, j) {
+  rcor_mat = cor_mat[-j,-j]
+  return(solve(rcor_mat))
+}
+
 woodbury_s22_inv = function(cor_mat_inv, cor_mat, j) {
   # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
 
@@ -144,7 +149,16 @@ precompute_arrays = function(j, cor_mat, cor_mat_inv) {
   ord = c(j, (1:n)[-j])
 
   r12 = cor_mat[ord, ord][1,-1, drop = FALSE]
-  r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j)
+
+  any_high_corr = any(cor_mat[j, -j] > .99999)
+
+  if (any_high_cor) {
+    # Woodbury induces a tiny numerical inaccuracy for high correlations. Revert to slow naive
+    # method if that happens.
+    r22_inv = s22_inv(cor_mat_inv, cor_mat, j)
+  } else {
+    r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j)
+  }
 
   sigma12x22_inv_arr_j = r12 %*% r22_inv
   cor21_arr_j = t(r12)
