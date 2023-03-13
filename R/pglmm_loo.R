@@ -39,7 +39,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   if (verbose) message("- 1/2 precomputing conditional covariance arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
-  p = progressr::progressor(steps = n_obs)
+  p = progressr::progressor(steps = n_obs / 4)
 
   cor_mat_inv = chol2inv(t(Lcov))
   # ^ Stan and R have different conventions on where the triangle should be for a cholesky factor...
@@ -47,7 +47,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
                                  res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
-                                 p()
+                                 if (.x %% 4 == 0) p()
                                  return(res)},
                                .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv")))
 
@@ -59,7 +59,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   # set up the progressr and list over posterior iterations
   if (verbose) message("- 2/2 computing integrated importance weights for loo CV")
 
-  p = progressr::progressor(along = 1:max_i)
+  p = progressr::progressor(steps = max_i / 20)
 
   draw_split = draw_df[1:max_i,] |>
     dplyr::group_split(`.draw`)
@@ -91,8 +91,10 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
 
   }
 
-  ll_list = furrr::future_map(draw_split,
-                       function(.x) {
+  # For each element in the posterior chain, compute the log likelihood contribution for each
+  # observation.
+  ll_list = furrr::future_imap(draw_split,
+                       function(.x, i) {
                          res = log_lik_terms_i(i_df = .x,
                                                effect_means = effect_means,
                                                cor_mat = cor_mat,
@@ -100,7 +102,7 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
                                                sigma12x22_inv_arr = sigma12x22_inv_arr,
                                                cor21_arr = cor21_arr,
                                                family = family)
-                         p()
+                         if (i %% 20 == 0) p()
                          return(res)
                        },
                        .options = furrr::furrr_options(globals = global_list))
@@ -123,6 +125,7 @@ s22_inv = function(cor_mat_inv, cor_mat, j) {
 
 woodbury_s22_inv = function(cor_mat_inv, cor_mat, j) {
   # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
+  # >20x faster, but less numerically precise by a tiny amount.
 
   n = nrow(cor_mat)
   ord = c(j, (1:n)[-j])
