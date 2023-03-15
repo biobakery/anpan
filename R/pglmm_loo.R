@@ -153,7 +153,7 @@ precompute_arrays = function(j, cor_mat, cor_mat_inv) {
 
   r12 = cor_mat[ord, ord][1,-1, drop = FALSE]
 
-  any_high_corr = any(cor_mat[j, -j] > .99999)
+  any_high_corr = any(cor_mat[j, -j] > .9999)
 
   if (any_high_corr) {
     # Woodbury induces a tiny numerical inaccuracy for high correlations. Revert to slow naive
