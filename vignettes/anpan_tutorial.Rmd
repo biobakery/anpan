@@ -885,38 +885,16 @@ If you don't have a phylogeny for your data, you can get a very rough estimate i
 
 ```{r eval = FALSE}
 gene_tree = gene_pres_abs_matrix |> 
-  vegan::vegdist(method = "jaccard") |> # or just stats::dist(). possibly add "pca() |>" here
+  stats::dist() |> 
+  pca() |>
   ape::nj() # or ape::fastme.bal() or ape::bionj()
 ```
 
-This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
+This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices can end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
 
-The method in the code block above can sometimes yield trees that in turn yield correlation matrices that are not positive definite. If that happens, another method to try is to subset the raw abundance data to samples where the bug is well-covered, then build the tree from those raw values:
+If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences. The number of principle components to use is debatable, but choosing based on how the of proportion of variance explained dies off can be reasonable. One might choose eigenvalues up to the first eigenvalue that is less than one tenth of the first eigenvalue.
 
-```{r eval = FALSE}
-sample_labels = fread("filter_stats/labels/sample_labels_bug.tsv.gz")
-
-select_cols = sample_labels[bug_present == TRUE]$sample_id
-
-abd_mat = fread("path/to/bug.genefamilies.tsv.gz")[ , ..select_cols] |> 
-  as.matrix() |> 
-  t()
-
-half_min = min(abd_mat[abd_mat != 0]) / 2
-
-abd_mat[abd_mat == 0] = half_min
-
-labd_mat = log(abd_mat)
-
-labd_phylo = labd_mat |> # it can also be useful to add in "pca() |>" at this point 
-  dist(method = "euclidean") |> 
-  ape::nj() |> 
-  ape::ladderize()
-```
-
-If you have bug abundance values (from e.g. MetaPhlAn), it can also be helpful to divide that out from the gene abundances to estimate a rough "copy number", which can also improve the phylogeny estimation. If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences. The number of principle components to use is debatable, but using the number that captures at least 50% of the input variation is a reasonable choice.
-
-However, it's usually best to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)). There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The two preceding code blocks are mainly intended for quick-and-dirty, "good enough" method to get a quick look at how gene patterns affect the outcome overall.
+That being said, it's preferable to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)) rather than doing something _ad hoc_ from the gene matrices. There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The preceding code block is mainly intended as a quick-and-dirty, "good enough" method to get a quick look at how relatedness affects the outcome overall.
 
 ## Picking out clade members
 
