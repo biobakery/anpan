@@ -945,6 +945,10 @@ anpan_pglmm_batch = function(meta_file,
   worked = safe_res_df |>
     dplyr::filter(purrr::map_lgl(error, ~is.null(.x)))
 
+  if (nrow(worked) == 0) {
+    stop("No PGLMMs finished without error. See pglmm_errors.RData in the output directory.")
+  }
+
   res_df = dplyr::bind_cols(worked["input_file"],
                             as_tibble(purrr::transpose(worked$result))) |>
     mutate(n                      = purrr::map_int(model_input, nrow),
