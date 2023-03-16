@@ -1573,7 +1573,7 @@ loo_to_df = function(loo_res) {
 }
 
 plot_elpd_diff_batch = function(anpan_pglmm_res,
-                                probs = c(.5, .98),
+                                probs = c(.5, .95),
                                 color_category = NULL,
                                 verbose = TRUE) {
 
