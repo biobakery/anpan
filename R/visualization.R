@@ -244,8 +244,9 @@ ctl_case_trees = function(sample_clust, model_input, outcome) {
 get_cov_color_map = function(unique_covs, title_pos = 'bottom') {
 
   # From an online distinct color palette generator:
-  pal2 = c("#2f4f4f", "#a52a2a", "#006400", "#00008b", "#d2b48c", "#ff0000", "#00ced1", "#ffa500",
-           "#ffff00", "#00ff00", "#0000ff", "#000000", "#FFFFFF", "#dda0dd", "#90ee90", "#ff1493")
+  pal2 = c("#2f4f4f", "#a52a2a", "#006400", "#ffa500", "#0000ff", "#00ff00",
+           "#dda0dd", "#90ee90", "#00008b", "#d2b48c", "#ff0000", "#00ced1",
+           "#ffff00", "#000000", "#FFFFFF", "#ff1493")
 
   disc_guide = guide_legend(title.position = title_pos, title.hjust = .5)
   disc_scales = list(scale_fill_brewer(palette = "Set1",
