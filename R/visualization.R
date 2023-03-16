@@ -1503,7 +1503,7 @@ plot_half_cor_mat = function(cor_mat,
 #'   variable to NA for all other entries.
 #' @export
 plot_elpd_diff = function(anpan_pglmm_res,
-                          probs = c(.5, .98),
+                          probs = c(.5, .95),
                           color_category = NULL,
                           verbose = TRUE) {
 
