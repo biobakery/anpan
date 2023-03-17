@@ -1,9 +1,9 @@
 Package: anpan
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Quantifying Microbial Strain-Host Associations
 Version: 0.3.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
+Author: Andrew Ghazi
+Maintainer: Andrew Ghazi <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
     Use four spaces when indenting paragraphs within the Description.
 License: MIT + file LICENSE
