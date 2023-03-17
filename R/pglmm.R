@@ -644,7 +644,7 @@ anpan_pglmm = function(meta_file,
                                 ~matrix(unlist(.x), ncol = 1))
     }
 
-    fit_summary = pglmm_fit$summary() |>
+    fit_summary = pglmm_fit$summary(variables = 'phylo_effect') |>
       tibble::as_tibble()
 
     # These are decent starting places for offset terms
