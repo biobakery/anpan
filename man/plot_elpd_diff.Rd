@@ -6,7 +6,7 @@
 \usage{
 plot_elpd_diff(
   anpan_pglmm_res,
-  probs = c(0.5, 0.98),
+  probs = c(0.5, 0.95),
   color_category = NULL,
   verbose = TRUE
 )

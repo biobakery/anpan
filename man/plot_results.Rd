@@ -71,12 +71,16 @@ If included, \code{annotation_file} must be a tsv with two columns: "gene" and
   When \code{cluster = "none"}, the samples are ordered by metadata and the genes are ordered by
   statistical significance.
 
-  When signficance stars are shown, they encode the following (fairly standard) signficance
+  When significance stars are shown, they encode the following (fairly standard) significance
   thresholds: p.value < .001 ~ ***, p.value < .01  ~ **, p.value < .05  ~ *, p.value < .1   ~ .,
   p.value < 1    ~ " "
 
   If applicable, the Q-value used to color the dot on the interval panel is q_global if present
-  in the input and q_bug_wise otherwise.
+  in the input and q_bug_wise otherwise. That means that you'll get different results if you
+  compare the output of \code{anpan_batch()} and a manual call to \code{plot_results()} using the
+  bug-wise results from the \code{model_stats/} output directory. If you'd like to replicate the
+  \code{anpan_batch()} plots exactly, read in the \code{all_bug_gene_terms.tsv.gz} result from
+  the top level output directory, then filter it to the bug of interest.
 
   Note that the beta_threshold uses the value of the estimate column directly, so it is
   interpreted according to the units of your outcome variable with a continuous outcome, and on
