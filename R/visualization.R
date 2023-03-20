@@ -251,7 +251,8 @@ get_cov_color_map = function(unique_covs, title_pos = 'bottom') {
   disc_guide = guide_legend(title.position = title_pos, title.hjust = .5)
   disc_scales = list(scale_fill_brewer(palette = "Set1",
                                        guide = disc_guide),
-                     scale_fill_manual(values = pal2),
+                     scale_fill_manual(values = pal2,
+                                       guide = disc_guide),
                      scale_fill_brewer(palette = "Dark2",
                                        guide = disc_guide))
 
@@ -1584,6 +1585,7 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
   mult = qnorm(1 - (1 - sort(probs))/2)
 
   loo_df = anpan_pglmm_res |>
+    filter(!is.na(elpd_diff)) |>
     select(input_file, loo) |>
     mutate(loo_comp = map(loo, loo_to_df)) |>
     select(-loo) |>
