@@ -22,10 +22,21 @@ get_pglmm_loo = function(ll_mat, draw_df) {
                                      chain_id = draw_df$`.chain`))
 }
 
+safely_invert = purrr::safely(solve)
 
 # For each posterior iteration, compute the log-likelihood of each observation.
-get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family, verbose = TRUE) {
+get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, Y, family, verbose = TRUE) {
 
+  inv_res = safely_invert(cor_mat)
+
+  if (!is.null(inv_res$error)) {
+    print(inv_res$error)
+    stop("Correlation matrix couldn't be inverted, loo not performed.")
+  } else {
+    cor_mat_inv = inv_res$result
+  }
+
+  max_i = nrow(draw_df)
   n_obs = length(effect_means)
 
   # precompute some arrays that are re-usable on each iteration.
@@ -40,9 +51,6 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
   p = progressr::progressor(steps = n_obs / 4)
-
-  cor_mat_inv = chol2inv(t(Lcov))
-  # ^ Stan and R have different conventions on where the triangle should be for a cholesky factor...
 
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
@@ -95,13 +103,14 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
   # observation.
   ll_list = furrr::future_imap(draw_split,
                        function(.x, i) {
-                         res = log_lik_terms_i(i_df = .x,
-                                               effect_means = effect_means,
-                                               cor_mat = cor_mat,
-                                               Xc = Xc, Y = Y,
+                         res = log_lik_terms_i(i_df               = .x,
+                                               effect_means       = effect_means,
+                                               cor_mat            = cor_mat,
+                                               Xc                 = Xc,
+                                               Y                  = Y,
                                                sigma12x22_inv_arr = sigma12x22_inv_arr,
-                                               cor21_arr = cor21_arr,
-                                               family = family)
+                                               cor21_arr          = cor21_arr,
+                                               family             = family)
                          if (i %% 20 == 0) p()
                          return(res)
                        },
@@ -117,6 +126,8 @@ get_ll_mat = function(draw_df, max_i, effect_means, cor_mat, Lcov, Xc, Y, family
 
   return(res)
 }
+
+safely_get_ll_mat = purrr::safely(get_ll_mat)
 
 s22_inv = function(cor_mat_inv, cor_mat, j) {
   rcor_mat = cor_mat[-j,-j]
@@ -193,6 +204,7 @@ log_lik_terms_i = function(i_df,
   # j = index over observations
   if (family == 'gaussian') {
     # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
+    # Pass j_df through as_tibble() if you want to look at it; it prints terribly as a data.table.
     j_df = data.table(j = seq_len(p),
                       l = c(lm_means),
                       sigma12x22_inv = lapply(seq_len(p), function(.x) matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
@@ -285,14 +297,39 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                 effects_mj, # effects minus j
                                 yj,
                                 effect_mean_j, cov_mat_jj, sqrt2pi) {
+  # To get the log-likelihood of observation j at draw i, we have to integrate out the phylogenetic
+  # effect from the likelihood. The likelihood of the phylogenetic effect for leaf j is a
+  # univariation normal distribution conditioned on the other phylogenetic effects + the outcome
+  # likelihood.
 
   p = length(effects_mj) + 1
 
   # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-  sigma_bar_j = sqrt(cov_mat_jj - c(sigma12x22_inv %*% sigma21))
+  # mu_bar_j & sigma_bar_j are the normal likelihood for phylogenetic effect j conditional on the
+  # other phylogenetic effects in a given posterior draw.
 
   mu_bar_j = c(sigma12x22_inv %*% (effects_mj))
   #^ a = the other phylo effects from iteration i, mu2 = 0
+
+  var_j = cov_mat_jj - c(sigma12x22_inv %*% sigma21)
+
+  if (var_j <= 0) {
+    # This happens with off diagonal correlations == 1, or from woodbury numerical fuzz. In that
+    # case, the conditional normal likelihood on the phylogenetic effect essentially becomes a dirac
+    # delta function, which when integrated yields only the binomial likelihood at mu_bar_j. Inspect
+    # vec_integrand_logistic closely if this doesn't make sense.
+
+    model_mean = lm_mean + mu_bar_j
+
+    fit_term = dbinom(x = yj,
+                      size = 1,
+                      prob = inv_logit(model_mean),
+                      log = TRUE)
+
+    return(fit_term)
+  }
+
+  sigma_bar_j = sqrt(var_j)
 
   offset_j = vec_integrand_logistic(phylo_effect_vec = effect_mean_j,
                                     mu_bar_j         = mu_bar_j,

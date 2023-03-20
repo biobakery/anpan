@@ -644,57 +644,63 @@ anpan_pglmm = function(meta_file,
                                 ~matrix(unlist(.x), ncol = 1))
     }
 
-    fit_summary = pglmm_fit$summary(variables = 'phylo_effect') |>
-      tibble::as_tibble()
-
     # These are decent starting places for offset terms
-    effect_means = fit_summary |>
+    effect_means = pglmm_fit$summary(variables = 'phylo_effect') |>
+      tibble::as_tibble() |>
       filter(grepl("^phylo_effect", variable)) |>
       pull(mean)
 
-    ll_mat = get_ll_mat(draw_df,
-                        max_i = nrow(draw_df),
-                        effect_means = effect_means,
-                        cor_mat = cor_mat,
-                        Lcov = Lcov,
-                        Xc = Xc,
-                        Y = data_list$Y,
-                        family = family,
-                        verbose = verbose)
+    ll_attempt = safely_get_ll_mat(draw_df,
+                                   effect_means = effect_means,
+                                   cor_mat = cor_mat,
+                                   Lcov = Lcov,
+                                   Xc = Xc,
+                                   Y = data_list$Y,
+                                   family = family,
+                                   verbose = verbose)
 
-    pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
+    if (is.null(ll_attempt$error)) {
+      ll_mat = ll_attempt$result
+      pglmm_loo = get_pglmm_loo(ll_mat, draw_df)
 
-    base_loo = base_fit$loo()
+      base_loo = base_fit$loo()
 
-    message("loo comparison: ")
-    comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
-                                       base_fit  = base_loo))
-    print(comparison)
+      message("loo comparison: ")
+      comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
+                                         base_fit  = base_loo))
+      print(comparison)
 
-    if (rownames(comparison)[1] == 'pglmm_fit') {
-      p1 = "The phylogenetic model seems to fit better, "
+      if (rownames(comparison)[1] == 'pglmm_fit') {
+        p1 = "The phylogenetic model seems to fit better, "
+      } else {
+        p1 = "The phylogenetic model seems to fit worse, "
+      }
+
+      if (abs(comparison[2,1] / comparison[2,2]) > 2) {
+        p2 = "and the difference seems clear (more than 2 standard errors difference in ELPD)."
+      } else {
+        p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
+      }
+
+      if (abs(comparison[2,1] / comparison[2,2]) > 2 && abs(comparison[2,1]) < 4) {
+        p3 = " However the ELPD difference is less than 4, so the difference is small."
+      } else {
+        p3 = NULL
+      }
+
+      message(paste0(p1, p2, p3))
     } else {
-      p1 = "The phylogenetic model seems to fit worse, "
-    }
+      warning(paste0("loo comparison failed for ", bug_name, " . loo results set to NULL."))
+      print(ll_attempt$error)
 
-    if (abs(comparison[2,1] / comparison[2,2]) > 2) {
-      p2 = "and the difference seems clear (more than 2 standard errors difference in ELPD)."
-    } else {
-      p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
+      base_fit = base_fit
+      pglmm_loo = NULL
+      base_loo = NULL
+      comparison = NULL
+      ll_mat = ll_attempt$error
     }
-
-    if (abs(comparison[2,1] / comparison[2,2]) > 2 && abs(comparison[2,1]) < 4) {
-      p3 = " However the ELPD difference is less than 4, so the difference is small."
-    } else {
-      p3 = NULL
-    }
-
-    message(paste0(p1, p2, p3))
 
   } else {
-
-    # outcome_signal = NULL
-    # hyp = NULL
     base_fit = NULL
     pglmm_loo = NULL
     base_loo = NULL
@@ -707,7 +713,7 @@ anpan_pglmm = function(meta_file,
 
     pglmm_fit$cmdstan_diagnose() # No need for print(), it already does itself
 
-    if (loo_comparison) {
+    if (loo_comparison && is.null(ll_attempt$error)) {
       print(loo::pareto_k_table(pglmm_loo))
     }
   }
@@ -720,7 +726,7 @@ anpan_pglmm = function(meta_file,
   if (save_object) {
     # V This is what to use once the pglmm_fit is done with cmdstanr
     pglmm_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_pglmm_fit.RDS")))
-    base_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_base_fit.RDS")))
+    if (loo_comparison) base_fit$save_object(file = file.path(out_dir, paste0(bug_name, "_base_fit.RDS")))
   }
 
   if (!save_object && !is.null(pglmm_dir)) {
@@ -733,7 +739,7 @@ anpan_pglmm = function(meta_file,
        pglmm_fit   = pglmm_fit,
        base_fit    = base_fit,
        loo         = list(pglmm_loo    = pglmm_loo,
-                          pglmm_ll_df  = tibble::as_tibble(ll_mat),
+                          pglmm_ll_df  = tibble::as_tibble(ll_attempt$result),
                           base_loo     = base_loo,
                           comparison   = comparison))
 
@@ -949,15 +955,34 @@ anpan_pglmm_batch = function(meta_file,
     stop("No PGLMMs finished without error. See pglmm_errors.RData in the output directory.")
   }
 
+  # There's probably some way to wrap these four into a single function, not sure how I'd pass in
+  # the different accessors though... Would probably be better to write a single pglmm_summarise()
+  # function instead of a bunch of different map_*()'s anyway.
+  get_prop_bad = function(loo_element) {
+    if (!is.null(loo_element$pglmm_loo)) mean(loo_element$pglmm_loo$diagnostics$pareto_k > .7) else NA
+  }
+
+  get_best_model = function(loo_element) {
+    if (!is.null(loo_element$comparison)) rownames(loo_element$comparison)[1] else NA
+  }
+
+  get_elpd_diff = function(loo_element) {
+    if (!is.null(loo_element$comparison)) loo_element$comparison[2,1] else NA
+  }
+
+  get_elpd_se = function(loo_element) {
+    if (!is.null(loo_element$comparison)) loo_element$comparison[2,2] else NA
+  }
+
   res_df = dplyr::bind_cols(worked["input_file"],
                             as_tibble(purrr::transpose(worked$result))) |>
     mutate(n                      = purrr::map_int(model_input, nrow),
-           prop_bad_pareto_k      = purrr::map_dbl(loo, ~mean(.x$pglmm_loo$diagnostics$pareto_k > .7)),
+           prop_bad_pareto_k      = purrr::map_dbl(loo, get_prop_bad),
            n_divergences          = purrr::map_dbl(pglmm_fit, ~sum(as.matrix(.x$sampler_diagnostics()[,,"divergent__"]))),
            sigma_phylo            = purrr::map_dbl(pglmm_fit, ~.x$summary(variables = 'sigma_phylo')$mean),
-           best_model             = gsub("_fit", "", purrr::map_chr(loo, ~rownames(.x$comparison)[1])),
-           elpd_diff              = purrr::map_dbl(loo, ~.x$comparison[2,1]),
-           elpd_se                = purrr::map_dbl(loo, ~.x$comparison[2,2])) |>
+           best_model             = gsub("_fit", "", purrr::map_chr(loo, get_best_model)),
+           elpd_diff              = purrr::map_dbl(loo, get_elpd_diff),
+           elpd_se                = purrr::map_dbl(loo, get_elpd_se)) |>
     dplyr::select(input_file, n:elpd_se, model_input:loo)
 
   return(res_df)
