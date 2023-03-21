@@ -760,9 +760,14 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'   The Stan model fitting can't be parallelized via futures, so the most effective way to
 #'   parallelize the model fitting AND the importance weight calculations is a nested future
 #'   topology (e.g. \code{plan(list(sequential, tweak(multisession, workers = 4)))} ) and set
-#'   parallel_chains = 4 . This will run sequentially over the trees, running the model fits with
+#'   parallel_chains = 4 . This will run sequentially over the trees, running the model fits with 4
 #'   parallel chains for each tree, then compute the importance weights in the future multisession
 #'   for each tree.
+#'
+#'   The tibble result from this function contains a lot of large objects in list columns, so it can
+#'   be pretty big (several GBs) when saved to disk in an RData file (and pretty ugly when not
+#'   printed as a tibble). If you just want to save the bare diagnostic, summary, and loo comparison
+#'   values, try \code{dplyr::select(your_result, input_file:elpd_se)} .
 #' @returns a tibble listing results for each tree file in input directory that fit successfully.
 #'   Columns give the number of leaves on the tree, diagnostic values, loo comparison values,
 #'   formatted input data, correlation matrices, PGLMM and "base" model fits, and loo objects (in
