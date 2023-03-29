@@ -123,7 +123,11 @@ It's normal to see some warnings during warmup, particularly about "Scale vector
 This function tries to get the \code{bug_name} argument from the tree file, but if it's not
 provided you may need to set it yourself.
 
-If using \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
+If a prior scale on covariate effects isn't specified (e.g. covariates are provided by
+\code{beta_sd} is left at the default NULL), the prior scale is set to 1 / (1 standard
+deviation) for each covariate. The values will be shown in a message.
+
+If supplying \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
 corresponding element in beta_sd. This appropriate element will get repeated as necessary.
 
 Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
