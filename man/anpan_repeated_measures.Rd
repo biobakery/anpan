@@ -9,6 +9,7 @@ anpan_repeated_measures(
   bug_dir,
   meta_file,
   out_dir,
+  genomes_dir = NULL,
   model_type = "fastglm",
   covariates = c("age", "gender"),
   outcome = "crc",
@@ -38,6 +39,8 @@ anpan_repeated_measures(
 \item{meta_file}{path to a metadata tsv}
 
 \item{out_dir}{path to the desired output directory}
+
+\item{genomes_dir}{an optional directory of genome files}
 
 \item{model_type}{either "horseshoe" or "fastglm"}
 

@@ -884,6 +884,7 @@ aggregate_by_subject = function(filtered_sample_file,
 
 read_filter_write = function(.x,
                              metadata,
+                             genomes_dir = NULL,
                              covariates,
                              outcome,
                              filtering_method,
@@ -891,8 +892,20 @@ read_filter_write = function(.x,
                              sample_wise_filter_stats_dir,
                              plot_ext = "pdf") {
 
-  read_res = read_and_filter(.x,
+  if (!is.null(genomes_dir)) {
+    bug_name = get_bug_name(.x)
+    genomes_file = list.files(genomes_dir,
+                             full.names = TRUE,
+                             pattern = bug_name)
+    if (length(genomes_file) > 1) genomes_file = genomes_file[1]
+    if (length(genomes_file) < 1) genomes_file = NULL
+  } else {
+    genomes_file = NULL
+  }
+
+  read_res = read_and_filter(bug_file         = .x,
                              metadata         = metadata,
+                             genomes_file     = genomes_file,
                              covariates       = covariates,
                              outcome          = outcome,
                              filtering_method = "kmeans",
@@ -925,6 +938,7 @@ anpan_repeated_measures = function(subject_sample_map,
                                    bug_dir,
                                    meta_file,
                                    out_dir,
+                                   genomes_dir = NULL,
                                    model_type = "fastglm",
                                    covariates = c("age", "gender"),
                                    outcome = "crc",
@@ -1002,6 +1016,7 @@ anpan_repeated_measures = function(subject_sample_map,
   bug_files |>
     purrr::walk(read_filter_write,
                 metadata = metadata,
+                genomes_dir = genomes_dir,
                 covariates = covariates,
                 outcome = outcome,
                 filtering_method = "kmeans",

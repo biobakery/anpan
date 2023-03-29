@@ -385,7 +385,7 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   if (verbose) message(paste0("* Reading " , bug_file))
 
-  gf = read_bug(bug_file, meta = metadata)
+  gf = read_bug(bug_file, meta = metadata) # gf = gene families
 
   if (!("sample_id" %in% names(gf))) {
     warning("No samples matching metadata samples found in gene file")
