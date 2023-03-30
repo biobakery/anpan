@@ -67,12 +67,15 @@ remotes::install_github("biobakery/anpan")
 ```
 
 If you would like to read the walkthrough vignette, you will need to set
-`build_vignettes = TRUE` in the `install_github()` command. Once it’s
-installed, you can view the vignette with
-`vignette("anpan_tutorial", package = 'anpan')`. There is also a static
-(and probably out-of-date) version of the tutorial available on [the
-biobakery wiki GitHub
-page](https://github.com/biobakery/biobakery/wiki/anpan-tutorial).
+`build_vignettes = TRUE` in the `install_github()` command.
+
+## Tutorial
+
+Once anpan is installed and the vignette is built, you can view the
+vignette with `vignette("anpan_tutorial", package = 'anpan')`. There is
+also a static (and probably out-of-date) version of the tutorial
+available on [the biobakery wiki GitHub
+page](https://github.com/biobakery/biobakery/wiki/anpan_tutorial).
 
 ## Example - element testing
 
