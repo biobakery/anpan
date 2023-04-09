@@ -42,8 +42,8 @@ anpan_batch(
 
 \item{genomes_dir}{an optional directory of genome files}
 
-\item{prefiltered_dir}{an optional directory to pre-filtered data from an
-earlier run to skip the filtering step}
+\item{prefiltered_dir}{an optional directory to pre-filtered data from an earlier run to skip the
+filtering step}
 
 \item{model_type}{either "horseshoe" or "fastglm"}
 
@@ -61,7 +61,8 @@ measurements (0/nonzero --> FALSE/TRUE) before passing them to the modelling fun
 \item{minmax_thresh}{genes must have at least this many (or N - this many)
 non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.}
 
-\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the
+genes of a bug are poorly covered}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
 model_type = "horseshoe".}
@@ -94,17 +95,17 @@ to include everything.}
 a data.table of model statistics for each bug:gene combination
 }
 \description{
-This function calls anpan() on each gene family file in the
-  \code{bug_dir} directory and makes a composite data + results plot for
-  each.
+This function calls anpan() on each gene family file in the \code{bug_dir} directory
+  and makes a composite data + results plot for each.
 }
 \details{
-\code{bug_dir} should be a directory of gene (or SNV or pathway)
-  abundance files, one for each bug.
+\code{bug_dir} should be a directory of gene (or SNV or pathway) abundance files, one
+  for each bug.
 
   \code{annotation} file must have two columns named "gene" and "annotation"
 
-  See \code{?anpan()} for the format / usage if providing genome files.
+  See \code{?anpan()} for the format / usage if providing genome files. If provided, genomes_dir
+  must contain ONLY the genome files themselves.
 }
 \seealso{
 [anpan()]

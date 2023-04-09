@@ -462,25 +462,26 @@ safely_anpan = purrr::safely(anpan)
 
 #' Apply anpan to a many bugs
 #'
-#' @description This function calls anpan() on each gene family file in the
-#'   \code{bug_dir} directory and makes a composite data + results plot for
-#'   each.
+#' @description This function calls anpan() on each gene family file in the \code{bug_dir} directory
+#'   and makes a composite data + results plot for each.
 #'
 #' @param bug_dir a directory of gene family files
 #' @param genomes_dir an optional directory of genome files
 #' @param plot_result logical indicating whether or not to plot the results
 #' @param covariates character vector of covariates to include in the model
-#' @param prefiltered_dir an optional directory to pre-filtered data from an
-#'   earlier run to skip the filtering step
-#' @param discard_poorly_covered_samples logical indicating whether to discard samples where the genes of a bug are poorly covered
+#' @param prefiltered_dir an optional directory to pre-filtered data from an earlier run to skip the
+#'   filtering step
+#' @param discard_poorly_covered_samples logical indicating whether to discard samples where the
+#'   genes of a bug are poorly covered
 #' @param annotation_file a path to a file giving annotations for each gene
 #' @param ... arguments to pass to [cmdstanr::sample()] if applicable
-#' @details \code{bug_dir} should be a directory of gene (or SNV or pathway)
-#'   abundance files, one for each bug.
+#' @details \code{bug_dir} should be a directory of gene (or SNV or pathway) abundance files, one
+#'   for each bug.
 #'
 #'   \code{annotation} file must have two columns named "gene" and "annotation"
 #'
-#'   See \code{?anpan()} for the format / usage if providing genome files.
+#'   See \code{?anpan()} for the format / usage if providing genome files. If provided, genomes_dir
+#'   must contain ONLY the genome files themselves.
 #' @inheritParams plot_results
 #' @inheritParams anpan
 #' @returns a data.table of model statistics for each bug:gene combination

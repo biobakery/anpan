@@ -55,7 +55,8 @@ anpan_repeated_measures(
 \item{minmax_thresh}{genes must have at least this many (or N - this many)
 non-zero observations or else be discarded. NULL defaults to \code{floor(0.005*nrow(metadata))}.}
 
-\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the genes of a bug are poorly covered}
+\item{discard_poorly_covered_samples}{logical indicating whether to discard samples where the
+genes of a bug are poorly covered}
 
 \item{skip_large}{logical indicating whether to skip bugs with over 5k genes. Only used when
 model_type = "horseshoe".}
