@@ -885,8 +885,8 @@ If you don't have a phylogeny for your data, you can get a very rough estimate i
 
 ```{r eval = FALSE}
 gene_tree = gene_pres_abs_matrix |> 
-  stats::dist() |> 
   pca() |>
+  stats::dist() |> 
   ape::nj() # or ape::fastme.bal() or ape::bionj()
 ```
 
