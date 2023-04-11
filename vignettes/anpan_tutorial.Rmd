@@ -892,6 +892,8 @@ gene_tree = gene_pres_abs_matrix |>
 
 This process is sub-optimal in a number of ways (the gene matrix is low signal, Jaccard dissimilarity isn't the most thoughtful thing to use here, the correlation matrices can end up close to the identity, tree distance is based on functional profile similarity instead of real evolutionary relatedness, etc), but it will give you _something_ that you can pass to `anpan_pglmm()`. Identifying which genes explain which branching points is left as an exercise for the reader.
 
+The code chunk above won't run out of the box, you'll need to plug in your own matrix and `pca()` function.
+
 If your gene measurements are noisy, it can also be helpful to run some sort of dimension reduction (e.g. PCA) on the input to the `dist()` function in case the noise in your input matrix is overwhelming phylogenetic differences. The number of principle components to use is debatable, but choosing based on how the of proportion of variance explained dies off can be reasonable. One might choose eigenvalues up to the first eigenvalue that is less than one tenth of the first eigenvalue.
 
 That being said, it's preferable to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)) rather than doing something _ad hoc_ from the gene matrices. There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The preceding code block is mainly intended as a quick-and-dirty, "good enough" method to get a quick look at how relatedness affects the outcome overall.
