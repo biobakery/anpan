@@ -943,6 +943,33 @@ half_correlation_matrix +
 plot_layout(ncol = 1)
 ```
 
+### Editing color bar palettes
+
+The palettes used in the color bar can be edited by setting the appropriate scale on the patchwork object. Below I give an example where I change the colors used for gender on the color bar from red/blue to purple/green. With some slight edits to this you could change the color bar on tree plots as well. [This github exchange](https://github.com/eliocamp/ggnewscale/issues/54#issuecomment-1501951928) may also be helpful if you're looking for more information.
+
+```{r eval = FALSE}
+p = plot_results(res = res,
+                 covariates = c("age", "gender", "study_name"),
+                 outcome='crc',
+                 model_input = mi)
+
+color_bar_i = 1 # the color bar subplot in the patchwork
+gender_i    = 4 # the scale used for gender on the plot
+
+p[[color_bar_i]] # this should print the color bar only
+
+aes_name = p[[color_bar_i]]$scales$scales[[gender_i]]$aesthetics
+guide = p[[color_bar_i]]$scales$scales[[gender_i]]$guide
+guide$available_aes = aes_name
+
+p[[color_bar_i]]$scales$scales[[gender_i]] = scale_fill_discrete(aesthetics = aes_name,
+                                                                 guide = guide,
+                                                                 type = c("purple", "green")) 
+
+p[[color_bar_i]] # Now gender is purple/green
+```
+
+
 ## Configuring parallelization and progress reporting
 
 anpan uses the packages [`furrr`](https://furrr.futureverse.org/) and [`progressr`](https://progressr.futureverse.org/) to parallelize and show progress on long calculations, respectively. That means that internally some anpan calculations are written conceptually as "this code might run in parallel" and "this code might display progress". The user can configure the parallelization plan and progress reporting to their preference. 
