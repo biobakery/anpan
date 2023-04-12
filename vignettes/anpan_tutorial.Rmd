@@ -948,9 +948,9 @@ plot_layout(ncol = 1)
 The palettes used in the color bar can be edited by setting the appropriate scale on the patchwork object. Below I give an example where I change the colors used for gender on the color bar from red/blue to purple/green. With some slight edits to this you could change the color bar on tree plots as well. [This github exchange](https://github.com/eliocamp/ggnewscale/issues/54#issuecomment-1501951928) may also be helpful if you're looking for more information.
 
 ```{r eval = FALSE}
-p = plot_results(res = res,
-                 covariates = c("age", "gender", "study_name"),
-                 outcome='crc',
+p = plot_results(res         = res,
+                 covariates  = c("age", "gender", "study_name"),
+                 outcome     = 'crc',
                  model_input = mi)
 
 color_bar_i = 1 # the color bar subplot in the patchwork
