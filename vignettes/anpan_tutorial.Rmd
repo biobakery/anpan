@@ -950,13 +950,15 @@ The palettes used in the color bar can be edited by setting the appropriate scal
 ```{r eval = FALSE}
 p = plot_results(res         = res,
                  covariates  = c("age", "gender", "study_name"),
-                 outcome     = 'crc',
+                 outcome     = "crc",
                  model_input = mi)
+
 
 color_bar_i = 1 # the color bar subplot in the patchwork
 gender_i    = 4 # the scale used for gender on the plot
 
 p[[color_bar_i]] # this should print the color bar only
+p[[color_bar_i]]$scales$scales # examine the list of scales to find the one you need to set gender_i
 
 aes_name = p[[color_bar_i]]$scales$scales[[gender_i]]$aesthetics
 guide = p[[color_bar_i]]$scales$scales[[gender_i]]$guide
