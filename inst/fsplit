@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# input_file = $1
+
+
+# Create the output directory / files we'll need
+
+f1=${1%.*}
+f2=${f1##*/}
+
+output="$PWD"/"$f2"_split
+mkdir "$output"
+
+
+# Create the output file for each unique species
+cut -f1 $1 | grep "|" | grep -v "|unclassified" | cut -f 2 -d"|" | sort -u | while read line;
+       do
+               touch "$output"/"$line".tsv;
+       done
+
+# Add the header line to each one
+for filename in "$output"/*.tsv; do
+   head -1 $1 > "$filename"
+done
+
+awk -v outdir="$output" '
+BEGIN {FS="\t"}
+{
+    if (NR==1) {next};
+    n = split($1, a, "|");
+    if (n == 2) {
+        if (a[2] == "unclassified") {
+            next
+        }
+        species_name = outdir"/"a[2]
+    } else {
+        next
+    }
+    print $0 >> species_name".tsv"
+}
+' $1

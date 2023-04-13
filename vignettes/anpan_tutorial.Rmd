@@ -827,6 +827,33 @@ Another method for detecting this phenomenon is to compute a phylogeny based on 
 
 We leave the approach to handling this to the user. If the blocking is driven by a single outlier genome, it may make sense to remove the genes unique to that outlier. More complicated cases like the example shown above may require more ad hoc measures, such as separating out the separate genomes and running them through the gene model separately.
 
+## Splitting merged HUMAnN outputs
+
+HUMAnN UniRef90 profiles may contain all species merged into a single huge tsv. `anpan` includes a small shell script that will split a file like this into the per-bug files that are needed to run the gene model. You can find this script on your system like so:
+
+```{r}
+system.file('fsplit', package = 'anpan')
+```
+
+In a shell (not R) would then navigate to your big `merged_humann_output.tsv` and run
+
+```
+/path/to/fsplit merged_humann_output.tsv
+```
+
+This will:
+
+1. create an output folder called `merged_humann_output_split/`
+2. create an output file for each unique bug in the input
+3. add the original header line to each
+4. then scan the input with `awk` and append each line to the appropriate bug-specific file
+
+It will probably take a few minutes for large input files. The split output folder can then be used as the `bug_dir` argument in `anpan_batch()`.
+
+The identifiers in the first column of the input must be formatted as `gene_id|bug_id` e.g. `UniRef90_A0A009H1T1|g__Escherichia.s__Escherichia_coli`
+
+Lines corresponding to overall gene abundance (where the first column is just `gene_id`) or where the taxa is `unclassified` are discarded. The `fsplit` script isn't _too_ complicated, so if you're reading this you can probably figure out how to tweak it if you need those.
+
 ## Horseshoe gene model
 
 The default model type for the gene model runs a simple glm for every gene in every bug, then FDR corrects the p-values after the fact. While conceptually and computationally simple, this approach has a few disadvantages:
