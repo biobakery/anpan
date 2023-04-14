@@ -108,27 +108,38 @@ the tip labels of the tree must be the sample ids from the metadata. You can use
 \code{trim_pattern} argument to automatically trim off any consistent pattern from the tip
 labels if necessary.
 
+The default error distribution for the outcome is "gaussian". You could change this to a
+phylogenetic logistic regression by changing \code{family} to "binomial" for example.
+
+The prior for the intercept is a normal distribution centered on the mean of the outcome
+variable with a standard deviation of 3*sd(outcome variable).
+
+If a prior scale on covariate effects isn't specified (i.e. \code{beta_sd} is left at the
+default NULL), the prior scale is set to 1 / (1 standard deviation) for each covariate. The
+values will be shown in a message. It's preferable to set \code{beta_sd} with domain knowledge.
+Consider the units/scale of your outcome variable if using \code{family = "gaussian"} or the
+range of plausible coefficient values on the log-odds scale if using \code{family =
+  "binomial"}.
+
+If supplying \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
+corresponding element in beta_sd. This appropriate element will get repeated as necessary.
+
+\code{sigma_phylo_scale} is used to set the width of the half-normal prior on sigma_phylo when
+\code{family = "binomial"} (no effect when \code{family = "gaussian"}). Increasing this value
+can easily lead to overfitting. If sigma_phylo is high, then leafwise phylogenetic effects can
+get very far from zero (disregarding the correlation structure and covariate effects), which
+lets the model perfectly fit each observation. The default value keeps most of the prior mass
+on leafwise phylogenetic effects between +/- 1, which is still pretty liberal on the log-odds
+scale.
+
 The model indexes the leaves according to the Cholesky factor of the correlation matrix. This
 likely won't be the same order as the input tree. The \code{model_input} that is returned as
 part of the output will have the samples in a factor with the model index order if needed.
-
-The prior for the intercept is a normal distribution centered on the mean of the outcome
-variable with a standard deviation of 3*sd(outcome variable)
-
-The default error distribution for the outcome is "gaussian". You could change this to a
-phylogenetic logistic regression by changing \code{family} to "binomial" for example.
 
 It's normal to see some warnings during warmup, particularly about "Scale vector is inf".
 
 This function tries to get the \code{bug_name} argument from the tree file, but if it's not
 provided you may need to set it yourself.
-
-If a prior scale on covariate effects isn't specified (e.g. covariates are provided by
-\code{beta_sd} is left at the default NULL), the prior scale is set to 1 / (1 standard
-deviation) for each covariate. The values will be shown in a message.
-
-If supplying \code{beta_sd} with a categorical predictor with >2 levels, only specify a single
-corresponding element in beta_sd. This appropriate element will get repeated as necessary.
 
 Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
 (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
