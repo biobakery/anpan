@@ -143,7 +143,7 @@ provided you may need to set it yourself.
 
 Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
 (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
-possibly needing more iterations to get convergence) and \code{parallel_chains = 4} (run the
+possibly needing more iterations to get convergence), \code{show_messages = FALSE} ,  and \code{parallel_chains = 4} (run the
 MCMC chains in parallel).
 
 If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
