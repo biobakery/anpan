@@ -441,7 +441,22 @@ You can sort of see by eye that the phylogeny correlates with the outcome. The m
 
 How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
-**Exercise: Change the simulation to produce a binary outcome. Hint: If you don't want to define an inverse logit function, you can use `stats::plogis()`. You may also want `rbinom()`.**
+**Exercise: Change the simulation to produce a binary outcome. Hint: If you don't want to define an inverse logit function, you can use `stats::plogis()`. You may also want `rbinom()`. The answer is given in the source Rmarkdown.**
+
+```{r echo=FALSE, eval = FALSE}
+# One possible answer to the exercise. Note that we use the covariate without the normal error (i.e. the term containing sigma_resid) because the error distribution is fixed (i.e. the binomial distribution).
+
+# This usually won't yield detectable phylogenetic signal since binary outcomes contain much less information. To get that you would need to increase n and/or sigma_phylo.
+
+metadata = tibble(sample_id = colnames(cor_mat),
+                  covariate = covariate,
+                  prob      = stats::plogis(true_phylo_effects + 1*covariate), 
+                  outcome   = as.logical(rbinom(n = n, p = prob, size = 1)))
+
+# if you want to define your own inverse logit:
+inv_logit = function(x) 1 / (1 + exp(-x))
+```
+
 
 ## Fit the PGLMM
 
@@ -491,7 +506,27 @@ But how do we estimate *clade* effects? It's important to contextualize the resu
 
 If you are able to justifiably define a clade manually (with some articulable, non-circular reasoning beyond "this clade looks like it has a higher outcome"), you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
-**Exercise: Fit a PGLMM with a binary outcome. If you weren't able to modify the simulation to generate binary outcomes, you can just set the outcome to random draws of TRUE/FALSE (in which case you should observe zero phylogenetic signal).**
+**Exercise: Fit a PGLMM with a binary outcome. If you weren't able to modify the simulation to generate binary outcomes, you can just set the outcome to random draws of TRUE/FALSE (in which case you should observe zero phylogenetic signal). The answer is given in the source Rmarkdown.**
+
+```{r echo = FALSE, eval=FALSE}
+# Either re-run the simulation to get a binary outcome (see earlier exercise answer) or set metadata$outcome = sample(c(TRUE, FALSE), size = n, replace = TRUE). Then re-run anpan_pglmm() changing the following arguments:
+# * family = "binomial" 
+# * reg_noise = FALSE
+
+result = anpan_pglmm(meta_file       = metadata,
+                     tree_file       = tr,
+                     outcome         = "outcome",
+                     covariates      = "covariate",
+                     family          = "binomial",
+                     bug_name        = "sim_bug",
+                     reg_noise       = FALSE,
+                     loo_comparison  = TRUE,
+                     run_diagnostics = FALSE,
+                     refresh         = 500,
+                     show_plot_tree  = FALSE,
+                     show_post       = FALSE)
+```
+
 
 ## Detailed interpretation
 
