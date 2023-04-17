@@ -116,8 +116,7 @@ See \code{\link[=anpan_pglmm]{anpan_pglmm()}} for details on most of the argumen
 
   The tibble result from this function contains a lot of large objects in list columns, so it can
   be pretty big (several GBs) when saved to disk in an RData file (and pretty ugly when not
-  printed as a tibble). If you just want to save the bare diagnostic, summary, and loo comparison
-  values, try \code{dplyr::select(your_result, input_file:elpd_se)} .
+  printed as a tibble). So be careful if you try to save the whole thing.
 }
 \seealso{
 \code{\link[ape:read.tree]{ape::read.tree}},

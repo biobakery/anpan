@@ -784,8 +784,7 @@ safely_anpan_pglmm = purrr::safely(anpan_pglmm)
 #'
 #'   The tibble result from this function contains a lot of large objects in list columns, so it can
 #'   be pretty big (several GBs) when saved to disk in an RData file (and pretty ugly when not
-#'   printed as a tibble). If you just want to save the bare diagnostic, summary, and loo comparison
-#'   values, try \code{dplyr::select(your_result, input_file:elpd_se)} .
+#'   printed as a tibble). So be careful if you try to save the whole thing.
 #' @returns a tibble listing results for each tree file in input directory that fit successfully.
 #'   Columns give the number of leaves on the tree, diagnostic values, loo comparison values,
 #'   formatted input data, correlation matrices, PGLMM and "base" model fits, and loo objects (in
@@ -1007,6 +1006,14 @@ anpan_pglmm_batch = function(meta_file,
            elpd_diff              = purrr::map_dbl(loo, get_elpd_diff),
            elpd_se                = purrr::map_dbl(loo, get_elpd_se)) |>
     dplyr::select(input_file, n:elpd_se, model_input:loo)
+
+  if (!is.null(out_dir)) {
+    pglmm_batch_summary_stats = dplyr::select(res_df,
+                                              input_file:elpd_se)
+
+    save(pglmm_batch_summary_stats,
+         file = file.path(out_dir, "pglmm_batch_summary_stats.RData"))
+  }
 
   return(res_df)
 
