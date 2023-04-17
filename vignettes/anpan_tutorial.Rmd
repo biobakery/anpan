@@ -448,13 +448,15 @@ How do we *quantitatively* assess the impact of the phylogeny on the outcome whi
 
 # This usually won't yield detectable phylogenetic signal since binary outcomes contain much less information. To get that you would need to increase n and/or sigma_phylo.
 
+inv_logit = function(x) 1 / (1 + exp(-x))
+
 metadata = tibble(sample_id = colnames(cor_mat),
                   covariate = covariate,
-                  prob      = stats::plogis(true_phylo_effects + 1*covariate), 
+                  prob      = inv_logit(true_phylo_effects + 1*covariate), 
                   outcome   = as.logical(rbinom(n = n, p = prob, size = 1)))
 
-# if you want to define your own inverse logit:
-inv_logit = function(x) 1 / (1 + exp(-x))
+# stats::plogis does the same thing as inv_logit
+
 ```
 
 
