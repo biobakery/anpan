@@ -1,3 +1,7 @@
+# These are most of the modeling/checking functions for the anpan gene model. Other
+# checking/filtering functions are in filtering.R and read_in_data.R. Zip to anpan() in RStudio with
+# ctrl+.
+
 get_bug_name = function(bug_file,
                         remove_pattern = ".genefamilies.tsv$|.genefamilies.tsv.gz$|.tsv$|.tsv.gz$") {
   bn = gsub("^filtered_", "",
@@ -23,6 +27,7 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     mod_family = "gaussian"
   }
 
+  # Nest
   glm_fits = model_input[,.(data_subset = list(.SD)), by = gene]
 
   # Progress won't be that hard: https://furrr.futureverse.org/articles/articles/progress.html#package-developers-1
@@ -279,6 +284,11 @@ anpan = function(bug_file,
                  ...) {
 
   n_steps = 3
+  # Three steps. Checks, filtering, fitting.
+  # Checks: create directories, check inputs, etc.
+  # Filtering: Call read_and_filter()
+  # Fitting: Call fit_horseshoe() or fit_glms().
+
 # Checks ------------------------------------------------------------------
   # TODO separate the checks out to a distinct function.
   if (verbose) message(paste0("\n(1/", n_steps, ") Preparing the mise en place (checking inputs)..."))
@@ -445,13 +455,6 @@ anpan = function(bug_file,
                                   bug_name = bug_name,
                                   discretized_inputs = discretize_inputs,
                                   glm_fun = safely_fit_fastglm))
-
-
-# Summarizing -------------------------------------------------------------
-# Only needed for anpan
-
-# Write output ------------------------------------------------------------
-# Done inside fit_glms()
 
   res$bug_name = bug_name
 
