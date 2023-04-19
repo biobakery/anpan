@@ -23,7 +23,7 @@ anpan_repeated_measures(
   save_filter_stats = TRUE,
   verbose = TRUE,
   plot_result = TRUE,
-  plot_ext = "png",
+  plot_ext = "pdf",
   q_threshold = 0.1,
   n_top = 50,
   width = 10,

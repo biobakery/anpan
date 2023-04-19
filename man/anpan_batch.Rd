@@ -24,7 +24,7 @@ anpan_batch(
   save_filter_stats = TRUE,
   verbose = TRUE,
   plot_result = TRUE,
-  plot_ext = "png",
+  plot_ext = "pdf",
   q_threshold = 0.1,
   beta_threshold = 1,
   n_top = 50,

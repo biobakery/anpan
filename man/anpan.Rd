@@ -20,7 +20,7 @@ anpan(
   skip_large = TRUE,
   save_fit = TRUE,
   discard_poorly_covered_samples = TRUE,
-  plot_ext = "png",
+  plot_ext = "pdf",
   save_filter_stats = TRUE,
   verbose = TRUE,
   ...
