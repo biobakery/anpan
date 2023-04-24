@@ -527,8 +527,8 @@ plot_results = function(res, covariates, outcome, model_input,
       res$q_bug_wise = p.adjust(res$p.value, method = "fdr")
     }
 
-    if (!is.null(q_threshold)) gene_level_df    = gene_level_df[gene_level_df[[signif_var]] < q_threshold]
-    if (!is.null(beta_threshold)) gene_level_df = gene_level_df[abs(estimate) >= beta_threshold]
+    if (!is.null(   q_threshold)) gene_level_df = gene_level_df[gene_level_df[[signif_var]] <     q_threshold]
+    if (!is.null(beta_threshold)) gene_level_df = gene_level_df[abs(estimate)              >=  beta_threshold]
 
     gene_levels = gene_level_df$gene
 
@@ -1024,6 +1024,7 @@ check_meta = function(model_input,
 #' @description Plot a tree file, and show the outcome variable as a colored dot on the end of each
 #'   tip.
 #' @details Showing the covariates as color bar annotations isn't supported yet.
+#' @param tree_file either a path to a tree file readable by ape::read.tree() or an object of class "phylo" that is already read into R.
 #' @param return_tree_df if true, return a list containing 1) the plot, 2) the segment data frame,
 #'   and 3) the labelled terminal segment data frame. Otherwise, just return the plot.
 #' @param color_bars if true, show color bars below the plot showing the covariates and outcome
@@ -1147,32 +1148,45 @@ plot_outcome_tree = function(tree_file,
 }
 
 #' Plot a tree and the PGLMM posterior on phylogenetic effects
+#' @param tree_file either a path to a tree file readable by ape::read.tree() or an object of class
+#'   "phylo" that is already read into R.
 #' @param fit a pglmm fit from \code{anpan_pglmm()}
 #' @param labels the ordered tip labels from the tree
-#' @details The whiskers of each box plot are the 90% posterior intervals, the box is the 50%
+#' @details The whiskers of each box plot are the 90\% posterior intervals, the box is the 50\%
 #'   interval, and the middle line is the posterior mean.
 #'
-#'   The \code{labels} needs to contain the leaf labels in the order produced by the Cholesky
-#'   factorization of the correlation matrix (which is how the data are passed to the sampler). This
-#'   is not necessarily the order of the leafs on the x-axis of the tree. The simplest way to get
-#'   this is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
+#'   The \code{labels} needs to contain the leaf labels \emph{in the order produced by the
+#'   Cholesky factorization of the correlation matrix} (which is how the data are passed to the
+#'   sampler). This is not necessarily the order of the leaves on the x-axis of the tree, nor the
+#'   order of the samples in the metadata. The simplest way to get the sample_ids in the proper
+#'   order is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
 #' @return either the plot or (if return_tree_df = TRUE) a list containing the plot, the segment df,
 #'   the terminal segment df, and the yrep df.
 #' @inheritParams plot_outcome_tree
+#' @examples \dontrun{
+#' # Using the result simulated in the vignette:
+#' plot_tree_with_post(tr, metadata,
+#'                     fit        = result$pglmm_fit,
+#'                     labels     = result$model_input$sample_id,
+#'                     outcome    = 'outcome',
+#'                     covariate  = 'covariate',
+#'                     color_bars = TRUE)
+#' }
 #' @export
 plot_tree_with_post = function(tree_file,
                                meta_file,
                                fit,
+                               labels,
                                covariates = c("age", "gender"),
                                outcome = 'crc',
                                omit_na = FALSE,
                                ladderize = TRUE,
                                color_bars = FALSE,
                                verbose = TRUE,
-                               labels,
                                trim_pattern = NULL,
                                return_tree_df = FALSE) {
 
+  # Make the base tree plot
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
                                 covariates = covariates,
@@ -1184,6 +1198,26 @@ plot_tree_with_post = function(tree_file,
                                 trim_pattern = trim_pattern,
                                 return_tree_df = TRUE)
 
+  # Find the metadat that will go on the plot, and check if it overlaps with the labels argument.
+  olap_list = olap_tree_and_meta(tree_file = tree_file,
+                                 meta_file = meta_file,
+                                 covariates = covariates,
+                                 outcome = outcome,
+                                 omit_na = omit_na,
+                                 ladderize = ladderize,
+                                 verbose = verbose,
+                                 trim_pattern = trim_pattern)
+
+  meta_sample_ids = olap_list[[2]]$sample_id
+
+  label_meta_overlap = intersect(labels, meta_sample_ids) |> length()
+
+  if (length(label_meta_overlap) < 2) {
+    stop("Couldn't find overlapping samples between the metadata sample_id column and the provided labels. You probably didn't provide the labels properly. See the note on how to get the right labels in the Details section of ?plot_tree_with_post alongside an example that uses the simulated data in the vignette.")
+  }
+
+  # Compute the posterior summaries and plot. It would be nice for the boxplot quantiles to be
+  # adjustable, but that would be a bit finicky.
   post_df = fit$summary(NULL, "mean", ~quantile(., probs = c(.05, .25, .75, .95))) |>
     filter(grepl("^phylo_effect", variable)) |>
     mutate(label = labels)

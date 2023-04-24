@@ -8,24 +8,26 @@ plot_tree_with_post(
   tree_file,
   meta_file,
   fit,
+  labels,
   covariates = c("age", "gender"),
   outcome = "crc",
   omit_na = FALSE,
   ladderize = TRUE,
   color_bars = FALSE,
   verbose = TRUE,
-  labels,
   trim_pattern = NULL,
   return_tree_df = FALSE
 )
 }
 \arguments{
-\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}} or an object of
-class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied.}
+\item{tree_file}{either a path to a tree file readable by ape::read.tree() or an object of class
+"phylo" that is already read into R.}
 
 \item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
 \item{fit}{a pglmm fit from \code{anpan_pglmm()}}
+
+\item{labels}{the ordered tip labels from the tree}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
 
@@ -38,8 +40,6 @@ the model}
 
 \item{color_bars}{if true, show color bars below the plot showing the covariates and outcome
 variables.}
-
-\item{labels}{the ordered tip labels from the tree}
 
 \item{trim_pattern}{optional pattern to trim from tip labels of the tree}
 
@@ -54,11 +54,23 @@ either the plot or (if return_tree_df = TRUE) a list containing the plot, the se
 Plot a tree and the PGLMM posterior on phylogenetic effects
 }
 \details{
-The whiskers of each box plot are the 90% posterior intervals, the box is the 50%
+The whiskers of each box plot are the 90\% posterior intervals, the box is the 50\%
   interval, and the middle line is the posterior mean.
 
-  The \code{labels} needs to contain the leaf labels in the order produced by the Cholesky
-  factorization of the correlation matrix (which is how the data are passed to the sampler). This
-  is not necessarily the order of the leafs on the x-axis of the tree. The simplest way to get
-  this is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
+  The \code{labels} needs to contain the leaf labels \emph{in the order produced by the
+  Cholesky factorization of the correlation matrix} (which is how the data are passed to the
+  sampler). This is not necessarily the order of the leaves on the x-axis of the tree, nor the
+  order of the samples in the metadata. The simplest way to get the sample_ids in the proper
+  order is to take the \code{sample_id} column from the model_input result from anpan_pglmm().
+}
+\examples{
+\dontrun{
+# Using the result simulated in the vignette:
+plot_tree_with_post(tr, metadata,
+                    fit        = result$pglmm_fit,
+                    labels     = result$model_input$sample_id,
+                    outcome    = 'outcome',
+                    covariate  = 'covariate',
+                    color_bars = TRUE)
+}
 }

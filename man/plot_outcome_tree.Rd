@@ -18,8 +18,7 @@ plot_outcome_tree(
 )
 }
 \arguments{
-\item{tree_file}{either a path to a tree file readable by \code{\link[ape:read.tree]{ape::read.tree()}} or an object of
-class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied.}
+\item{tree_file}{either a path to a tree file readable by ape::read.tree() or an object of class "phylo" that is already read into R.}
 
 \item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
