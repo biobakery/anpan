@@ -367,6 +367,8 @@ We can see in the synthetic example above that the tree clearly does impact the 
 
 To demonstrate the PGLMM functionality, we'll simulate a tree, a single covariate `x`, and an outcome variable `y`. We'll use `n = 120`, `sigma_phylo = 1` and `sigma_resid = 1`. 
 
+The best way to understand a generative model is to use it to simulate data. If you feel like you don't understand PGLMMs, step through these simulation blocks line by line (10 lines in total), look at the outputs, and make sure you understand what happens on that line. Try modifying it in different ways and see how the outputs and downstream inference change.
+
 The code chunk below sets a randomization seed and the parameters we'll use, then generates a random tree:
 
 ```{r eval = TRUE}
@@ -395,7 +397,7 @@ The chunk below generates a normally distributed covariate `covariate`, the line
 ```{r}
 covariate = rnorm(n)
 
-linear_term = 1 * covariate + rnorm(n, sd = sigma_resid)
+linear_term = 1 * covariate + rnorm(n, mean = 0, sd = sigma_resid)
 
 true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_mat)
 
@@ -441,21 +443,26 @@ You can sort of see by eye that the phylogeny correlates with the outcome. The m
 
 How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
-**Exercise: Change the simulation to produce a binary outcome. Hint: If you don't want to define an inverse logit function, you can use `stats::plogis()`. You may also want `rbinom()`. The answer is given in the source Rmarkdown.**
+**Exercise: Change the simulation to produce a binary outcome. Hint: If you don't want to define an inverse logit function, you can use `stats::plogis()`. You may also want to use `rbinom()` and start by first simulating a standard logistic regression. The answer is given in the source Rmarkdown.**
 
 ```{r echo=FALSE, eval = FALSE}
-# One possible answer to the exercise. Note that we use the covariate without the normal error (i.e. the term containing sigma_resid) because the error distribution is fixed (i.e. the binomial distribution).
+# One possible answer to the exercise. Note that we use the covariate by itself without the normal
+# error (i.e. the term containing sigma_resid) because the error distribution is fixed (i.e. the
+# binomial distribution).
 
-# This usually won't yield detectable phylogenetic signal since binary outcomes contain much less information. To get that you would need to increase n and/or sigma_phylo.
+# If you leave the other parameters at the values used in the tutorial, this usually won't yield detectable phylogenetic signal since binary outcomes contain much less information. To get that you would need to increase n and/or sigma_phylo.
 
 inv_logit = function(x) 1 / (1 + exp(-x))
 
 metadata = tibble(sample_id = colnames(cor_mat),
                   covariate = covariate,
                   prob      = inv_logit(true_phylo_effects + 1*covariate), 
-                  outcome   = as.logical(rbinom(n = n, p = prob, size = 1)))
+                  outcome   = as.logical(rbinom(n    = n, 
+                                                p    = prob, 
+                                                size = 1)))
 
 # stats::plogis does the same thing as inv_logit
+# drop the `true_phylo_effects` from the `prob = ...` line and you have a standard logistic regression.
 
 ```
 
