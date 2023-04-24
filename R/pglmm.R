@@ -1,6 +1,7 @@
 olap_cor_mat_and_meta = function(cor_mat,
                                  meta_file,
                                  covariates,
+                                 offset,
                                  outcome,
                                  omit_na = FALSE,
                                  trim_pattern = NULL,
@@ -9,13 +10,13 @@ olap_cor_mat_and_meta = function(cor_mat,
   if (is.data.frame(meta_file)) {
 
     meta = meta_file |>
-      dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
+      dplyr::select(dplyr::all_of(c("sample_id", offset, covariates, outcome)))
 
     if (omit_na) meta = na.omit(meta)
 
   } else {
     meta = read_meta(meta_file,
-                     select_cols = c("sample_id", covariates, outcome),
+                     select_cols = c("sample_id", offset, covariates, outcome),
                      omit_na = omit_na)
   }
 
@@ -69,6 +70,7 @@ olap_cor_mat_and_meta = function(cor_mat,
 olap_tree_and_meta = function(tree_file,
                               meta_file,
                               covariates,
+                              offset,
                               outcome,
                               omit_na = FALSE,
                               ladderize = TRUE,
@@ -89,13 +91,13 @@ olap_tree_and_meta = function(tree_file,
   if (is.data.frame(meta_file)) {
 
     meta = meta_file |>
-      dplyr::select(dplyr::all_of(c("sample_id", covariates, outcome)))
+      dplyr::select(dplyr::all_of(c("sample_id", offset, covariates, outcome)))
 
     if (omit_na) meta = na.omit(meta)
 
   } else {
     meta = read_meta(meta_file,
-                     select_cols = c("sample_id", covariates, outcome),
+                     select_cols = c("sample_id", offset, covariates, outcome),
                      omit_na = omit_na)
   }
 
@@ -166,6 +168,7 @@ safely_chol = purrr::safely(chol)
 #'   class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied.
 #' @param meta_file either a data frame of metadata or a path to file containing the metadata
 #' @param cor_mat a correlation matrix provided as an alternative to a tree.
+#' @param offset a variable to include as an offset
 #' @param trim_pattern optional pattern to trim from tip labels of the tree
 #' @param ladderize logical indicating whether to run [ape::ladderize()] on the tree before running
 #'   the model
@@ -238,8 +241,8 @@ safely_chol = purrr::safely(chol)
 #'
 #'   Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
 #'   (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
-#'   possibly needing more iterations to get convergence), \code{show_messages = FALSE} ,  and \code{parallel_chains = 4} (run the
-#'   MCMC chains in parallel).
+#'   possibly needing more iterations to get convergence), \code{show_messages = FALSE} ,  and
+#'   \code{parallel_chains = 4} (run the MCMC chains in parallel).
 #'
 #'   If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
 #'   package, you'll need to convert it to a matrix with \code{as.matrix()}. It's converted to a
@@ -247,6 +250,11 @@ safely_chol = purrr::safely(chol)
 #'
 #'   If \code{int_prior_scale} isn't specified, it defaults to 1 for binary outcomes and 1 standard
 #'   deviation of the outcome for gaussian outcomes.
+#'
+#'   If \code{offset} is categorical, the offset value used is the empirical mean (continuous
+#'   outcomes) or proportion (binary outcome) for each category. Using a categorical offset variable
+#'   with a continuous outcome is strange and you probably shouldn't try it unless you know what
+#'   you're doing.
 #' @examples
 #' meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))
 #' tr = ape::rtree(100)
@@ -264,6 +272,7 @@ anpan_pglmm = function(meta_file,
                        cor_mat = NULL,
                        outcome,
                        covariates = NULL,
+                       offset = NULL,
                        out_dir = NULL,
                        trim_pattern = NULL,
                        bug_name = NULL,
@@ -312,6 +321,7 @@ anpan_pglmm = function(meta_file,
     olap_list = olap_tree_and_meta(tree_file,
                                    meta_file,
                                    covariates,
+                                   offset,
                                    outcome,
                                    omit_na,
                                    ladderize = ladderize,
@@ -328,6 +338,7 @@ anpan_pglmm = function(meta_file,
     olap_list = olap_cor_mat_and_meta(cor_mat,
                                       meta_file,
                                       covariates,
+                                      offset,
                                       outcome,
                                       omit_na,
                                       trim_pattern,
@@ -359,6 +370,19 @@ anpan_pglmm = function(meta_file,
   if (!omit_na && nrow(na.omit(model_input)) < nrow(model_input)) {
     stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
   }
+
+  if (!is.null(offset) && (is.character(model_input[[offset]]) || is.factor(model_input[[offset]]))) {
+    if (is.numeric(model_input[[outcome]])) {
+      stop("Can't use a categorical offset variable with a continuous outcome.")
+    }
+
+    message("The provided offset variable is categorical. Setting the offset used to the inv_logit(proportion) for each category.")
+
+    model_input[, offset_val := lapply(.SD, function(x) stats::qlogis(mean(x))), by = offset, .SDcols = outcome] # data.table is sick
+
+  }
+
+  if (is.null(offset)) model_input$offset_val = rep(0, nrow(model_input))
 
   if (cor_mat_provided) {
 
@@ -506,6 +530,7 @@ anpan_pglmm = function(meta_file,
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
+                     offset = model_input$offset_val,
                      Lcov = Lcov,
                      sigma_phylo_scale = sigma_phylo_scale,
                      int_prior_scale = ifelse(!is.null(int_prior_scale), int_prior_scale, 1))
@@ -721,6 +746,7 @@ anpan_pglmm = function(meta_file,
     base_loo = NULL
     comparison = NULL
     ll_mat = NULL
+    ll_attempt = list(result = NULL)
   }
 
   if (run_diagnostics) {

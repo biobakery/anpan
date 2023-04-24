@@ -10,6 +10,7 @@ anpan_pglmm(
   cor_mat = NULL,
   outcome,
   covariates = NULL,
+  offset = NULL,
   out_dir = NULL,
   trim_pattern = NULL,
   bug_name = NULL,
@@ -44,6 +45,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{outcome}{the name of the outcome variable}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{offset}{a variable to include as an offset}
 
 \item{out_dir}{if saving, directory where to save}
 
@@ -143,8 +146,8 @@ provided you may need to set it yourself.
 
 Common cmdstanr options that one might want to pass in via ... include \code{refresh = 500}
 (show fewer MCMC progress updates), \code{adapt_delta = .98} (avoid divergences at the cost of
-possibly needing more iterations to get convergence), \code{show_messages = FALSE} ,  and \code{parallel_chains = 4} (run the
-MCMC chains in parallel).
+possibly needing more iterations to get convergence), \code{show_messages = FALSE} ,  and
+\code{parallel_chains = 4} (run the MCMC chains in parallel).
 
 If you want to use the PGLMM log-likelihood data frame with functions from the \code{loo}
 package, you'll need to convert it to a matrix with \code{as.matrix()}. It's converted to a
@@ -152,6 +155,11 @@ tibble internally so that it prints nicely.
 
 If \code{int_prior_scale} isn't specified, it defaults to 1 for binary outcomes and 1 standard
 deviation of the outcome for gaussian outcomes.
+
+If \code{offset} is categorical, the offset value used is the empirical mean (continuous
+outcomes) or proportion (binary outcome) for each category. Using a categorical offset variable
+with a continuous outcome is strange and you probably shouldn't try it unless you know what
+you're doing.
 }
 \examples{
 meta = data.frame(x = rnorm(100), sample_id = paste0("t", 1:100))

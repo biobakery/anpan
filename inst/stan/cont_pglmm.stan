@@ -3,6 +3,7 @@ data {
   vector[N] Y;  // response variable
   int<lower=1> K;  // number of covariates
   matrix[N, K] X;  // population-level design matrix (covariates only)
+  vector[N] offset;
   matrix[N, N] Lcov;  // cholesky factor of known correlation matrix
   real int_mean;
   real<lower=0> resid_scale;
@@ -31,7 +32,7 @@ transformed parameters {
 }
 model {
   // likelihood
-  vector[N] mu = centered_cov_intercept + phylo_effect;
+  vector[N] mu = centered_cov_intercept + phylo_effect + offset;
   target += normal_id_glm_lpdf(Y | Xc, mu, beta, sigma_resid);
 
   // priors
@@ -52,9 +53,9 @@ generated quantities {
   array[N] real yrep;
   vector[N] lin_pred;
 
-  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect;
+  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect + offset;
 
   for (i in 1:N){
-    yrep[i] = normal_rng(centered_cov_intercept + phylo_effect[i] + Xc[i]*beta, sigma_resid);
+    yrep[i] = normal_rng(centered_cov_intercept + phylo_effect[i] + offset[i] + Xc[i]*beta, sigma_resid);
   }
 }

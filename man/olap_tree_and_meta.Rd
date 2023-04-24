@@ -8,6 +8,7 @@ olap_tree_and_meta(
   tree_file,
   meta_file,
   covariates,
+  offset,
   outcome,
   omit_na = FALSE,
   ladderize = TRUE,
@@ -22,6 +23,8 @@ class "phylo" that is already read into R. Ignored if \code{cor_mat} is supplied
 \item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{offset}{a variable to include as an offset}
 
 \item{outcome}{the name of the outcome variable}
 

@@ -3,6 +3,7 @@ data {
   vector[N] Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
+  vector[N] offset;
   real int_mean;
   real<lower=0> resid_scale;
   vector<lower=0>[K-1] beta_sd;
@@ -24,7 +25,7 @@ parameters {
 }
 model {
   // likelihood
-  target += normal_id_glm_lpdf(Y | Xc, centered_cov_intercept, beta, sigma_resid);
+  target += normal_id_glm_lpdf(Y | Xc, centered_cov_intercept + offset, beta, sigma_resid);
 
   // priors
   target += normal_lpdf(centered_cov_intercept | int_mean, int_prior_scale);
@@ -39,9 +40,9 @@ generated quantities {
   vector[N] log_lik;
   vector[N] lin_pred;
 
-  lin_pred = Xc * beta + centered_cov_intercept;
+  lin_pred = Xc * beta + centered_cov_intercept + offset;
 
   for (i in 1:N){
-    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept, beta, sigma_resid);
+    log_lik[i] = normal_id_glm_lpdf(Y[i] | to_matrix(Xc[i]), centered_cov_intercept + offset[i], beta, sigma_resid);
   }
 }
