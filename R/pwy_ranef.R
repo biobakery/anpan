@@ -112,10 +112,10 @@ safely_anpan_pwy_ranef = purrr::safely(anpan_pwy_ranef)
 #'
 #' # Examine the summary
 #' pwy_group_res = res |>
-#'   select(bug, summary_df) |>             # select the two main columns
-#'   unnest(c(summary_df)) |>               # unnest
-#'   filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
-#'   arrange(-abs(mean))                    # sort by decreasing effect size
+#'   dplyr::select(bug, summary_df) |>             # select the two main columns
+#'   tidyr::unnest(c(summary_df)) |>               # unnest
+#'   dplyr::filter(grepl("^pwy_eff", variable)) |> # get just the pwy:group terms
+#'   dplyr::arrange(-abs(mean))                    # sort by decreasing effect size
 #'
 #' print(pwy_group_res)
 #'
