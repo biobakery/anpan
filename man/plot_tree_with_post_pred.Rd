@@ -8,6 +8,7 @@ plot_tree_with_post_pred(
   tree_file,
   meta_file,
   covariates = c("age", "gender"),
+  offset = NULL,
   outcome = "crc",
   omit_na = FALSE,
   ladderize = TRUE,
@@ -25,6 +26,8 @@ plot_tree_with_post_pred(
 \item{meta_file}{either a data frame of metadata or a path to file containing the metadata}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{offset}{a variable to include as an offset}
 
 \item{outcome}{the name of the outcome variable}
 

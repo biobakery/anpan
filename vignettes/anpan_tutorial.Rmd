@@ -973,6 +973,16 @@ If your gene measurements are noisy, it can also be helpful to run some sort of 
 
 That being said, it's preferable to estimate phylogenies from the raw data themselves using any of the many tools available in the literature (e.g. [StrainPhlAn](https://huttenhower.sph.harvard.edu/strainphlan)) rather than doing something _ad hoc_ from the gene matrices. There is a rich literature on the topic of phylogeny estimation, but the topic falls outside the scope of anpan. The preceding code block is mainly intended as a quick-and-dirty, "good enough" method to get a quick look at how relatedness affects the outcome overall.
 
+## Offset variables
+
+`anpan_pglmm()` is able to take a single variable from the metadata and use it as an "offset". See `?offset()` for additional description. Basically, an offset is a variable to be included as a covariate, but the coefficient is known to be exactly 1. The coefficient is not estimated as part of the model. If a given observation has an offset of +0.5, the linear predictor for that observation goes up by +0.5. 
+
+Categorical offsets can also be used with binary outcomes, in which case the offset value is taken as the inv_logit(proportion) of the outcome variable by category. In data.table it's roughly `model_input[, offset_value := inv_logit(mean(outcome)), by = offset]`.
+
+We originally developed this functionality for `study_id` variables. The proportion of cases in a given study isn't really an uncertain quantity, it's something set by the study designers. So if you want to include one study with mostly cases and another with mostly controls, it makes sense to build that difference into the model without adding additional parameters to estimate. You can set `offset = "study_id"` in the call to `anpan_pglmm()` and it will estimate the proportions and display them in a message.
+
+Offsets show up on the color bars on plots after the covariates. They're always on a continuous scale because the offset value is always a continuous number. 
+
 ## Picking out clade members
 
 This section not done

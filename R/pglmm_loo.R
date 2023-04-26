@@ -25,7 +25,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
 safely_invert = purrr::safely(solve)
 
 # For each posterior iteration, compute the log-likelihood of each observation.
-get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, Y, family, verbose = TRUE) {
+get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, family, verbose = TRUE) {
 
   inv_res = safely_invert(cor_mat)
 
@@ -107,6 +107,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, Y, family, verbo
                                                effect_means       = effect_means,
                                                cor_mat            = cor_mat,
                                                Xc                 = Xc,
+                                               offset_val         = offset_val,
                                                Y                  = Y,
                                                sigma12x22_inv_arr = sigma12x22_inv_arr,
                                                cor21_arr          = cor21_arr,
@@ -185,7 +186,7 @@ precompute_arrays = function(j, cor_mat, cor_mat_inv) {
 log_lik_terms_i = function(i_df,
                            effect_means,
                            cor_mat,
-                           Xc, Y,
+                           Xc, offset_val, Y,
                            sigma12x22_inv_arr,
                            cor21_arr,
                            family = 'gaussian') {
@@ -194,9 +195,9 @@ log_lik_terms_i = function(i_df,
   cov_mat = i_df$sigma_phylo^2 * cor_mat
 
   if (ncol(Xc) > 0) {
-    covariate_term = Xc %*% matrix(i_df$beta[[1]], ncol = 1)
+    covariate_term = Xc %*% matrix(i_df$beta[[1]], ncol = 1) + matrix(offset_val, ncol = 1)
   } else {
-    covariate_term = 0
+    covariate_term = matrix(offset_val, ncol = 1)
   }
 
   lm_means = covariate_term + i_df$centered_cov_intercept

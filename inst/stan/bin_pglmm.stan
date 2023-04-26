@@ -3,7 +3,7 @@ data {
   array[N] int Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
-  vector[N] offset;
+  vector[N] offset_val;
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
   vector<lower=0>[K-1] beta_sd;
   real<lower=0> int_prior_scale;
@@ -30,7 +30,7 @@ transformed parameters {
 }
 model {
   // likelihood
-  vector[N] mu = centered_cov_intercept + phylo_effect + offset;
+  vector[N] mu = centered_cov_intercept + phylo_effect + offset_val;
   target += bernoulli_logit_glm_lpmf(Y | Xc, mu, beta);
 
   // priors
@@ -51,9 +51,9 @@ generated quantities {
   array[N] int yrep;
   vector[N] lin_pred;
 
-  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect + offset;
+  lin_pred = Xc * beta + centered_cov_intercept + phylo_effect + offset_val;
 
   for (i in 1:N){
-    yrep[i] = bernoulli_logit_rng(centered_cov_intercept + phylo_effect[i] + offset[i] + Xc[i]*beta);
+    yrep[i] = bernoulli_logit_rng(centered_cov_intercept + phylo_effect[i] + offset_val[i] + Xc[i]*beta);
   }
 }

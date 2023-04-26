@@ -317,6 +317,8 @@ anpan_pglmm = function(meta_file,
     cor_mat_provided = TRUE
   }
 
+  if (!is.null(offset) && length(offset) > 1) stop("Can't have more than one offset variable.")
+
   if (is.null(cor_mat)) {
     olap_list = olap_tree_and_meta(tree_file,
                                    meta_file,
@@ -371,15 +373,29 @@ anpan_pglmm = function(meta_file,
     stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
   }
 
-  if (!is.null(offset) && (is.character(model_input[[offset]]) || is.factor(model_input[[offset]]))) {
-    if (is.numeric(model_input[[outcome]])) {
-      stop("Can't use a categorical offset variable with a continuous outcome.")
+  categorical_offset = is.character(model_input[[offset]]) || is.factor(model_input[[offset]])
+  numeric_outcome = is.numeric(model_input[[outcome]]) && dplyr::n_distinct(model_input[[outcome]]) > 2
+
+  if (!is.null(offset)) {
+    if (categorical_offset) {
+      if (numeric_outcome) {
+        stop("Can't use a categorical offset variable with a continuous outcome.")
+      }
+
+      message("The provided offset variable is categorical. Setting the offset used to the inv_logit(proportion) for each category.\n")
+      setDT(model_input) # It's already a data.table here, but it was copied at some point by R.
+      model_input[, offset_val := lapply(.SD, function(x) stats::qlogis(mean(x))),
+                  by = offset,
+                  .SDcols = outcome] # data.table is sick
+
+      message("The offset values used by category are:")
+      message(paste0(capture.output(model_input[,.(offset_val = offset_val[1]),by = offset]),
+                     sep = "\n"))
+
+      message("These values are on the log-odds scale. Ensure that they make sense for your offset variable.\n")
+    } else {
+      model_input$offset_val = model_input[[offset]]
     }
-
-    message("The provided offset variable is categorical. Setting the offset used to the inv_logit(proportion) for each category.")
-
-    model_input[, offset_val := lapply(.SD, function(x) stats::qlogis(mean(x))), by = offset, .SDcols = outcome] # data.table is sick
-
   }
 
   if (is.null(offset)) model_input$offset_val = rep(0, nrow(model_input))
@@ -517,6 +533,7 @@ anpan_pglmm = function(meta_file,
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
+                     offset_val = model_input$offset_val,
                      Lcov = Lcov,
                      int_mean = outcome_mean,
                      int_prior_scale = ifelse(!is.null(int_prior_scale), int_prior_scale, outcome_sd),
@@ -530,7 +547,7 @@ anpan_pglmm = function(meta_file,
                      Y = model_input[[outcome]],
                      K = ncol(model_mat),
                      X = model_mat,
-                     offset = model_input$offset_val,
+                     offset_val = model_input$offset_val,
                      Lcov = Lcov,
                      sigma_phylo_scale = sigma_phylo_scale,
                      int_prior_scale = ifelse(!is.null(int_prior_scale), int_prior_scale, 1))
@@ -595,10 +612,11 @@ anpan_pglmm = function(meta_file,
   }
 
   if (show_plot_tree) {
-
+    if (!is.null(offset)) offset_var = "offset_val" else offset_var = NULL
     p = plot_outcome_tree(tree_file,
-                          meta_file,
+                          model_input,
                           covariates = covariates,
+                          offset = offset_var,
                           outcome = outcome,
                           omit_na = omit_na,
                           ladderize = ladderize,
@@ -614,9 +632,13 @@ anpan_pglmm = function(meta_file,
   }
 
   if (show_post) {
+
+    if (!is.null(offset)) offset_var = "offset_val" else offset_var = NULL
+
     p_post = plot_tree_with_post(tree_file,
-                                 meta_file,
+                                 model_input,
                                  covariates = covariates,
+                                 offset = offset_var,
                                  outcome = outcome,
                                  omit_na = omit_na,
                                  ladderize = ladderize,
@@ -635,9 +657,12 @@ anpan_pglmm = function(meta_file,
   }
 
   if (show_yrep) {
+    if (!is.null(offset)) offset_var = "offset_val" else offset_var = NULL
+
     p_post_pred = plot_tree_with_post_pred(tree_file,
-                                           meta_file,
+                                           model_input,
                                            covariates = covariates,
+                                           offset = offset_var,
                                            outcome = outcome,
                                            omit_na = omit_na,
                                            ladderize = ladderize,
@@ -695,6 +720,7 @@ anpan_pglmm = function(meta_file,
                                    cor_mat = cor_mat,
                                    Lcov = Lcov,
                                    Xc = Xc,
+                                   offset_val = data_list$offset_val,
                                    Y = data_list$Y,
                                    family = family,
                                    verbose = verbose)

@@ -292,11 +292,14 @@ get_cov_color_map = function(unique_covs, title_pos = 'bottom') {
 }
 
 plot_color_bars = function(color_bar_df, model_input,
-                           covariates, outcome, binary_outcome,
+                           covariates, offset = NULL, outcome, binary_outcome,
                            show_outcome_scale = TRUE,
                            terminal_seg_df = NULL) {
 
   title_pos = if (is.null(terminal_seg_df)) "bottom" else "top"
+
+  # if offset isn't NULL, just plot it as another covariate
+  if (!is.null(offset)) covariates = c(covariates, offset)
 
   if (binary_outcome) {
 
@@ -1034,6 +1037,7 @@ check_meta = function(model_input,
 plot_outcome_tree = function(tree_file,
                              meta_file,
                              covariates = c("age", "gender"),
+                             offset = NULL,
                              outcome = 'crc',
                              omit_na = FALSE,
                              ladderize = TRUE,
@@ -1049,6 +1053,7 @@ plot_outcome_tree = function(tree_file,
   olap_list = olap_tree_and_meta(tree_file = tree_file,
                                  meta_file = meta_file,
                                  covariates = covariates,
+                                 offset = offset,
                                  outcome = outcome,
                                  omit_na = omit_na,
                                  ladderize = ladderize,
@@ -1068,7 +1073,7 @@ plot_outcome_tree = function(tree_file,
   covariates = meta_check_result$covariates
   outcome = meta_check_result$outcome
 
-  select_cols = c("sample_id", outcome, covariates)
+  select_cols = c("sample_id", outcome, offset, covariates)
 
   color_bar_df = model_input |>
     dplyr::select(dplyr::all_of(select_cols)) |>
@@ -1105,7 +1110,7 @@ plot_outcome_tree = function(tree_file,
 
   if (color_bars) {
     anno_plot = plot_color_bars(color_bar_df, model_input,
-                                covariates, outcome, binary_outcome,
+                                covariates, offset, outcome, binary_outcome,
                                 show_outcome_scale = FALSE,
                                 terminal_seg_df = terminal_seg_df)
   }
@@ -1178,6 +1183,7 @@ plot_tree_with_post = function(tree_file,
                                fit,
                                labels,
                                covariates = c("age", "gender"),
+                               offset = NULL,
                                outcome = 'crc',
                                omit_na = FALSE,
                                ladderize = TRUE,
@@ -1190,6 +1196,7 @@ plot_tree_with_post = function(tree_file,
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
                                 covariates = covariates,
+                                offset = offset,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 ladderize = ladderize,
@@ -1202,6 +1209,7 @@ plot_tree_with_post = function(tree_file,
   olap_list = olap_tree_and_meta(tree_file = tree_file,
                                  meta_file = meta_file,
                                  covariates = covariates,
+                                 offset = offset,
                                  outcome = outcome,
                                  omit_na = omit_na,
                                  ladderize = ladderize,
@@ -1212,7 +1220,7 @@ plot_tree_with_post = function(tree_file,
 
   label_meta_overlap = intersect(labels, meta_sample_ids) |> length()
 
-  if (length(label_meta_overlap) < 2) {
+  if (label_meta_overlap < 2) {
     stop("Couldn't find overlapping samples between the metadata sample_id column and the provided labels. You probably didn't provide the labels properly. See the note on how to get the right labels in the Details section of ?plot_tree_with_post alongside an example that uses the simulated data in the vignette.")
   }
 
@@ -1290,6 +1298,7 @@ plot_tree_with_post = function(tree_file,
 plot_tree_with_post_pred = function(tree_file,
                                     meta_file,
                                     covariates = c("age", "gender"),
+                                    offset = NULL,
                                     outcome = 'crc',
                                     omit_na = FALSE,
                                     ladderize = TRUE,
@@ -1303,6 +1312,7 @@ plot_tree_with_post_pred = function(tree_file,
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
                                 covariates = covariates,
+                                offset = offset,
                                 outcome = outcome,
                                 omit_na = omit_na,
                                 ladderize = ladderize,
