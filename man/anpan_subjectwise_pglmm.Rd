@@ -9,6 +9,7 @@ anpan_subjectwise_pglmm(
   meta_file,
   subject_sample_map,
   outcome,
+  offset = NULL,
   covariates = NULL,
   out_dir = NULL,
   trim_pattern = NULL,
@@ -41,6 +42,8 @@ either subjects or samples.}
 leaves of the tree up to the trim_pattern) and subject_id}
 
 \item{outcome}{the name of the outcome variable}
+
+\item{offset}{a variable to include as an offset}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
 

@@ -1097,6 +1097,7 @@ anpan_subjectwise_pglmm = function(tree_file,
                                    meta_file,
                                    subject_sample_map,
                                    outcome,
+                                   offset = NULL,
                                    covariates = NULL,
                                    out_dir = NULL,
                                    trim_pattern = NULL,
@@ -1184,11 +1185,11 @@ anpan_subjectwise_pglmm = function(tree_file,
   } else if (is.data.frame(meta_file)) {
     metadata = as.data.table(meta_file)
   } else {
-    stop("The provided meta_file doesn't seems to be neither a file nor a data frame.")
+    stop("The provided meta_file is neither a file nor a data frame.")
   }
 
   if ("sample_id" %in% names(metadata)) {
-    output_cols = c(covariates, outcome, "subject_id")
+    output_cols = c(covariates, outcome, offset, "subject_id")
 
     if ("subject_id" %in% names(metadata)) metadata$subject_id = NULL
 
@@ -1196,12 +1197,14 @@ anpan_subjectwise_pglmm = function(tree_file,
       unique() |>
       dplyr::group_by(subject_id) |>
       dplyr::summarise(dplyr::across(.cols = dplyr::all_of(c(covariates, outcome)),
-                                     summarise_metadata_variable)) |>
+                                     summarise_metadata_variable),
+                       dplyr::across(.cols = dplyr::all_of(offset),
+                                     dplyr::first)) |>
       dplyr::rename(sample_id = subject_id) |>
       as.data.table()
   } else if ("subject_id" %in% names(metadata)) {
     metadata = metadata |>
-      dplyr::select(dplyr::all_of(c("subject_id", outcome, covariates))) |>
+      dplyr::select(dplyr::all_of(c("subject_id", outcome, covariates, offset))) |>
       dplyr::rename(sample_id = subject_id)
   } else {
     stop("Couldn't find subject_id or sample_id in the metadata")
@@ -1213,6 +1216,7 @@ anpan_subjectwise_pglmm = function(tree_file,
               cor_mat           = ordered_subj_cor_mat,
               outcome           = outcome,
               covariates        = covariates,
+              offset            = offset,
               out_dir           = out_dir,
               trim_pattern      = NULL,
               bug_name          = bug_name,
