@@ -3,7 +3,7 @@ data {
   vector[N] Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
-  vector[N] offset_val;
+  vector[N] offset_val; // vector of offsets to add to linear predictor
   matrix[N, N] Lcov;  // cholesky factor of known covariance matrix
   real int_mean;
   real<lower=0> resid_scale;

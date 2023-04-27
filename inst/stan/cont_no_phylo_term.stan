@@ -3,7 +3,7 @@ data {
   vector[N] Y;  // response variable
   int<lower=1> K;  // number of population-level effects
   matrix[N, K] X;  // population-level design matrix
-  vector[N] offset_val;
+  vector[N] offset_val; // vector of offsets to add to linear predictor
   real int_mean;
   real<lower=0> resid_scale;
   vector<lower=0>[K-1] beta_sd;
