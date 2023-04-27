@@ -9,6 +9,7 @@ anpan_pglmm_batch(
   tree_dir,
   outcome,
   covariates = NULL,
+  offset = NULL,
   out_dir = NULL,
   trim_pattern = NULL,
   omit_na = FALSE,
@@ -39,6 +40,8 @@ anpan_pglmm_batch(
 \item{outcome}{the name of the outcome variable}
 
 \item{covariates}{covariates to account for (as a vector of strings)}
+
+\item{offset}{a variable to include as an offset}
 
 \item{out_dir}{if saving, directory where to save}
 
