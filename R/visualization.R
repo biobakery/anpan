@@ -651,8 +651,12 @@ plot_results = function(res, covariates, outcome, model_input,
     n_case = sum(color_bar_df[[outcome]] == 1)
   }
 
-  anno_plot = plot_color_bars(color_bar_df, model_input,
-                              covariates, outcome, binary_outcome)
+  anno_plot = plot_color_bars(color_bar_df = color_bar_df,
+                              model_input = model_input,
+                              covariates = covariates,
+                              offset = NULL,
+                              outcome = outcome,
+                              binary_outcome = binary_outcome)
 
   if (!is.null(annotation_file) && !("annotation" %in% names(res))) {
     plot_data = as.data.table(res)[anno[plot_data, on = 'gene'], on = 'gene']
@@ -1109,8 +1113,12 @@ plot_outcome_tree = function(tree_file,
     left_join(model_input, by = c("label" = "sample_id")) # join on metadata
 
   if (color_bars) {
-    anno_plot = plot_color_bars(color_bar_df, model_input,
-                                covariates, offset, outcome, binary_outcome,
+    anno_plot = plot_color_bars(color_bar_df = color_bar_df,
+                                model_input = model_input,
+                                covariates = covariates,
+                                offset = offset,
+                                outcome = outcome,
+                                binary_outcome = binary_outcome,
                                 show_outcome_scale = FALSE,
                                 terminal_seg_df = terminal_seg_df)
   }

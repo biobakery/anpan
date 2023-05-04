@@ -373,10 +373,12 @@ anpan_pglmm = function(meta_file,
     stop("omit_na == FALSE but NAs present in metadata. Either set omit_na = TRUE or fix the metadata.")
   }
 
-  categorical_offset = is.character(model_input[[offset]]) || is.factor(model_input[[offset]])
   numeric_outcome = is.numeric(model_input[[outcome]]) && dplyr::n_distinct(model_input[[outcome]]) > 2
 
   if (!is.null(offset)) {
+
+    categorical_offset = is.character(model_input[[offset]]) || is.factor(model_input[[offset]])
+
     if (categorical_offset) {
       if (numeric_outcome) {
         stop("Can't use a categorical offset variable with a continuous outcome.")
