@@ -935,6 +935,7 @@ anpan_pglmm_batch = function(meta_file,
   olap_list = olap_tree_and_meta(tree_files[1],
                                  meta_file,
                                  covariates,
+                                 offset = offset,
                                  outcome,
                                  omit_na,
                                  ladderize = ladderize,
@@ -1123,7 +1124,9 @@ anpan_subjectwise_pglmm = function(tree_file,
 
   if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
 
-  olap_tree_map = olap_tree_and_meta(tree_file, subject_sample_map, covariates = "subject_id",
+  olap_tree_map = olap_tree_and_meta(tree_file, subject_sample_map,
+                                     covariates = "subject_id",
+                                     offset = offset,
                                      trim_pattern = trim_pattern,
                                      ladderize = ladderize,
                                      outcome = NULL, verbose = FALSE)
