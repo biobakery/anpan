@@ -559,7 +559,7 @@ anpan_batch = function(bug_dir,
 
   if (!(is.numeric(metadata[[outcome]]) || is.logical(metadata[[outcome]]))) {
     error_msg = paste0("The specified outcome variable in the metadata is neither numeric nor logical. The specified outcome variable is class: ",
-                       class(meta[[outcome]])[1])
+                       class(metadata[[outcome]])[1])
     stop(error_msg)
   }
 
