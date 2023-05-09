@@ -829,6 +829,9 @@ aggregate_by_subject = function(filtered_sample_file,
                                 covariates,
                                 outcome,
                                 out_dir) {
+
+  #TODO make sure the gene columns are all the same type first to avoid type-promotion warnings in
+  #the melt.
   sample_df = filtered_sample_file |>
     fread(header = TRUE) |>
     melt(id.vars = c(covariates, outcome, "sample_id"),

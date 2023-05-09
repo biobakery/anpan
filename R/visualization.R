@@ -445,6 +445,8 @@ pca = function(mat, k = 10) {
 #' @param beta_threshold Regression coefficient threshold to use for inclusion in the plot. Set to 0
 #'   to include everything.
 #' @param cluster axis to cluster. either "none", "samples", "genes", or "both"
+#' @param show_intervals logical indicating whether to show the interval plot of estimates on the left
+#' @param stars logical indicating whether to show significance stars on the
 #' @param show_trees logical to show the trees for the samples (if clustered)
 #' @param width width of saved plot in inches
 #' @param height height of saved plot in inches
@@ -484,6 +486,7 @@ plot_results = function(res, covariates, outcome, model_input,
                         q_threshold = .1,
                         beta_threshold = 1,
                         show_intervals = TRUE,
+                        stars = TRUE,
                         max_anno_width = 70,
                         width = NULL,
                         height = NULL,
@@ -772,6 +775,14 @@ plot_results = function(res, covariates, outcome, model_input,
     point_geom = geom_point(color = 'grey10')
   }
 
+  if (stars) {
+    star_geom = geom_text(aes(x = star_loc,
+                              y = gene,
+                              label = p_group), hjust = 0, vjust = .7)
+  } else {
+    star_geom = NULL
+  }
+
   int_plot = int_plot_df |>
     ggplot(aes(estimate, gene)) +
     geom_segment(aes(y = gene,
@@ -783,9 +794,7 @@ plot_results = function(res, covariates, outcome, model_input,
     geom_vline(xintercept = 0,
                lty = 2,
                color = 'grey70') +
-    geom_text(aes(x = star_loc,
-                  y = gene,
-                  label = p_group), hjust = 0, vjust = .7) +
+    star_geom +
     xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
            max(0, max(int_plot_df$max_val)))) +
     labs(fill = expression(paste("-log"[10], "(Q)"))) +

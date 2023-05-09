@@ -19,6 +19,7 @@ plot_results(
   q_threshold = 0.1,
   beta_threshold = 1,
   show_intervals = TRUE,
+  stars = TRUE,
   max_anno_width = 70,
   width = NULL,
   height = NULL,
@@ -51,6 +52,10 @@ the output written to *gene_terms.tsv.gz)}
 
 \item{beta_threshold}{Regression coefficient threshold to use for inclusion in the plot. Set to 0
 to include everything.}
+
+\item{show_intervals}{logical indicating whether to show the interval plot of estimates on the left}
+
+\item{stars}{logical indicating whether to show significance stars on the}
 
 \item{width}{width of saved plot in inches}
 
