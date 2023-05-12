@@ -779,8 +779,10 @@ plot_results = function(res, covariates, outcome, model_input,
     star_geom = geom_text(aes(x = star_loc,
                               y = gene,
                               label = p_group), hjust = 0, vjust = .7)
+    x_lo = min(int_plot_df$min_val) - .3*est_range
   } else {
     star_geom = NULL
+    x_lo = min(int_plot_df$min_val)
   }
 
   int_plot = int_plot_df |>
@@ -795,7 +797,7 @@ plot_results = function(res, covariates, outcome, model_input,
                lty = 2,
                color = 'grey70') +
     star_geom +
-    xlim(c(min(0, min(int_plot_df$min_val) - .3*est_range),
+    xlim(c(min(0, x_lo),
            max(0, max(int_plot_df$max_val)))) +
     labs(fill = expression(paste("-log"[10], "(Q)"))) +
     guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5)) +
