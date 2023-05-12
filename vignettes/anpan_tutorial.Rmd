@@ -883,6 +883,8 @@ HUMAnN UniRef90 profiles may contain all species merged into a single huge tsv. 
 system.file('fsplit', package = 'anpan')
 ```
 
+Depending on how you installed the package, you may need to `chmod +x /path/to/fsplit` in order to give it execute access.
+
 In a shell (not R) would then navigate to your big `merged_humann_output.tsv` and run
 
 ```
