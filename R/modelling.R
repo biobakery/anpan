@@ -83,14 +83,6 @@ fit_glms = function(model_input, out_dir, covariates, outcome, bug_name,
     dplyr::select(-term) |>
     data.table::as.data.table()
 
-  if (discretized_inputs && dplyr::n_distinct(model_input[[outcome]]) == 2) {
-    prop_diff_df = model_input[, .(p = mean(present)),
-                               by = c("gene", outcome)][,.(prop_diff = abs(diff(p))),
-                                                        by = "gene"]
-
-    bug_terms = bug_terms[prop_diff_df, on = 'gene', nomatch = 0]
-  }
-
   write_tsv_no_progress(bug_terms,
                         file = file.path(out_dir, "model_stats",
                                          paste0(bug_name, "_gene_terms.tsv.gz")))
@@ -650,11 +642,6 @@ anpan_batch = function(bug_dir,
         dplyr::relocate(bug_name, gene) |>
         dplyr::relocate(annotation, .after = dplyr::last_col())
     }
-  }
-
-  if (discretize_inputs && dplyr::n_distinct(metadata[[outcome]]) == 2 && model_type == 'fastglm') {
-    all_bug_terms[,metarank_bugwise := (data.table::frank(p.value) + data.table::frank(-prop_diff))/2, by = bug_name]
-    all_bug_terms[,metarank_global  := (data.table::frank(p.value) + data.table::frank(-prop_diff))/2]
   }
 
   write_tsv_no_progress(all_bug_terms,

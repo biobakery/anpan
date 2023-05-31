@@ -506,6 +506,8 @@ plot_results = function(res, covariates, outcome, model_input,
 
   if (!is.data.table(res)) res = as.data.table(res)
 
+  if ("p.value" %in% names(res)) res = res[order(p.value)]
+
   binary_outcome = dplyr::n_distinct(model_input[[outcome]]) == 2
 
   if (!is.null(annotation_file) && !("annotation" %in% names(res))) {
@@ -515,12 +517,6 @@ plot_results = function(res, covariates, outcome, model_input,
   }
 
   n_top = min(n_top, dplyr::n_distinct(res$gene))
-
-  if ("metarank_global" %in% names(res)) {
-    res = res[order(metarank_global)]
-    # Otherwise res is used in the order provided, which is sorted by increasing p-value from
-    # anpan() by default.
-  }
 
   if (!is.null(q_threshold) || !is.null(beta_threshold)) {
     signif_var = ifelse("q_global" %in% names(res),
