@@ -213,7 +213,7 @@ Things to know about the results plot:
 * the estimate intervals on the left show the coefficient estimates +/- 1.96 * standard error bars and nominal significance stars
   * In this case, you can see that really only the top two rows are obviously different between the two groups, despite the nominal significance stars on the lower rows. 
 * The genes are sorted by significance by default, but they and/or the samples may be clustered by setting `cluster = "samples"` or `"genes"` or `"both"`. 
-  * In this case, because we didn't incorporate any linkage of genes or relatedness of samples, we don't get any interesting clustring structure. 
+  * In this case, because we didn't simulate any linkage of genes or relatedness of samples, we don't get any interesting clustering structure. 
 * The plot shows the top 50 genes by default, but you can set the `n_top`, `beta_threshold`, and/or `q_threshold` arguments to override this behavior.
 
 Some additional outputs you'll get with `anpan_batch()`:
