@@ -128,7 +128,7 @@ Now let's look at the gene data:
 fread(bug_path, nrows = 5, select = 1:4)
 ```
 
-The gene file needs to have gene IDs in the first column, formatted as `gene_id|taxon_id` e.g. `UniRef90_ABC000001|g__Madeuppy.s__Madeuppy_Fakerii`. The names of the remaining columns need to exactly match the entries in the `sample_id` column of the metadata. 
+The gene file needs to have gene IDs in the first column, formatted as `gene_id|taxon_id` e.g. `UniRef90_ABC000001|g__Madeuppy.s__Madeuppy_Fakerii`. The names of the remaining columns need to exactly match the entries in the `sample_id` column of the metadata. By default anpan will trim `"_Abundance-RPKs"` from the column names of the gene file since that part of the ID is usually added by HUMAnN and not present in the metadata.
 
 ## Run the gene model
 
