@@ -1,6 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
+<strong><b><span style="font-size:xxx-large;color:red"> Read the
+vignette: `browseVignettes("anpan")` </span></b></strong>
+
 # anpan <img src="man/figures/logo.png" align="right"/>
 
 <!-- badges: start -->
