@@ -77,7 +77,7 @@ remotes::install_github("biobakery/anpan", build_vignettes = TRUE)
 ## Tutorial
 
 
-<b><span style="font-size:xxx-large;color:red"> Read the vignette: `browseVignettes("anpan")` </span></b>
+<strong><b><span style="font-size:xxx-large;color:red"> Read the vignette: `browseVignettes("anpan")` </span></b></strong>
 
 The vignette has step-by-step walkthroughs and detailed documentatation on the most important functionality. The examples shown below are just for demonstration.
 
