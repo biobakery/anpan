@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
 )
 ```
 
+
 # anpan <img src="man/figures/logo.png" align="right"/>
 
 <!-- badges: start -->
@@ -75,7 +76,12 @@ remotes::install_github("biobakery/anpan", build_vignettes = TRUE)
 
 ## Tutorial
 
-Once anpan is installed and the vignette is built, you can view the vignette with `vignette("anpan_tutorial", package = "anpan")`. Try `browseVignettes("anpan")` > "HTML" if you'd like to view it in a browser. There is also a static (and probably out-of-date) version of the tutorial available on [the biobakery wiki GitHub page](https://github.com/biobakery/biobakery/wiki/anpan_tutorial).
+
+<b><span style="font-size:xxx-large;color:red"> Read the vignette: `browseVignettes("anpan")` </span></b>
+
+The vignette has step-by-step walkthroughs and detailed documentatation on the most important functionality. The examples shown below are just for demonstration.
+
+There is also a static (and probably out-of-date) version of the tutorial available on [the biobakery wiki GitHub page](https://github.com/biobakery/biobakery/wiki/anpan_tutorial).
 
 ## Example - element testing
 
