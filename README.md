@@ -1,8 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<strong><b><span style="font-size:xxx-large;color:red"> Read the
-vignette: `browseVignettes("anpan")` </span></b></strong>
+# Read the vignette: `browseVignettes("anpan")`
+
+You are reading the Github README, not the vignette.
 
 # anpan <img src="man/figures/logo.png" align="right"/>
 
@@ -14,6 +15,8 @@ analysis. This includes automated filtering of metagenomic functional
 profiles, testing genetic elements for association with outcomes,
 phylogenetic association testing, and pathway-level random effects
 models.
+
+<br> <br>
 
 <img src="man/figures/1_overview.png" width="90%" height="90%" />
 
