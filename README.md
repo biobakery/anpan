@@ -16,7 +16,7 @@ profiles, testing genetic elements for association with outcomes,
 phylogenetic association testing, and pathway-level random effects
 models.
 
-<br> <br>
+<br>
 
 <img src="man/figures/1_overview.png" width="90%" height="90%" />
 
