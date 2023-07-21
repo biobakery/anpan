@@ -515,12 +515,17 @@ But how do we estimate *clade* effects? It's important to contextualize the resu
 
 If you are able to justifiably define a clade manually (with some articulable, non-circular reasoning beyond "this clade looks like it has a higher outcome"), you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
-**Exercise: Fit a PGLMM with a binary outcome. If you weren't able to modify the simulation to generate binary outcomes, you can just set the outcome to random draws of TRUE/FALSE (in which case you should observe zero phylogenetic signal). The answer is given in the source Rmarkdown.**
+**Exercise: Fit a PGLMM with a binary outcome. If you weren't able to modify the simulation to generate binary outcomes in the previous exercise, just set the outcome to random draws of TRUE/FALSE (in which case you should observe zero phylogenetic signal). The answer is given in the source Rmarkdown.**
 
 ```{r echo = FALSE, eval=FALSE}
 # Either re-run the simulation to get a binary outcome (see earlier exercise answer) or set metadata$outcome = sample(c(TRUE, FALSE), size = n, replace = TRUE). Then re-run anpan_pglmm() changing the following arguments:
 # * family = "binomial" 
 # * reg_noise = FALSE
+
+# Generate a random binary outcome. Skip this if you already have a binary result from the previous exercise.
+metadata$outcome = sample(c(TRUE, FALSE), 
+                          size = n, replace = TRUE)
+# ^ There is no relationship to the covariate nor phylogeny here. So the estimates for the covariate coefficient and sigma_phylo should be close to 0.
 
 result = anpan_pglmm(meta_file       = metadata,
                      tree_file       = tr,
