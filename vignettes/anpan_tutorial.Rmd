@@ -1015,7 +1015,7 @@ These can mostly be addressed after the fact with the usual means of altering gg
 p[[1]]$layers[[1]]$aes_params$size = .2
 
 # Make the sample labels bigger
-p[[2]]$theme$axis.text.x = element_text(size = 4.5, angle = 90, hjust = 0)
+p[[3]]$theme$axis.text.x = element_text(size = 4.5, angle = 90, hjust = 0)
 
 # Make the points bigger
 p[[1]]$layers[[2]]$aes_params$size = 3
