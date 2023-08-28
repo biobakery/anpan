@@ -1007,7 +1007,7 @@ The labels are a bit too small. Another common problem with these plots is that 
 These can mostly be addressed after the fact with the usual means of altering ggplot. However, many of the plots produced by anpan are composite figures produced by the [patchwork](https://patchwork.data-imaginist.com/index.html) package. This adds an additional step to tweaking the plots and making them publication ready. `patchwork` plots can essentially be accessed as a list with the sub-plots as elements. So the code block below shows three common modifications:
 
 * make the lines thinner on the tree (first sub-plot)
-* make the labels bigger and left-justified on the posterior box plots (second sub-plot)
+* make the labels bigger and left-justified on the posterior box plots (third sub-plot)
 * make the points bigger on the tree
 
 ```{r eval = TRUE}
@@ -1023,7 +1023,7 @@ p[[1]]$layers[[2]]$aes_params$size = 3
 p
 ```
 
-The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign `p[[2]]$` then looking at the names suggested by RStudio auto-complete can get you pretty far. 
+The details of finding which theme/aes parameters that are needed for additional tweaks are left as an exercise for the reader, but generally typing a dollar sign on a sub-plot `p[[2]]$`, then looking at the names suggested by RStudio auto-complete can get you pretty far. 
 
 You can also use the sub-plot accessor to pull out sub-plots that can then be rearranged in new ways with `patchwork::plot_layout()`. We have occasionally made huge mega plots with something like the code chunk below. 
 
