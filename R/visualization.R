@@ -303,6 +303,8 @@ plot_color_bars = function(color_bar_df, model_input,
 
   if (binary_outcome) {
 
+    if (!is.logical(color_bar_df[[outcome]])) color_bar_df[[outcome]] = as.logical(color_bar_df[[outcome]])
+
     outcome_fill_values = c("FALSE" = '#abd9e9', 'TRUE' = '#d73027')
 
     fill_guide = if (show_outcome_scale) {
