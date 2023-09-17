@@ -37,6 +37,17 @@ read_meta = function(meta_file,
   metadata
 }
 
+#' Read a bug's genefamily file
+#' @param bug_file path to a bug's genefamily file
+#' @param meta a data frame of metadata
+#' @param remove_pattern pattern to remove from the column names of the
+#'   genefamily file
+#' @details
+#' The input bug_file needs to be readable by data.table::fread()
+#'
+#' If metadata is provided, the genefamily file is subset to only those samples
+#' present in the sample_id column of the metadata.
+#' @returns The genefamily file of the bug as a data.table in TALL format
 #' @export
 read_bug = function(bug_file, meta = NULL,
                     remove_pattern = "_Abundance-RPKs") {
