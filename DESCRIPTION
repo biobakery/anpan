@@ -30,11 +30,14 @@ Imports:
     phylogram,
     posterior,
     tidyselect,
-    shadowtext
+    MASS,
+    future,
+    methods
 RoxygenNote: 7.2.3
 Suggests: 
     rmarkdown,
     knitr,
+    shadowtext,
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
