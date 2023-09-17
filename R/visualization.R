@@ -971,6 +971,11 @@ plot_p_value_histogram = function(all_bug_terms,
   p
 }
 
+#' Plot a correlation matrix
+#' Generate a colorful heatmap visualization of a correlation matrix
+#' @param cor_mat a correlation matrix
+#' @param bug_name a string giving the name of the bug
+#' @returns a ggplot of the correlation matrix
 #' @export
 plot_cor_mat = function(cor_mat,
                         bug_name = NULL) {
