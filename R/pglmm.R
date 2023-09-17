@@ -78,7 +78,7 @@ olap_tree_and_meta = function(tree_file,
                               verbose = TRUE) {
 
 
-  if (class(tree_file) == "phylo") {
+  if (is(tree_file, "phylo")) {
     bug_tree = tree_file
   } else{
     bug_tree = ape::read.tree(tree_file)
@@ -420,7 +420,7 @@ anpan_pglmm = function(meta_file,
     Lcov = t(chol_res$result)
   }
 
-  if (!(class(tree_file) == "phylo") && is.null(bug_name) && !is.null(tree_file)) {
+  if (!(is(tree_file, "phylo")) && is.null(bug_name) && !is.null(tree_file)) {
     bug_name = get_bug_name(tree_file,
                             remove_pattern = ".tre$|.tree$")
   } else {
