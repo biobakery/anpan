@@ -198,6 +198,16 @@ filter_with_kmeans = function(gf,
   filtered_gf
 }
 
+#' Filter a gene family file
+#' @description This is the function that anpan uses to filter an input
+#'   genefamily data.table. This can be useful if you want to play around with
+#'   different filtering options without repeatedly re-reading or checking the
+#'   file.
+#'
+#' @param gf a gene family data.table
+#' @param samp_stats a data.table of sample statistics
+#' @inheritParams anpan
+#' @inheritParams read_and_filter
 #' @export
 filter_gf = function(gf,
                      samp_stats,
