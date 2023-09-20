@@ -618,6 +618,7 @@ filter_batch = function(bug_dir, meta_file,
   }
 
   bug_files = get_file_list(bug_dir)
+  if (length(bug_files) == 0) stop("No files found in bug_dir")
 
   p = progressr::progressor(along = bug_files)
 

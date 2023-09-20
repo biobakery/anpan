@@ -536,9 +536,11 @@ anpan_batch = function(bug_dir,
       sep = "\n")
 
   bug_files = get_file_list(bug_dir)
+  if (length(bug_files) == 0) stop("No files found in bug_dir")
 
   if (!is.null(genomes_dir)) {
     genomes_files = get_file_list(genomes_dir)
+    if (length(genomes_files) == 0) stop("No genome files found in specified genomes_dir")
   }
 
   metadata = read_meta(meta_file,
@@ -992,6 +994,8 @@ anpan_repeated_measures = function(subject_sample_map,
   }
 
   bug_files = get_file_list(bug_dir)
+
+  if (length(bug_files) == 0) stop("No files found in bug_dir")
 
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
