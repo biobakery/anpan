@@ -494,6 +494,8 @@ If you want to tl;dr the rest of the PGLMMs section, look at the model compariso
 result$loo$comparison
 ```
 
+***Leave one out model comparison [is NOT a null hypothesis significance test.](https://avehtari.github.io/modelselection/CV-FAQ.html#13_When_not_to_use_cross-validation)***
+
 The PGLMM is the best fitting model, the difference in ELPD (predictive performance score) is relatively large (> -4), and the difference in ELPD for the base model is more than two standard errors below zero. So in this case you can say the phylogeny clearly contributes to the outcome. Given that we simulated the tree with $\sigma_{phylo} > 0$, that is the correct conclusion.
 
 If you want to see how the fit sees the effect of the tree, you can examine the posterior distribution on the phylogenetic with a simple interval plot laid out below the tree using `plot_tree_with_post()` (or leave `show_post` at its default `TRUE` value in the above call to `anpan_pglmm()`):
