@@ -311,11 +311,7 @@ anpan_pglmm = function(meta_file,
     reg_noise = FALSE
   }
 
-  if (is.null(cor_mat)) {
-    cor_mat_provided = FALSE
-  } else {
-    cor_mat_provided = TRUE
-  }
+  cor_mat_provided = !is.null(cor_mat)
 
   if (!is.null(offset) && length(offset) > 1) stop("Can't have more than one offset variable.")
 
@@ -510,8 +506,12 @@ anpan_pglmm = function(meta_file,
     arrange(sample_id)
 
   if (show_plot_cor_mat) {
-    ordered_tips = get_ordered_tips(bug_tree)
-    mat_for_plot = cor_mat[ordered_tips, ordered_tips]
+    if (cor_mat_provided) {
+      mat_for_plot = cor_mat
+    } else {
+      ordered_tips = get_ordered_tips(bug_tree)
+      mat_for_plot = cor_mat[ordered_tips, ordered_tips]
+    }
 
     if (verbose) message("Plotting correlation matrix...")
     p = plot_cor_mat(mat_for_plot,
@@ -661,6 +661,8 @@ anpan_pglmm = function(meta_file,
   if (show_yrep) {
     if (!is.null(offset)) offset_var = "offset_val" else offset_var = NULL
 
+    # This uses viridis twice if plotting a continuous covariate + continuous
+    # outcome. ... Fix later.
     p_post_pred = plot_tree_with_post_pred(tree_file,
                                            model_input,
                                            covariates = covariates,
@@ -1123,6 +1125,15 @@ anpan_subjectwise_pglmm = function(tree_file,
   # tree tip labels must match sample_id values already
 
   if (!is.data.table(subject_sample_map)) subject_sample_map = as.data.table(subject_sample_map)
+
+  ids_are_char_or_fct = (is(subject_sample_map$subject_id, "character") |
+                           is(subject_sample_map$subject_id, "factor")) &
+                        (is(subject_sample_map$sample_id, "character") |
+                           is(subject_sample_map$sample_id, "factor"))
+
+  if (!(ids_are_char_or_fct)) {
+    stop("subject and/or sample identifiers should be characters or factors.")
+  }
 
   olap_tree_map = olap_tree_and_meta(tree_file, subject_sample_map,
                                      covariates = "subject_id",
