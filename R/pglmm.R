@@ -905,6 +905,8 @@ anpan_pglmm_batch = function(meta_file,
         sep = "\n")
   }
 
+  if (!dir.exists(tree_dir)) stop("Specified tree_dir doesn't exist!")
+
   tree_files = list.files(tree_dir,
                           full.names = TRUE)
 
