@@ -5,6 +5,9 @@
 
 You are reading the Github README, not the vignette.
 
+The command above will open the vignette for you or tell you how to
+build it if you don’t have it built.
+
 # anpan <img src="man/figures/logo.png" align="right"/>
 
 <!-- badges: start -->
