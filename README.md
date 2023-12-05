@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Read the vignette: `browseVignettes("anpan")`
+# Read the vignette: `anpan::anpan_vignette()`
 
 You are reading the Github README, not the vignette.
 
@@ -75,7 +75,9 @@ remotes::install_github("biobakery/anpan", build_vignettes = TRUE)
 ## Tutorial
 
 <strong><b><span style="font-size:xxx-large;color:red"> Read the
-vignette: `browseVignettes("anpan")` </span></b></strong>
+vignette: `anpan::anpan_vignette()` </span></b></strong>.
+
+You are currently reading the Github README, not the vignette.
 
 The vignette has step-by-step walkthroughs and detailed documentatation
 on the most important functionality. The examples shown below are just
