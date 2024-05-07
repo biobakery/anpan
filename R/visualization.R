@@ -26,7 +26,7 @@ plot_lines = function(bug_file = NULL,
   precomputed = !is.null(fgf)
   to_compute = !is.null(bug_file) & !is.null(meta_file)
 
-  if (!(precomputed|to_compute)) {
+  if (!precomputed || to_compute) {
     # filtered gene families
     fgf = read_and_filter(bug_file,
                           covariates = covariates,
