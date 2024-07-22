@@ -88,7 +88,7 @@ for demonstration.
 
 There is also a static (and probably out-of-date) version of the
 tutorial available on [the biobakery wiki GitHub
-page](https://github.com/biobakery/biobakery/wiki/anpan_tutorial).
+page](https://github.com/biobakery/biobakery/wiki/anpan).
 
 ## Example - element testing
 
