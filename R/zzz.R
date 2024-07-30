@@ -11,7 +11,7 @@
 
   vignette_msg = paste0('- Read the vignette: ',
                         rebuild_advice,
-                        'anpan::anpan_vignette()')
+                        'run anpan::anpan_vignette()')
 
   packageStartupMessage("This is anpan version ", ver)
   packageStartupMessage(vignette_msg)
