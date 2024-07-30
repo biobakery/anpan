@@ -507,7 +507,7 @@ p = plot_tree_with_post(tree_file  = tr,
                         covariates = "covariate",
                         outcome    = "outcome",
                         color_bars = TRUE,
-                        labels     = metadata$sample_id)
+                        labels     = result$model_input$sample_id)
 p
 ```
 
@@ -679,7 +679,7 @@ anpan::plot_tree_with_post_pred(tree_file  = tr,
                                 covariates = "covariate",
                                 outcome    = "outcome",
                                 fit        = result$pglmm_fit,
-                                labels     = metadata$sample_id,
+                                labels     = result$model_input$sample_id,
                                 verbose    = FALSE)
 ```
 So when observations (the colored dots) are held out, the posterior predictive distribution for each leaf (the boxplots) generally capture the true value, showing that our model generally fits the data well. 
