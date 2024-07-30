@@ -1214,6 +1214,8 @@ plot_tree_with_post = function(tree_file,
                                trim_pattern = NULL,
                                return_tree_df = FALSE) {
 
+  if (verbose) message("Make sure the label order matches the fit object! See ?plot_tree_with_post")
+
   # Make the base tree plot
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
@@ -1330,6 +1332,8 @@ plot_tree_with_post_pred = function(tree_file,
                                     labels,
                                     trim_pattern = NULL,
                                     return_tree_df = FALSE) {
+
+  if (verbose) message("Make sure the label order matches the fit object! See ?plot_tree_with_post")
 
   tree_plot = plot_outcome_tree(tree_file,
                                 meta_file,
