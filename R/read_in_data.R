@@ -55,7 +55,9 @@ read_bug = function(bug_file, meta = NULL,
   gf = fread(bug_file,
              showProgress = FALSE,
              header = TRUE) |>
-    dplyr::select_all(~gsub(remove_pattern, "", .)) # This is why we need to import dplyr
+    dplyr::select_all(~gsub(remove_pattern, "", .))
+  # ^ This is why we need to import dplyr. dplyr doesn't have any unique
+  # sub-dependencies, so it wouldn't help much to remove it.
 
   names(gf)[1] = "gene"
 

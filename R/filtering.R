@@ -399,6 +399,13 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
 
   if (!("sample_id" %in% names(gf))) {
     warning("No samples matching metadata samples found in gene file")
+    if (save_filter_stats) {
+      warnings_file = check_warnings_file(filter_stats_dir)
+      cat(paste0(bug_name, " was skipped because no samples matching metadata samples found in gene file."),
+          file = warnings_file,
+          append = TRUE,
+          sep = "\n")
+    }
     return(NULL)
   }
 
@@ -512,6 +519,16 @@ read_and_filter = function(bug_file, metadata, # TODO make metadata optional for
   }
 }
 
+check_warnings_file = function(filter_stats_dir) {
+  warnings_file = file.path(filter_stats_dir, "warnings.txt")
+
+  if (!file.exists(warnings_file)) {
+    file.create(warnings_file)
+  }
+
+  return(warnings_file)
+}
+
 check_filter_res = function(model_input,
                             bug_file,
                             warnings_file,
@@ -600,10 +617,7 @@ filter_batch = function(bug_dir, meta_file,
   if (!dir.exists(fs_plot_dir)) dir.create(fs_plot_dir)
   if (!dir.exists(fs_labs_dir)) dir.create(fs_labs_dir)
 
-  warnings_file = file.path(filter_stats_dir, "warnings.txt")
-  if (!file.exists(warnings_file)) {
-    file.create(warnings_file)
-  }
+  warnings_file = check_warnings_file(filter_stats_dir)
 
   metadata = read_meta(meta_file,
                        select_cols = c("sample_id", outcome, covariates),
@@ -652,5 +666,6 @@ filter_batch = function(bug_dir, meta_file,
   return(filter_list)
 
 }
+
 
 
