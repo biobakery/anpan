@@ -6,18 +6,20 @@
   if (vignette_built) {
     rebuild_advice = ""
   } else {
-    rebuild_advice = "Reinstall with build_vignettes = TRUE, then "
+    rebuild_advice = "Reinstall with {.code build_vignettes = TRUE}, then "
   }
 
-  vignette_msg = paste0('- Read the vignette: ',
-                        rebuild_advice,
-                        'run anpan::anpan_vignette()')
+  vign_emph = cli::combine_ansi_styles("bold", "red2")
 
-  packageStartupMessage("This is anpan version ", ver)
-  packageStartupMessage(vignette_msg)
-  packageStartupMessage("- Get help: Visit the biobakery help forum at https://forum.biobakery.org/")
-  packageStartupMessage("- Parallelize: Before calling anpan, run future::plan() in a way that's appropriate for your system.")
-  packageStartupMessage("- Show progress: Before calling anpan, run library(progressr); handlers(global=TRUE)")
+  vignette_msg = paste0('{cli::symbol$bullet} {.strong Read the guide}: ',
+                        rebuild_advice,
+                        'run {vign_emph("anpan::anpan_vignette()")}')
+
+  cli::cli_inform(paste0("{cli::symbol$bullet} This is anpan version {.strong ", ver, "}"), class = "packageStartupMessage")
+  cli::cli_inform(vignette_msg, class = "packageStartupMessage")
+  cli::cli_inform("{cli::symbol$bullet} {.strong Get help}: Visit the biobakery help forum at {.url https://forum.biobakery.org/}", class = "packageStartupMessage")
+  cli::cli_inform("{cli::symbol$bullet} {.strong Parallelize}: Run {.fn future::plan} in a way that's appropriate for your system.", class = "packageStartupMessage")
+  cli::cli_inform("{cli::symbol$bullet} {.strong Activate progress bars}: {.code library(progressr); handlers(global=TRUE)}", class = "packageStartupMessage")
 }
 
 #' Open the anpan vignette
