@@ -18,7 +18,7 @@
   cli::cli_inform(paste0("{cli::symbol$bullet} This is anpan version {.strong ", ver, "}"), class = "packageStartupMessage")
   cli::cli_inform(vignette_msg, class = "packageStartupMessage")
   cli::cli_inform("{cli::symbol$bullet} {.strong Get help}: Visit the biobakery help forum at {.url https://forum.biobakery.org/}", class = "packageStartupMessage")
-  cli::cli_inform("{cli::symbol$bullet} {.strong Parallelize}: Run {.fn future::plan} in a way that's appropriate for your system.", class = "packageStartupMessage")
+  cli::cli_inform("{cli::symbol$bullet} {.strong Parallelize}: Run {.fn future::plan} as appropriate for your system.", class = "packageStartupMessage")
   cli::cli_inform("{cli::symbol$bullet} {.strong Activate progress bars}: {.code library(progressr); handlers(global=TRUE)}", class = "packageStartupMessage")
 }
 
