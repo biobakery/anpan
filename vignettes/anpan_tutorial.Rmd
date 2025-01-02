@@ -76,7 +76,7 @@ A couple points to know about anpan function names:
 * Plotting functions are prefixed with `plot_`. 
 * Several modeling functions have a `_batch()` version, which applies a given model to each bug present in a user-specified input directory.
 
-This code chunk loads some other packages we'll use:
+This code chunk loads some other packages we'll use and rounds numbers when they're printed:
 
 ```{r message = FALSE, warning=FALSE, class.source = "fold-show"}
 library(data.table)
@@ -84,6 +84,8 @@ library(ggplot2)
 library(tibble)
 library(dplyr)
 library(ape)
+
+options(digits = 2)
 ```
 
 # Gene model
@@ -381,6 +383,18 @@ sigma_resid = 1
 tr = ape::rtree(n)
 ```
 
+```{r echo=FALSE}
+# For some reason, putting the PGLMM random data generation after the gene model
+# section causes the random number generation to not reproduce correctly when
+# building as a vignette versus running interactively. I think the future_map()
+# call in anpan() is messing with the R sessions Rmarkdown is using.
+# MASS::mvrnorm also produces slightly different results on different platforms
+# with the same seed.
+
+# Just silently load the right tree as a hack.
+load("vignette_figs/pglmm_objects.RData")
+```
+
 You can try `plot(tr)` if you want to take a quick look at your tree, but we'll examine it with some additional detail later.
 
 The chunk below derives the correlation matrix implied by the tree:
@@ -392,34 +406,37 @@ cor_mat[1:5,1:5]
 
 The "t#" labels are the default sample IDs that `ape::rtree()` puts as tip labels.
 
+The chunk below generates a normally distributed covariate `covariate` (which has no connection to phylogeny), the linear effect of that covariate `linear_term`, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`. Note that the effect size of the covariate is explicitly set to 1:
 
-The chunk below generates a normally distributed covariate `covariate`, the linear term contribution, the true phylogenetic effects we'll use, and the outcome variable `outcome`, all stored in a tibble called `metadata`. Note that the effect size of the linear covariate is explicitly set to 1:
 ```{r}
+set.seed(42)
+
 covariate = rnorm(n)
 
 linear_term = 1 * covariate + rnorm(n, mean = 0, sd = sigma_resid)
 
-true_phylo_effects = sigma_phylo * MASS::mvrnorm(1, mu = rep(0, n), Sigma = cor_mat)
+true_phylo_effects = sigma_phylo * draw_mvnorm(Sigma = cor_mat)
 
 metadata = tibble(sample_id = colnames(cor_mat),
                   covariate = covariate,
                   outcome   = linear_term + true_phylo_effects)
 ```
 
-```{r echo = FALSE}
-# For some reason, putting the PGLMM random data generation after the gene model section causes the
-# random number generation to not reproduce correctly. I think the future_map() call in anpan() is
-# messing with the R sessions Rmarkdown is using.
+```{r echo=FALSE}
+# For some reason, putting the PGLMM random data generation after the gene model
+# section causes the random number generation to not reproduce correctly when
+# building as a vignette versus running interactively. I think the future_map()
+# call in anpan() is messing with the R sessions Rmarkdown is using.
+# MASS::mvrnorm also produces slightly different results on different platforms
+# with the same seed.
 
-# Just silently load the right objects as a hack.
-load('vignette_figs/pglmm_objects.RData')
+# Just silently load the right tree as a hack.
+load("vignette_figs/pglmm_objects.RData")
 ```
-
 
 ```{r}
 metadata
 ```
-
 
 Now we have our tree and the metadata that goes along with it. A quick plot shows that the outcome correlates with the simulated covariate as desired:
 
@@ -439,7 +456,7 @@ plot_outcome_tree(tr,
                   outcome    = "outcome")
 ```
 
-You can sort of see by eye that the phylogeny correlates with the outcome. The middle clade is generally brighter, and close neighbors usually have about the same shade of color.
+You can sort of see by eye that the phylogeny correlates with the outcome. Some clades are generally brighter, and close neighbors usually have about the same shade of color.
 
 How do we *quantitatively* assess the impact of the phylogeny on the outcome while also building in the relationship with the covariate? Use a PGLMM.
 
@@ -511,9 +528,9 @@ p = plot_tree_with_post(tree_file  = tr,
 p
 ```
 
-You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up in the middle clade and tightly correlated neighbors generally have very similar phylogenetic effects.
+You can see that the model fit confirms what we observed visually earlier: the phylogenetic effect generally shifts the outcome up in the bright clades and tightly correlated neighbors generally have very similar phylogenetic effects.
 
-But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are set against the tree is a simple presentation of the raw model fit, but can't draw the sharp dividing lines we might want. 
+But how do we estimate *clade* effects? It's important to contextualize the results in terms of the model formulation. A PGLMM doesn't see the tree, it sees the correlation matrix $\Omega$. Human eyes can easily pick out blocks in the matrix as discrete clades, but the model sees only a single, constrained multivariate distribution. So a presentation like this where the phylogenetic effects are juxtaposed against the tree is a straightforward way to display of the fitted model, but can't draw the sharp dividing lines we might want. 
 
 If you are able to justifiably define a clade manually (with some articulable, non-circular reasoning beyond "this clade looks like it has a higher outcome"), you can use the function `compute_clade_effects()` to compare the average phylogenetic effect of clade members against that of non-members. However automating the selection of clades is non-trivial and beyond the scope of this package, so we won't be demonstrating that function here.
 
