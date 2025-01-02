@@ -30,7 +30,6 @@ Imports:
     phylogram,
     posterior,
     tidyselect,
-    MASS,
     future,
     methods,
     cli
