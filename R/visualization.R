@@ -1124,7 +1124,8 @@ plot_outcome_tree = function(tree_file,
     filter(yend == min(yend)) |>
     ungroup() |>
     left_join(tip_df, by = "x") |> # join on tip labels
-    left_join(model_input, by = c("label" = "sample_id")) # join on metadata
+    left_join(model_input, by = c("label" = "sample_id")) |>  # join on metadata
+    arrange(x)
 
   if (color_bars) {
     anno_plot = plot_color_bars(color_bar_df = color_bar_df,
@@ -1138,7 +1139,8 @@ plot_outcome_tree = function(tree_file,
   }
 
   n = nrow(model_input)
-  leaf_label_size = if (n > 100) 2.33 else 4 # TODO make this more thoughtful
+
+  leaf_label_size = if (n > 100) 3 else 4 # TODO make this more thoughtful
 
   p = ggplot(seg_df, aes(x = x, y = yend)) +
     geom_segment(aes(x = x, xend = xend,
