@@ -4,4 +4,7 @@
 #' @importFrom utils capture.output combn head vignette
 #' @importFrom future plan
 #' @importFrom methods is
+#' @importFrom Rcpp sourceCpp
+#' @useDynLib anpan, .registration = TRUE
 NULL
+

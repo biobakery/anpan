@@ -223,7 +223,10 @@ log_lik_terms_i = function(i_df,
                        yj = yj,
                        s2 = sigma_resid)
 
-    ll_ij_fun = log_lik_i_j_gaussian
+    # ll_ij_fun = log_lik_i_j_gaussian
+    res = llij_gauss(j_df$m1, j_df$s1, j_df$l, j_df$yj, j_df$s2)
+    return(res)
+
   } else {
     j_df = data.table(j              = seq_len(p),
                       lm_mean        = c(lm_means),

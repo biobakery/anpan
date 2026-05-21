@@ -32,8 +32,8 @@ Imports:
     tidyselect,
     future,
     methods,
-    cli
-RoxygenNote: 7.3.1
+    cli,
+    Rcpp
 Suggests: 
     rmarkdown,
     knitr,
@@ -41,3 +41,6 @@ Suggests:
     testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+LinkingTo: 
+    Rcpp
+Config/roxygen2/version: 8.0.0
