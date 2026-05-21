@@ -714,7 +714,8 @@ anpan_pglmm = function(meta_file,
     }
 
     # These are decent starting places for offset terms
-    effect_means = pglmm_fit$summary(variables = 'phylo_effect') |>
+    effect_means = pglmm_fit$summary(variables = 'phylo_effect',
+                                     mean = mean) |>
       tibble::as_tibble() |>
       filter(grepl("^phylo_effect", variable)) |>
       pull(mean)
