@@ -64,8 +64,8 @@ the model}
 \item{loo_comparison}{logical indicating whether to compare the phylogenetic model against a base
 model (without the phylogenetic term) using \code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
-\item{run_diagnostics}{logical indicating whether to run \code{\link[cmdstanr:fit-method-cmdstan_summary]{cmdstanr::cmdstan_diagnose()}} and
-\code{\link[loo:pareto-k-diagnostic]{loo::pareto_k_table()}} to check the MCMC and loo diagnostics respectively.}
+\item{run_diagnostics}{logical indicating whether to run \code{\link[cmdstanr:cmdstan_diagnose]{cmdstanr::cmdstan_diagnose()}} and
+\code{\link[loo:pareto_k_table]{loo::pareto_k_table()}} to check the MCMC and loo diagnostics respectively.}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid
 with a Gamma prior}
@@ -90,7 +90,7 @@ overfitting.}
 
 \item{seed}{random seed to pass to furrr_options()}
 
-\item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
+\item{...}{other arguments to pass to \code{\link[cmdstanr:sample]{cmdstanr::sample()}}}
 }
 \value{
 a tibble listing results for each tree file in input directory that fit successfully.

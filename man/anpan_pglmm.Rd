@@ -75,8 +75,8 @@ distribution for each observation if plotting the tree}
 \item{loo_comparison}{logical indicating whether to compare the phylogenetic model against a base
 model (without the phylogenetic term) using \code{\link[loo:loo_compare]{loo::loo_compare()}}}
 
-\item{run_diagnostics}{logical indicating whether to run \code{\link[cmdstanr:fit-method-cmdstan_summary]{cmdstanr::cmdstan_diagnose()}} and
-\code{\link[loo:pareto-k-diagnostic]{loo::pareto_k_table()}} to check the MCMC and loo diagnostics respectively.}
+\item{run_diagnostics}{logical indicating whether to run \code{\link[cmdstanr:cmdstan_diagnose]{cmdstanr::cmdstan_diagnose()}} and
+\code{\link[loo:pareto_k_table]{loo::pareto_k_table()}} to check the MCMC and loo diagnostics respectively.}
 
 \item{reg_noise}{logical indicating whether to regularize the ratio of sigma_phylo to sigma_resid
 with a Gamma prior}
@@ -96,7 +96,7 @@ model (with centered covariates)}
 logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 overfitting.}
 
-\item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
+\item{...}{other arguments to pass to \code{\link[cmdstanr:sample]{cmdstanr::sample()}}}
 }
 \value{
 A list containing the model input (in the order passed to the model), estimated
@@ -172,5 +172,5 @@ show_plot_cor_mat = FALSE,
 show_plot_tree = FALSE)
 }
 \seealso{
-\code{\link[=anpan_pglmm_batch]{anpan_pglmm_batch()}}, \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}
+\code{\link[=anpan_pglmm_batch]{anpan_pglmm_batch()}}, \code{\link[loo:loo]{loo::loo()}}, \code{\link[cmdstanr:sample]{cmdstanr::sample()}}
 }

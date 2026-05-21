@@ -89,7 +89,7 @@ in the GLM component}
 logistic PGLMMs when \code{family = 'binomial'}. Increasing this value can easily lead to
 overfitting.}
 
-\item{...}{other arguments to pass to \code{\link[cmdstanr:model-method-sample]{cmdstanr::sample()}}}
+\item{...}{other arguments to pass to \code{\link[cmdstanr:sample]{cmdstanr::sample()}}}
 }
 \description{
 If you have a dataset where multiple samples come from the same individual, running

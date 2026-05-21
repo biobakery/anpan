@@ -3,3 +3,4 @@
 ^README\.Rmd$
 ^[\.]exe$$
 ^LICENSE\.md$
+^data-raw$
