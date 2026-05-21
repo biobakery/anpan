@@ -1,16 +1,51 @@
 #include <Rcpp.h>
+#include <RcppArmadillo/>
+// [[Rcpp::depends(RcppArmadillo)]]
+
 using namespace Rcpp;
 
-//' @export
 // [[Rcpp::export]]
-int add(int x, int y, int z) {
-  int sum = x + y + z;
-  return sum;
-}
+NumericVector llij_gauss_inputs(int p,
+                       NumericVector lm_means,
+                       NumericMatrix sigma_inv,
+                       double sigma_phylo,
+                       NumericMatrix cor_arr,
+                       NumericVector phylo_effects,
+                       double sigma_resid,
+                       NumericVector Y,
+                       NumericVector cov_mat_diag) {
+  // This function aims to replace the block setting up j_df in the original
+  // implementation. The lapplys there are the main performance bottleneck of
+  // the log likelihood calculations.
 
-// [[Rcpp::export]]
-double l2p() {
-  return log(2*M_PI);
+  // List res(5);
+  NumericVector m1 (p);
+  NumericVector s1 (p);
+  NumericVector l (p);
+  NumericVector s2 (p, sigma_resid);
+
+  // res[1] = m1;
+  // res[2] = s1;
+  // res[3] = l;
+  // res[4] = Y;
+  // res[5] = s2;
+
+  int j = 1;
+
+  NumericMatrix::Column inv_col = sigma_inv(_,j);
+  NumericMatrix emj = phylo_effects[-j];
+  NumericVector res = inv_col * emj;
+
+  // for (int j=0; j<p; ++j) {
+  //   NumericMatrix::Column inv_col = sigma_inv(_,j);
+  //   NumericMatrix emj = phylo_effects[-j];
+  //   m1[j] = (inv_col * emj)(1,1);
+  //
+  // }
+  //
+  // List res = List::create(m1, s1, l, Y, s2);
+
+  return res;
 }
 
 // [[Rcpp::export]]
