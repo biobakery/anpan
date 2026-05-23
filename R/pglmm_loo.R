@@ -51,7 +51,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
                                  res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
-                                 if (.x %% 4 == 0) p()
+                                 if (.x %% 50 == 0) p()
                                  return(res)},
                                .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv"))) |>
     purrr::transpose()
@@ -64,14 +64,12 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   # set up the progressr and list over posterior iterations
   if (verbose) message("- 2/2 computing integrated importance weights for loo CV")
 
-  p = progressr::progressor(steps = max_i / 20)
+  p = progressr::progressor(steps = max_i / 50)
 
   draw_split = draw_df[1:max_i,] |>
-    dplyr::group_split(`.draw`)
+    dplyr::group_split(`.draw`) |>
+    lapply(as.list)
   #^87ms
-  # TODO: check if piping into map(as.list) has any appreciable perf benefit
-
-  # future map over posterior iterations
 
   if (family == "gaussian") {
     global_list = c("effect_means",
@@ -97,6 +95,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
 
   }
 
+  # future map over posterior iterations
   # For each element in the posterior chain, compute the log likelihood contribution for each
   # observation. Use imap so we can hand the index to the progress bar.
   ll_list = furrr::future_imap(draw_split,
@@ -109,7 +108,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
                                                        sigma12x22_inv_mat = sigma12x22_inv_mat,
                                                        cor21_mat          = cor21_mat,
                                                        family             = family)
-                                 if (i %% 20 == 0) p()
+                                 if (i %% 50 == 0) p()
                                  return(res)
                                },
                                .options = furrr::furrr_options(globals = global_list))
@@ -206,24 +205,6 @@ log_lik_terms_i = function(i_df,
   # j = index over observations
   if (family == 'gaussian') {
     # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-    # Pass j_df through as_tibble() if you want to look at it; it prints terribly as a data.table.
-    # j_df = data.table(j = seq_len(p),
-    #                   l = c(lm_means),
-    #                   sigma12x22_inv = lapply(seq_len(p), function(.x) sigma12x22_inv_mat[.x,,drop=FALSE], nrow = 1),
-    #                   sigma21        = lapply(seq_len(p), function(.x) i_df$sigma_phylo^2 * cor21_arr[,.x, drop=FALSE]),
-    #                   effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-    #                   sigma_resid    = i_df$sigma_resid,
-    #                   yj             = Y,
-    #                   effect_mean_j  = effect_means,
-    #                   cov_mat_jj     = diag(cov_mat)) |>
-    #   dplyr::transmute(m1 = mapply(function(.x, .y) c(.x %*% .y),
-    #                                sigma12x22_inv, effects_mj),
-    #                    s1 = mapply(function(.x, .y, .z) sqrt(.x - c(.y %*% .z)),
-    #                                cov_mat_jj, sigma12x22_inv, sigma21),
-    #                    l  = l,
-    #                    yj = yj,
-    #                    s2 = sigma_resid)
-    # Do this setup and the eval in Rcpp instead
 
     res = llij_gauss(p, lm_means[,1],
                      sigma12x22_inv_mat,
@@ -231,8 +212,7 @@ log_lik_terms_i = function(i_df,
                      cor21_mat,
                      i_df$phylo_effects[[1]],
                      i_df$sigma_resid,
-                     Y,
-                     dcov_mat)[,1]
+                     Y)[,1]
 
   } else {
     j_df = data.table(j              = seq_len(p),
@@ -467,8 +447,6 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
 }
 
 inv_logit = function(x) 1 / (1 + exp(-x))
-
-vec_integrand_logistic = llij_logis_integrand
 
 vec_integrand_logistic_old = function(phylo_effect_vec,
                                   mu_bar_j, sigma_bar_j,      # phylo term components
