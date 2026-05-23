@@ -11,45 +11,73 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
-// llij_logis_integrand
-arma::vec llij_logis_integrand(arma::vec phy_eff_vec, double mu_bar_j, double sigma_bar_j, double yj, double lm_term, double offset_term, double s2p, int log_out);
-RcppExport SEXP _anpan_llij_logis_integrand(SEXP phy_eff_vecSEXP, SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lm_termSEXP, SEXP offset_termSEXP, SEXP s2pSEXP, SEXP log_outSEXP) {
+// inv_logit
+arma::vec inv_logit(arma::vec x);
+RcppExport SEXP _anpan_inv_logit(SEXP xSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< arma::vec >::type phy_eff_vec(phy_eff_vecSEXP);
+    Rcpp::traits::input_parameter< arma::vec >::type x(xSEXP);
+    rcpp_result_gen = Rcpp::wrap(inv_logit(x));
+    return rcpp_result_gen;
+END_RCPP
+}
+// vec_integrand_logistic
+arma::vec vec_integrand_logistic(arma::vec phylo_effect_vec, double mu_bar_j, double sigma_bar_j, double yj, double lm_term, double offset_term, double sqrt2pi, int log_out);
+RcppExport SEXP _anpan_vec_integrand_logistic(SEXP phylo_effect_vecSEXP, SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lm_termSEXP, SEXP offset_termSEXP, SEXP sqrt2piSEXP, SEXP log_outSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type phylo_effect_vec(phylo_effect_vecSEXP);
     Rcpp::traits::input_parameter< double >::type mu_bar_j(mu_bar_jSEXP);
     Rcpp::traits::input_parameter< double >::type sigma_bar_j(sigma_bar_jSEXP);
     Rcpp::traits::input_parameter< double >::type yj(yjSEXP);
     Rcpp::traits::input_parameter< double >::type lm_term(lm_termSEXP);
     Rcpp::traits::input_parameter< double >::type offset_term(offset_termSEXP);
-    Rcpp::traits::input_parameter< double >::type s2p(s2pSEXP);
+    Rcpp::traits::input_parameter< double >::type sqrt2pi(sqrt2piSEXP);
     Rcpp::traits::input_parameter< int >::type log_out(log_outSEXP);
-    rcpp_result_gen = Rcpp::wrap(llij_logis_integrand(phy_eff_vec, mu_bar_j, sigma_bar_j, yj, lm_term, offset_term, s2p, log_out));
+    rcpp_result_gen = Rcpp::wrap(vec_integrand_logistic(phylo_effect_vec, mu_bar_j, sigma_bar_j, yj, lm_term, offset_term, sqrt2pi, log_out));
     return rcpp_result_gen;
 END_RCPP
 }
-// llij_gauss_inputs
-List llij_gauss_inputs(int p, arma::vec lm_means, arma::mat sigma_inv, double sigma_phylo, arma::mat cor_arr, arma::vec phylo_effects, double sigma_resid, arma::vec Y, arma::vec cov_mat_diag);
-RcppExport SEXP _anpan_llij_gauss_inputs(SEXP pSEXP, SEXP lm_meansSEXP, SEXP sigma_invSEXP, SEXP sigma_phyloSEXP, SEXP cor_arrSEXP, SEXP phylo_effectsSEXP, SEXP sigma_residSEXP, SEXP YSEXP, SEXP cov_mat_diagSEXP) {
+// integrand_logistic
+double integrand_logistic(double phylo_effect, double mu_bar_j, double sigma_bar_j, double yj, double lm_term, double offset_term, double sqrt2pi, int log_out);
+RcppExport SEXP _anpan_integrand_logistic(SEXP phylo_effectSEXP, SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lm_termSEXP, SEXP offset_termSEXP, SEXP sqrt2piSEXP, SEXP log_outSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< int >::type p(pSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type lm_means(lm_meansSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type sigma_inv(sigma_invSEXP);
+    Rcpp::traits::input_parameter< double >::type phylo_effect(phylo_effectSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_bar_j(mu_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_bar_j(sigma_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type yj(yjSEXP);
+    Rcpp::traits::input_parameter< double >::type lm_term(lm_termSEXP);
+    Rcpp::traits::input_parameter< double >::type offset_term(offset_termSEXP);
+    Rcpp::traits::input_parameter< double >::type sqrt2pi(sqrt2piSEXP);
+    Rcpp::traits::input_parameter< int >::type log_out(log_outSEXP);
+    rcpp_result_gen = Rcpp::wrap(integrand_logistic(phylo_effect, mu_bar_j, sigma_bar_j, yj, lm_term, offset_term, sqrt2pi, log_out));
+    return rcpp_result_gen;
+END_RCPP
+}
+// llij_binom
+arma::vec llij_binom(arma::vec lm_mean, arma::mat sigma_inv_mat, arma::mat cor21_mat, double sigma_phylo, arma::vec phylo_effects, arma::vec Y, arma::vec effect_means, double s2pi);
+RcppExport SEXP _anpan_llij_binom(SEXP lm_meanSEXP, SEXP sigma_inv_matSEXP, SEXP cor21_matSEXP, SEXP sigma_phyloSEXP, SEXP phylo_effectsSEXP, SEXP YSEXP, SEXP effect_meansSEXP, SEXP s2piSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type lm_mean(lm_meanSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type sigma_inv_mat(sigma_inv_matSEXP);
+    Rcpp::traits::input_parameter< arma::mat >::type cor21_mat(cor21_matSEXP);
     Rcpp::traits::input_parameter< double >::type sigma_phylo(sigma_phyloSEXP);
-    Rcpp::traits::input_parameter< arma::mat >::type cor_arr(cor_arrSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type phylo_effects(phylo_effectsSEXP);
-    Rcpp::traits::input_parameter< double >::type sigma_resid(sigma_residSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type cov_mat_diag(cov_mat_diagSEXP);
-    rcpp_result_gen = Rcpp::wrap(llij_gauss_inputs(p, lm_means, sigma_inv, sigma_phylo, cor_arr, phylo_effects, sigma_resid, Y, cov_mat_diag));
+    Rcpp::traits::input_parameter< arma::vec >::type effect_means(effect_meansSEXP);
+    Rcpp::traits::input_parameter< double >::type s2pi(s2piSEXP);
+    rcpp_result_gen = Rcpp::wrap(llij_binom(lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, s2pi));
     return rcpp_result_gen;
 END_RCPP
 }
 // llij_gauss_eval
-arma::vec llij_gauss_eval(arma::vec m1, arma::vec s1, arma::vec l, arma::vec yj, arma::vec s2);
+arma::vec llij_gauss_eval(arma::vec m1, arma::vec s1, arma::vec l, arma::vec yj, double s2);
 RcppExport SEXP _anpan_llij_gauss_eval(SEXP m1SEXP, SEXP s1SEXP, SEXP lSEXP, SEXP yjSEXP, SEXP s2SEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
@@ -58,25 +86,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type s1(s1SEXP);
     Rcpp::traits::input_parameter< arma::vec >::type l(lSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type yj(yjSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type s2(s2SEXP);
+    Rcpp::traits::input_parameter< double >::type s2(s2SEXP);
     rcpp_result_gen = Rcpp::wrap(llij_gauss_eval(m1, s1, l, yj, s2));
     return rcpp_result_gen;
 END_RCPP
 }
-// get_s12x22inv
-List get_s12x22inv(NumericMatrix x);
-RcppExport SEXP _anpan_get_s12x22inv(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< NumericMatrix >::type x(xSEXP);
-    rcpp_result_gen = Rcpp::wrap(get_s12x22inv(x));
-    return rcpp_result_gen;
-END_RCPP
-}
 // llij_gauss
-arma::vec llij_gauss(int p, arma::vec lm_means, arma::mat sigma_inv, double sigma_phylo, arma::mat cor_arr, arma::vec phylo_effects, double sigma_resid, arma::vec Y, arma::vec cov_mat_diag);
-RcppExport SEXP _anpan_llij_gauss(SEXP pSEXP, SEXP lm_meansSEXP, SEXP sigma_invSEXP, SEXP sigma_phyloSEXP, SEXP cor_arrSEXP, SEXP phylo_effectsSEXP, SEXP sigma_residSEXP, SEXP YSEXP, SEXP cov_mat_diagSEXP) {
+arma::vec llij_gauss(int p, arma::vec lm_means, arma::mat sigma_inv, double sigma_phylo, arma::mat cor_arr, arma::vec phylo_effects, double sigma_resid, arma::vec Y);
+RcppExport SEXP _anpan_llij_gauss(SEXP pSEXP, SEXP lm_meansSEXP, SEXP sigma_invSEXP, SEXP sigma_phyloSEXP, SEXP cor_arrSEXP, SEXP phylo_effectsSEXP, SEXP sigma_residSEXP, SEXP YSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -88,18 +105,18 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type phylo_effects(phylo_effectsSEXP);
     Rcpp::traits::input_parameter< double >::type sigma_resid(sigma_residSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type Y(YSEXP);
-    Rcpp::traits::input_parameter< arma::vec >::type cov_mat_diag(cov_mat_diagSEXP);
-    rcpp_result_gen = Rcpp::wrap(llij_gauss(p, lm_means, sigma_inv, sigma_phylo, cor_arr, phylo_effects, sigma_resid, Y, cov_mat_diag));
+    rcpp_result_gen = Rcpp::wrap(llij_gauss(p, lm_means, sigma_inv, sigma_phylo, cor_arr, phylo_effects, sigma_resid, Y));
     return rcpp_result_gen;
 END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_anpan_llij_logis_integrand", (DL_FUNC) &_anpan_llij_logis_integrand, 8},
-    {"_anpan_llij_gauss_inputs", (DL_FUNC) &_anpan_llij_gauss_inputs, 9},
+    {"_anpan_inv_logit", (DL_FUNC) &_anpan_inv_logit, 1},
+    {"_anpan_vec_integrand_logistic", (DL_FUNC) &_anpan_vec_integrand_logistic, 8},
+    {"_anpan_integrand_logistic", (DL_FUNC) &_anpan_integrand_logistic, 8},
+    {"_anpan_llij_binom", (DL_FUNC) &_anpan_llij_binom, 8},
     {"_anpan_llij_gauss_eval", (DL_FUNC) &_anpan_llij_gauss_eval, 5},
-    {"_anpan_get_s12x22inv", (DL_FUNC) &_anpan_get_s12x22inv, 1},
-    {"_anpan_llij_gauss", (DL_FUNC) &_anpan_llij_gauss, 9},
+    {"_anpan_llij_gauss", (DL_FUNC) &_anpan_llij_gauss, 8},
     {NULL, NULL, 0}
 };
 
