@@ -11,6 +11,24 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// llij_logis_integrand
+arma::vec llij_logis_integrand(arma::vec phy_eff_vec, double mu_bar_j, double sigma_bar_j, double yj, double lm_term, double offset_term, double s2p, int log_out);
+RcppExport SEXP _anpan_llij_logis_integrand(SEXP phy_eff_vecSEXP, SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lm_termSEXP, SEXP offset_termSEXP, SEXP s2pSEXP, SEXP log_outSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::vec >::type phy_eff_vec(phy_eff_vecSEXP);
+    Rcpp::traits::input_parameter< double >::type mu_bar_j(mu_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_bar_j(sigma_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type yj(yjSEXP);
+    Rcpp::traits::input_parameter< double >::type lm_term(lm_termSEXP);
+    Rcpp::traits::input_parameter< double >::type offset_term(offset_termSEXP);
+    Rcpp::traits::input_parameter< double >::type s2p(s2pSEXP);
+    Rcpp::traits::input_parameter< int >::type log_out(log_outSEXP);
+    rcpp_result_gen = Rcpp::wrap(llij_logis_integrand(phy_eff_vec, mu_bar_j, sigma_bar_j, yj, lm_term, offset_term, s2p, log_out));
+    return rcpp_result_gen;
+END_RCPP
+}
 // llij_gauss_inputs
 List llij_gauss_inputs(int p, arma::vec lm_means, arma::mat sigma_inv, double sigma_phylo, arma::mat cor_arr, arma::vec phylo_effects, double sigma_resid, arma::vec Y, arma::vec cov_mat_diag);
 RcppExport SEXP _anpan_llij_gauss_inputs(SEXP pSEXP, SEXP lm_meansSEXP, SEXP sigma_invSEXP, SEXP sigma_phyloSEXP, SEXP cor_arrSEXP, SEXP phylo_effectsSEXP, SEXP sigma_residSEXP, SEXP YSEXP, SEXP cov_mat_diagSEXP) {
@@ -77,6 +95,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_anpan_llij_logis_integrand", (DL_FUNC) &_anpan_llij_logis_integrand, 8},
     {"_anpan_llij_gauss_inputs", (DL_FUNC) &_anpan_llij_gauss_inputs, 9},
     {"_anpan_llij_gauss_eval", (DL_FUNC) &_anpan_llij_gauss_eval, 5},
     {"_anpan_get_s12x22inv", (DL_FUNC) &_anpan_get_s12x22inv, 1},

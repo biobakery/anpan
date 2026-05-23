@@ -358,7 +358,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                     lm_term          = lm_mean,
                                     offset_term      = 0,
                                     sqrt2pi          = sqrt2pi,
-                                    log              = TRUE)
+                                    log              = 1)
 
   offset_check = abs(offset_j) > 25
 
@@ -371,7 +371,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                lm_term          = lm_mean,
                                offset_term      = offset_j,
                                sqrt2pi          = sqrt2pi,
-                               log              = FALSE)
+                               log              = 0)
   }
 
   if (offset_check ||
@@ -390,7 +390,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                            lm_term          = lm_mean,
                            offset_term      = 0,
                            sqrt2pi          = sqrt2pi,
-                           log              = TRUE)
+                           log              = 1)
 
     if (!is.null(opt_res$error)) {
       opt_res = safely_optim(par = effect_mean_j,
@@ -403,7 +403,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                              lm_term          = lm_mean,
                              offset_term      = 0,
                              sqrt2pi          = sqrt2pi,
-                             log              = TRUE)
+                             log              = 1)
     }
 
     opt_res = opt_res$result
@@ -418,7 +418,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                lm_term          = lm_mean,
                                offset_term      = offset_j,
                                sqrt2pi          = sqrt2pi,
-                               log              = FALSE)
+                               log              = 0)
 
     if (!is.null(int_res$error) ||
         int_res$result$value == 0 ||
@@ -435,7 +435,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                               lm_term          = lm_mean,
                                               offset_term      = 0,
                                               sqrt2pi          = sqrt2pi,
-                                              log              = TRUE)
+                                              log              = 1)
 
       # Set up the linear system
       A = c(integrand_pts) |> sapply(\(x) c(x^2, x, 1)) |> t()
@@ -456,7 +456,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
                                  lm_term          = lm_mean,
                                  offset_term      = offset_j,
                                  sqrt2pi          = sqrt2pi,
-                                 log              = FALSE)
+                                 log              = 0)
     }
   }
 
@@ -468,7 +468,9 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
 
 inv_logit = function(x) 1 / (1 + exp(-x))
 
-vec_integrand_logistic = function(phylo_effect_vec,
+vec_integrand_logistic = llij_logis_integrand
+
+vec_integrand_logistic_old = function(phylo_effect_vec,
                                   mu_bar_j, sigma_bar_j,      # phylo term components
                                   yj, lm_term,   # LM term components, NO SIGMA_RESID NOW!
                                   offset_term,
