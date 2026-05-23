@@ -166,7 +166,7 @@ arma::vec llij_binom(arma::vec lm_mean,
 
     // res(j) = offset_j;
 
-    List int_res = integrt(vec_integrand_logistic)
+    // List int_res = integrt(vec_integrand_logistic)
     // res(j) = res_j;
   }
 
