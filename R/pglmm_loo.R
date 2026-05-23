@@ -42,10 +42,6 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   # precompute some arrays that are re-usable on each iteration.
   # See this link for notation. sigma12x22_inv = sigma12 %*% solve(sigma22) for each observation j
   # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
-  sigma12x22_inv_arr = array(data = NA,
-                             dim = c(1, n_obs - 1, n_obs))
-
-  cor21_arr = array(dim = c(n_obs - 1, 1, n_obs))
 
   if (verbose) message("- 1/2 precomputing conditional covariance arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
@@ -57,12 +53,13 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
                                  res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
                                  if (.x %% 4 == 0) p()
                                  return(res)},
-                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv")))
+                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv"))) |>
+    purrr::transpose()
+  # ^1.5s
 
-  for (j in 1:n_obs) {
-    sigma12x22_inv_arr[,,j] = arr_list[[j]][[1]]
-    cor21_arr[,,j] = arr_list[[j]][[2]]
-  }
+
+  sigma12x22_inv_mat = do.call(rbind, arr_list[[1]])
+  cor21_mat = do.call(cbind, arr_list[[2]])
 
   # set up the progressr and list over posterior iterations
   if (verbose) message("- 2/2 computing integrated importance weights for loo CV")
@@ -71,24 +68,25 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
 
   draw_split = draw_df[1:max_i,] |>
     dplyr::group_split(`.draw`)
+  #^87ms
+  # TODO: check if piping into map(as.list) has any appreciable perf benefit
 
   # future map over posterior iterations
 
   if (family == "gaussian") {
     global_list = c("effect_means",
-                    "cor_mat",
                     "Xc", "Y",
-                    "sigma12x22_inv_arr",
-                    "cor21_arr",
+                    "sigma12x22_inv_mat",
+                    "cor21_mat",
                     "family",
                     "log_lik_terms_i",
-                    "log_lik_i_j_gaussian")
+                    "both_gauss_steps")
   } else {
     global_list = c("effect_means",
                     "cor_mat",
                     "Xc", "Y",
-                    "sigma12x22_inv_arr",
-                    "cor21_arr",
+                    "sigma12x22_inv_mat",
+                    "cor21_mat",
                     "family",
                     "log_lik_terms_i",
                     "inv_logit",
@@ -100,22 +98,22 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   }
 
   # For each element in the posterior chain, compute the log likelihood contribution for each
-  # observation.
+  # observation. Use imap so we can hand the index to the progress bar.
   ll_list = furrr::future_imap(draw_split,
-                       function(.x, i) {
-                         res = log_lik_terms_i(i_df               = .x,
-                                               effect_means       = effect_means,
-                                               cor_mat            = cor_mat,
-                                               Xc                 = Xc,
-                                               offset_val         = offset_val,
-                                               Y                  = Y,
-                                               sigma12x22_inv_arr = sigma12x22_inv_arr,
-                                               cor21_arr          = cor21_arr,
-                                               family             = family)
-                         if (i %% 20 == 0) p()
-                         return(res)
-                       },
-                       .options = furrr::furrr_options(globals = global_list))
+                               function(.x, i) {
+                                 res = log_lik_terms_i(i_df               = .x,
+                                                       effect_means       = effect_means,
+                                                       Xc                 = Xc,
+                                                       offset_val         = offset_val,
+                                                       Y                  = Y,
+                                                       sigma12x22_inv_mat = sigma12x22_inv_mat,
+                                                       cor21_mat          = cor21_mat,
+                                                       family             = family)
+                                 if (i %% 20 == 0) p()
+                                 return(res)
+                               },
+                               .options = furrr::furrr_options(globals = global_list))
+  # 20s
 
   # put the result into a matrix
   res = ll_list |>
@@ -124,6 +122,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
            byrow = TRUE)
 
   colnames(res) = paste("log_lik[", 1:n_obs, "]", sep = "")
+  # 20ms
 
   return(res)
 }
@@ -175,24 +174,26 @@ precompute_arrays = function(j, cor_mat, cor_mat_inv) {
     r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j)
   }
 
-  sigma12x22_inv_arr_j = r12 %*% r22_inv
-  cor21_arr_j = t(r12)
+  # sigma12x22_inv_arr_j = r12 %*% r22_inv
+  sigma12x22_inv_mat_j = r12 %*% r22_inv
 
-  return(list(sigma12x22_inv_arr_j,
-              cor21_arr_j))
+  return(list(sigma12x22_inv_mat_j,
+              t(r12)))
 }
 
 # compute the log likelihood for all observations in a single posterior iteration i
 log_lik_terms_i = function(i_df,
                            effect_means,
-                           cor_mat,
                            Xc, offset_val, Y,
-                           sigma12x22_inv_arr,
-                           cor21_arr,
+                           sigma12x22_inv_mat,
+                           cor21_mat,
                            family = 'gaussian') {
 
   p = length(effect_means)
-  cov_mat = i_df$sigma_phylo^2 * cor_mat
+
+  dcov_mat = rep(i_df$sigma_phylo^2, p)
+  # cov_mat = i_df$sigma_phylo^2 * cor_mat.
+  # diag of cor_mat = 1
 
   if (ncol(Xc) > 0) {
     covariate_term = Xc %*% matrix(i_df$beta[[1]], ncol = 1) + matrix(offset_val, ncol = 1)
@@ -206,46 +207,61 @@ log_lik_terms_i = function(i_df,
   if (family == 'gaussian') {
     # https://en.wikipedia.org/wiki/Multivariate_normal_distribution#Conditional_distributions
     # Pass j_df through as_tibble() if you want to look at it; it prints terribly as a data.table.
-    j_df = data.table(j = seq_len(p),
-                      l = c(lm_means),
-                      sigma12x22_inv = lapply(seq_len(p), function(.x) matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
-                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
-                      effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-                      sigma_resid    = i_df$sigma_resid,
-                      yj             = Y,
-                      effect_mean_j  = effect_means,
-                      cov_mat_jj     = diag(cov_mat)) |>
-      dplyr::transmute(m1 = mapply(function(.x, .y) c(.x %*% .y),
-                                   sigma12x22_inv, effects_mj),
-                       s1 = mapply(function(.x, .y, .z) sqrt(.x - c(.y %*% .z)),
-                                   cov_mat_jj, sigma12x22_inv, sigma21),
-                       l  = l,
-                       yj = yj,
-                       s2 = sigma_resid)
+    # j_df = data.table(j = seq_len(p),
+    #                   l = c(lm_means),
+    #                   sigma12x22_inv = lapply(seq_len(p), function(.x) sigma12x22_inv_mat[.x,,drop=FALSE], nrow = 1),
+    #                   sigma21        = lapply(seq_len(p), function(.x) i_df$sigma_phylo^2 * cor21_arr[,.x, drop=FALSE]),
+    #                   effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+    #                   sigma_resid    = i_df$sigma_resid,
+    #                   yj             = Y,
+    #                   effect_mean_j  = effect_means,
+    #                   cov_mat_jj     = diag(cov_mat)) |>
+    #   dplyr::transmute(m1 = mapply(function(.x, .y) c(.x %*% .y),
+    #                                sigma12x22_inv, effects_mj),
+    #                    s1 = mapply(function(.x, .y, .z) sqrt(.x - c(.y %*% .z)),
+    #                                cov_mat_jj, sigma12x22_inv, sigma21),
+    #                    l  = l,
+    #                    yj = yj,
+    #                    s2 = sigma_resid)
+    # Do this setup and the eval in Rcpp instead
 
-    # ll_ij_fun = log_lik_i_j_gaussian
-    res = llij_gauss(j_df$m1, j_df$s1, j_df$l, j_df$yj, j_df$s2)
-    return(res)
+    res = llij_gauss(p, lm_means[,1],
+                     sigma12x22_inv_mat,
+                     i_df$sigma_phylo,
+                     cor21_mat,
+                     i_df$phylo_effects[[1]],
+                     i_df$sigma_resid,
+                     Y,
+                     dcov_mat)[,1]
 
   } else {
     j_df = data.table(j              = seq_len(p),
                       lm_mean        = c(lm_means),
-                      sigma12x22_inv = lapply(seq_len(p), function(.x) matrix(sigma12x22_inv_arr[,,.x], nrow = 1)),
-                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_arr[,,.x], ncol = 1)),
+                      sigma12x22_inv = lapply(seq_len(p), function(.x) sigma12x22_inv_mat[.x,,drop=FALSE]),
+                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_mat[,.x, drop=FALSE], ncol = 1)),
                       effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
                       yj             = Y,
                       effect_mean_j  = effect_means,
-                      cov_mat_jj     = diag(cov_mat),
+                      cov_mat_jj     = dcov_mat,
                       sqrt2pi        = sqrt(2*pi))
+    # ^15ms
+
     ll_ij_fun = log_lik_i_j_logistic
+
+    # Map over all p leaves
+    res = purrr::pmap_dbl(j_df,
+                          ll_ij_fun)
+    # ^77ms!
   }
 
-  # Map over all p leaves
-  purrr::pmap_dbl(j_df,
-                  ll_ij_fun)
+  return(res)
+
 }
 
 log_lik_i_j_gaussian = function(m1, s1, l, yj, s2) {
+
+  # Old implementation. Moved to Rcpp. Not particularly fast / numerically
+  # stable as it's done on the identity scale then logged.
 
   # Get the coefficients of the quadratic log-likelihood of the two components of a gaussian PGLMM
   # m1, s1 = mean, sd of the PGLMM correlation term

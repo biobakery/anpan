@@ -42,5 +42,6 @@ Suggests:
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 LinkingTo: 
-    Rcpp
+    Rcpp,
+    RcppArmadillo
 Config/roxygen2/version: 8.0.0
