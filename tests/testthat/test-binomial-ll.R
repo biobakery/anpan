@@ -13,7 +13,59 @@ test_that("Binomial loglik calculation accurate", {
                        pieces$metadata$outcome,
                        pieces$family, verbose = FALSE)
 
+  # This fails with a fairly large relative difference in element 265, 9. Need
+  # to debug that one.
   expect_true(all(dplyr::near(test_ll - binom_ll,
-                                  0)))
+                              0)))
 
 })
+
+test_that("C++ inv_logit works", {
+  x = rnorm(100)
+
+  expect_equal(inv_logit(x),
+               plogis(x))
+})
+
+test_that("C++ log integrand accurate", {
+  tv = c(0.0256493935170817, 0.440822642358155, 0.0624806907205936,
+         1, 1.05692176403115, 0, 2.506628274631, 1)
+  effect_mean_j = tv[1]
+  mu_bar_j = tv[2]
+  sigma_bar_j = tv[3]
+  yj = tv[4]
+  lm_mean = tv[5]
+  sqrt2pi = tv[7]
+
+
+  expect_equal(integrand_logistic(effect_mean_j, mu_bar_j, sigma_bar_j, yj, lm_mean, 0, sqrt2pi , 1),
+               -20.5146062669803)
+})
+
+test_that("C++ log integrand matches old version", {
+  tv = c(0.0256493935170817, 0.440822642358155, 0.0624806907205936,
+         1, 1.05692176403115, 0, 2.506628274631, 1)
+  effect_mean_j = tv[1]
+  mu_bar_j = tv[2]
+  sigma_bar_j = tv[3]
+  yj = tv[4]
+  lm_mean = tv[5]
+  sqrt2pi = tv[7]
+
+
+  expect_equal(integrand_logistic(effect_mean_j, mu_bar_j, sigma_bar_j, yj, lm_mean, 0, sqrt2pi , 1),
+               vec_integrand_logistic_old(effect_mean_j, mu_bar_j, sigma_bar_j, yj, lm_mean, 0, sqrt2pi , 1))
+})
+
+# test_that("C++ observation-wise integration at iteration i correct", {
+#   load(test_path("test_data/lli_data.RData"))
+#
+#   res = llij_binom(lm_means,
+#                    sigma12x22_inv_mat,
+#                    cor21_mat,
+#                    sigma_phylo,
+#                    i_df$phylo_effects[[1]],
+#                    Y,
+#                    effect_means,
+#                    sqrt(2*pi))
+# })

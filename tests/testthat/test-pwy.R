@@ -7,10 +7,15 @@ test_that("multiplication works", {
                            group01 = sample(c(0,1),
                                             size = 500,
                                             replace = TRUE))
-  res = anpan_pwy_ranef(bug_pwy_dat,
-                        group_ind = "group01",
-                        iter_sampling = 10,
-                        iter_warmup = 10)
+
+  suppressMessages(suppressWarnings({
+    res = anpan_pwy_ranef(bug_pwy_dat,
+                          group_ind = "group01",
+                          iter_sampling = 10,
+                          iter_warmup = 10,
+                          show_messages = FALSE,
+                          show_exceptions = FALSE)
+  }))
 
   expect_s3_class(res, "data.frame")
 })
