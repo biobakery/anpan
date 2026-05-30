@@ -736,10 +736,13 @@ anpan_pglmm = function(meta_file,
 
       base_loo = base_fit$loo()
 
-      message("loo comparison: ")
       comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
                                          base_fit  = base_loo))
-      print(comparison)
+
+      if (verbose) {
+        message("loo comparison: ")
+        print(comparison)
+      }
 
       if (rownames(comparison)[1] == 'pglmm_fit') {
         p1 = "The phylogenetic model seems to fit better, "
@@ -759,7 +762,7 @@ anpan_pglmm = function(meta_file,
         p3 = NULL
       }
 
-      message(paste0(p1, p2, p3))
+      if (verbose) message(paste0(p1, p2, p3))
     } else {
       warning(paste0("loo comparison failed for ", bug_name, " . loo results set to NULL."))
       print(ll_attempt$error)
