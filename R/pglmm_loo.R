@@ -17,9 +17,16 @@
 
 # run loo on the log-likelihood matrix
 get_pglmm_loo = function(ll_mat, draw_df) {
+
+  emat = arma_exp(ll_mat)
+
+  colnames(emat) = colnames(ll_mat)
+
+  reff = loo::relative_eff(emat,
+                           chain_id = draw_df$`.chain`)
+
   loo::loo(x = ll_mat,
-           r_eff = loo::relative_eff(exp(ll_mat),
-                                     chain_id = draw_df$`.chain`))
+           r_eff = reff)
 }
 
 safely_invert = purrr::safely(solve)
@@ -46,14 +53,16 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   if (verbose) message("- 1/2 precomputing conditional covariance arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
-  p = progressr::progressor(steps = n_obs / 50)
+  n_upd = 50
+
+  p = progressr::progressor(steps = n_obs / n_upd)
 
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
                                  res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
-                                 if (.x %% 50 == 0) p()
+                                 if (.x %% n_upd == 0) p()
                                  return(res)},
-                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv", "n_obs"))) |>
+                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv", "n_obs", "precompute_arrays"))) |>
     purrr::transpose()
   # ^1.5s
 
@@ -64,7 +73,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   # set up the progressr and list over posterior iterations
   if (verbose) message("- 2/2 computing integrated importance weights for loo CV")
 
-  p = progressr::progressor(steps = max_i / 50)
+  p = progressr::progressor(steps = max_i / n_upd)
 
   draw_split = draw_df[1:max_i,] |>
     dplyr::group_split(`.draw`) |>
@@ -105,7 +114,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
                                                        sigma12x22_inv_mat = sigma12x22_inv_mat,
                                                        cor21_mat          = cor21_mat,
                                                        family             = family)
-                                 if (i %% 50 == 0) p()
+                                 if (i %% n_upd == 0) p()
                                  return(res)
                                },
                                .options = furrr::furrr_options(globals = global_list,
