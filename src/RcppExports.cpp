@@ -58,9 +58,43 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// bintegrate_finite
+NumericVector bintegrate_finite(double mu_bar_j, double sigma_bar_j, double yj, double lmj, double offset_j, double rt2pi, double lower, double upper);
+RcppExport SEXP _anpan_bintegrate_finite(SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lmjSEXP, SEXP offset_jSEXP, SEXP rt2piSEXP, SEXP lowerSEXP, SEXP upperSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mu_bar_j(mu_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_bar_j(sigma_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type yj(yjSEXP);
+    Rcpp::traits::input_parameter< double >::type lmj(lmjSEXP);
+    Rcpp::traits::input_parameter< double >::type offset_j(offset_jSEXP);
+    Rcpp::traits::input_parameter< double >::type rt2pi(rt2piSEXP);
+    Rcpp::traits::input_parameter< double >::type lower(lowerSEXP);
+    Rcpp::traits::input_parameter< double >::type upper(upperSEXP);
+    rcpp_result_gen = Rcpp::wrap(bintegrate_finite(mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi, lower, upper));
+    return rcpp_result_gen;
+END_RCPP
+}
+// bintegrate_infinite
+NumericVector bintegrate_infinite(double mu_bar_j, double sigma_bar_j, double yj, double lmj, double offset_j, double rt2pi);
+RcppExport SEXP _anpan_bintegrate_infinite(SEXP mu_bar_jSEXP, SEXP sigma_bar_jSEXP, SEXP yjSEXP, SEXP lmjSEXP, SEXP offset_jSEXP, SEXP rt2piSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< double >::type mu_bar_j(mu_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type sigma_bar_j(sigma_bar_jSEXP);
+    Rcpp::traits::input_parameter< double >::type yj(yjSEXP);
+    Rcpp::traits::input_parameter< double >::type lmj(lmjSEXP);
+    Rcpp::traits::input_parameter< double >::type offset_j(offset_jSEXP);
+    Rcpp::traits::input_parameter< double >::type rt2pi(rt2piSEXP);
+    rcpp_result_gen = Rcpp::wrap(bintegrate_infinite(mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi));
+    return rcpp_result_gen;
+END_RCPP
+}
 // llij_binom
-arma::vec llij_binom(arma::vec lm_mean, arma::mat sigma_inv_mat, arma::mat cor21_mat, double sigma_phylo, arma::vec phylo_effects, arma::vec Y, arma::vec effect_means, double s2pi);
-RcppExport SEXP _anpan_llij_binom(SEXP lm_meanSEXP, SEXP sigma_inv_matSEXP, SEXP cor21_matSEXP, SEXP sigma_phyloSEXP, SEXP phylo_effectsSEXP, SEXP YSEXP, SEXP effect_meansSEXP, SEXP s2piSEXP) {
+arma::vec llij_binom(arma::vec lm_mean, arma::mat sigma_inv_mat, arma::mat cor21_mat, double sigma_phylo, arma::vec phylo_effects, arma::vec Y, arma::vec effect_means, double rt2pi);
+RcppExport SEXP _anpan_llij_binom(SEXP lm_meanSEXP, SEXP sigma_inv_matSEXP, SEXP cor21_matSEXP, SEXP sigma_phyloSEXP, SEXP phylo_effectsSEXP, SEXP YSEXP, SEXP effect_meansSEXP, SEXP rt2piSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -71,8 +105,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< arma::vec >::type phylo_effects(phylo_effectsSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type Y(YSEXP);
     Rcpp::traits::input_parameter< arma::vec >::type effect_means(effect_meansSEXP);
-    Rcpp::traits::input_parameter< double >::type s2pi(s2piSEXP);
-    rcpp_result_gen = Rcpp::wrap(llij_binom(lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, s2pi));
+    Rcpp::traits::input_parameter< double >::type rt2pi(rt2piSEXP);
+    rcpp_result_gen = Rcpp::wrap(llij_binom(lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, rt2pi));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -114,6 +148,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_anpan_inv_logit", (DL_FUNC) &_anpan_inv_logit, 1},
     {"_anpan_vec_integrand_logistic", (DL_FUNC) &_anpan_vec_integrand_logistic, 8},
     {"_anpan_integrand_logistic", (DL_FUNC) &_anpan_integrand_logistic, 8},
+    {"_anpan_bintegrate_finite", (DL_FUNC) &_anpan_bintegrate_finite, 8},
+    {"_anpan_bintegrate_infinite", (DL_FUNC) &_anpan_bintegrate_infinite, 6},
     {"_anpan_llij_binom", (DL_FUNC) &_anpan_llij_binom, 8},
     {"_anpan_llij_gauss_eval", (DL_FUNC) &_anpan_llij_gauss_eval, 5},
     {"_anpan_llij_gauss", (DL_FUNC) &_anpan_llij_gauss, 8},

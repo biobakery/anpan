@@ -13,8 +13,16 @@ integrand_logistic <- function(phylo_effect, mu_bar_j, sigma_bar_j, yj, lm_term,
     .Call(`_anpan_integrand_logistic`, phylo_effect, mu_bar_j, sigma_bar_j, yj, lm_term, offset_term, sqrt2pi, log_out)
 }
 
-llij_binom <- function(lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, s2pi) {
-    .Call(`_anpan_llij_binom`, lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, s2pi)
+bintegrate_finite <- function(mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi, lower, upper) {
+    .Call(`_anpan_bintegrate_finite`, mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi, lower, upper)
+}
+
+bintegrate_infinite <- function(mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi) {
+    .Call(`_anpan_bintegrate_infinite`, mu_bar_j, sigma_bar_j, yj, lmj, offset_j, rt2pi)
+}
+
+llij_binom <- function(lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, rt2pi) {
+    .Call(`_anpan_llij_binom`, lm_mean, sigma_inv_mat, cor21_mat, sigma_phylo, phylo_effects, Y, effect_means, rt2pi)
 }
 
 llij_gauss_eval <- function(m1, s1, l, yj, s2) {
