@@ -13,9 +13,14 @@ test_that("Binomial loglik calculation accurate", {
                        pieces$metadata$outcome,
                        pieces$family, verbose = FALSE)
 
-  # This fails with a fairly large relative difference in element 265, 9. Need
-  # to debug that one.
-  expect_true(all(dplyr::near(test_ll - binom_ll,
+  diffs = test_ll - binom_ll
+
+  max(abs(diffs))
+
+  # observations 3 and 9 seem problematic
+  which(diffs == max(abs(diffs)), arr.ind = TRUE)
+
+  expect_true(all(dplyr::near(diffs,
                               0)))
 
 })

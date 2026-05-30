@@ -46,14 +46,14 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
   if (verbose) message("- 1/2 precomputing conditional covariance arrays")
   # Using future_map is safe here because even if anpan_pglmm_batch is run in a
   # future, nested futures run sequentially.
-  p = progressr::progressor(steps = n_obs / 4)
+  p = progressr::progressor(steps = n_obs / 50)
 
   arr_list = furrr::future_map(1:n_obs,
                                function(.x) {
                                  res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
                                  if (.x %% 50 == 0) p()
                                  return(res)},
-                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv"))) |>
+                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv", "n_obs"))) |>
     purrr::transpose()
   # ^1.5s
 
@@ -78,20 +78,17 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
                     "cor21_mat",
                     "family",
                     "log_lik_terms_i",
-                    "both_gauss_steps")
+                    "llij_gauss",
+                    "p")
   } else {
     global_list = c("effect_means",
-                    "cor_mat",
                     "Xc", "Y",
                     "sigma12x22_inv_mat",
                     "cor21_mat",
                     "family",
                     "log_lik_terms_i",
-                    "inv_logit",
-                    "log_lik_i_j_logistic",
-                    "vec_integrand_logistic",
-                    "p",
-                    'safely_integrate')
+                    "llij_binom",
+                    "p")
 
   }
 
@@ -111,8 +108,12 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
                                  if (i %% 50 == 0) p()
                                  return(res)
                                },
-                               .options = furrr::furrr_options(globals = global_list))
-  # 20s
+                               .options = furrr::furrr_options(globals = global_list,
+                                                               seed = TRUE))
+  # This function should be and practically seems to be deterministic, but
+  # future warns of random number generation. Not sure where that's coming from,
+  # I think maybe boost's Gauss-Kronrod integration scheme might place
+  # integration points down randomly?
 
   # put the result into a matrix
   res = ll_list |>
@@ -190,7 +191,7 @@ log_lik_terms_i = function(i_df,
 
   p = length(effect_means)
 
-  dcov_mat = rep(i_df$sigma_phylo^2, p)
+  # dcov_mat = rep(i_df$sigma_phylo^2, p)
   # cov_mat = i_df$sigma_phylo^2 * cor_mat.
   # diag of cor_mat = 1
 
@@ -215,23 +216,33 @@ log_lik_terms_i = function(i_df,
                      Y)[,1]
 
   } else {
-    j_df = data.table(j              = seq_len(p),
-                      lm_mean        = c(lm_means),
-                      sigma12x22_inv = lapply(seq_len(p), function(.x) sigma12x22_inv_mat[.x,,drop=FALSE]),
-                      sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_mat[,.x, drop=FALSE], ncol = 1)),
-                      effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
-                      yj             = Y,
-                      effect_mean_j  = effect_means,
-                      cov_mat_jj     = dcov_mat,
-                      sqrt2pi        = sqrt(2*pi))
-    # ^15ms
+    # j_df = data.table(j              = seq_len(p),
+    #                   lm_mean        = c(lm_means),
+    #                   sigma12x22_inv = lapply(seq_len(p), function(.x) sigma12x22_inv_mat[.x,,drop=FALSE]),
+    #                   sigma21        = lapply(seq_len(p), function(.x) matrix(i_df$sigma_phylo^2 * cor21_mat[,.x, drop=FALSE], ncol = 1)),
+    #                   effects_mj     = lapply(seq_len(p), function(.x) matrix(i_df$phylo_effects[[1]][-.x], ncol = 1)),
+    #                   yj             = Y,
+    #                   effect_mean_j  = effect_means,
+    #                   cov_mat_jj     = dcov_mat,
+    #                   sqrt2pi        = sqrt(2*pi))
+    # # ^15ms
+    #
+    # ll_ij_fun = log_lik_i_j_logistic
+    #
+    # # Map over all p leaves
+    # res = purrr::pmap_dbl(j_df,
+    #                       ll_ij_fun)
+    # # ^80ms!
 
-    ll_ij_fun = log_lik_i_j_logistic
-
-    # Map over all p leaves
-    res = purrr::pmap_dbl(j_df,
-                          ll_ij_fun)
-    # ^77ms!
+    res = llij_binom(lm_means[,1],
+                     sigma12x22_inv_mat,
+                     cor21_mat,
+                     i_df$sigma_phylo,
+                     i_df$phylo_effects[[1]],
+                     Y,
+                     effect_means,
+                     sqrt(2*pi))
+    # RcppArmadillo + BH = 4ms
   }
 
   return(res)
@@ -317,7 +328,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
     # This happens with off diagonal correlations == 1, or from woodbury numerical fuzz. In that
     # case, the conditional normal likelihood on the phylogenetic effect essentially becomes a dirac
     # delta function, which when integrated yields only the binomial likelihood at mu_bar_j. Inspect
-    # vec_integrand_logistic closely if this doesn't make sense.
+    # vec_integrand_logistic_old closely if this doesn't make sense.
 
     model_mean = lm_mean + mu_bar_j
 
@@ -331,7 +342,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
 
   sigma_bar_j = sqrt(var_j)
 
-  offset_j = vec_integrand_logistic(phylo_effect_vec = effect_mean_j,
+  offset_j = vec_integrand_logistic_old(phylo_effect_vec = effect_mean_j,
                                     mu_bar_j         = mu_bar_j,
                                     sigma_bar_j      = sigma_bar_j,
                                     yj               = yj,
@@ -343,7 +354,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
   offset_check = abs(offset_j) > 25
 
   if (!offset_check) {
-    int_res = safely_integrate(vec_integrand_logistic,
+    int_res = safely_integrate(vec_integrand_logistic_old,
                                lower = -Inf, upper = Inf,
                                mu_bar_j         = mu_bar_j,
                                sigma_bar_j      = sigma_bar_j,
@@ -361,7 +372,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
       int_res$result$value < 1e-4 ||
       int_res$result$value > 100) {
     opt_res = safely_optim(par = mu_bar_j,
-                           fn = vec_integrand_logistic,
+                           fn = vec_integrand_logistic_old,
                            method = "L-BFGS-B",
                            control = list(fnscale = -1),
                            mu_bar_j         = mu_bar_j,
@@ -374,7 +385,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
 
     if (!is.null(opt_res$error)) {
       opt_res = safely_optim(par = effect_mean_j,
-                             fn = vec_integrand_logistic,
+                             fn = vec_integrand_logistic_old,
                              method = "L-BFGS-B",
                              control = list(fnscale = -1),
                              mu_bar_j         = mu_bar_j,
@@ -390,7 +401,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
 
     offset_j = opt_res$value
 
-    int_res = safely_integrate(vec_integrand_logistic,
+    int_res = safely_integrate(vec_integrand_logistic_old,
                                lower = -Inf, upper = Inf,
                                mu_bar_j         = mu_bar_j,
                                sigma_bar_j      = sigma_bar_j,
@@ -408,7 +419,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
       # approximation about the optimum to find integration limits.
 
       integrand_pts = mu_bar_j + c(-.001, 0, .001)
-      offset_j_terms = vec_integrand_logistic(phylo_effect_vec = integrand_pts,
+      offset_j_terms = vec_integrand_logistic_old(phylo_effect_vec = integrand_pts,
                                               mu_bar_j         = mu_bar_j,
                                               sigma_bar_j      = sigma_bar_j,
                                               yj               = yj,
@@ -427,7 +438,7 @@ log_lik_i_j_logistic = function(j, lm_mean, sigma12x22_inv, sigma21,
       # d is the +/- delta value over which the log-likelihood of the phylogenetic effect[ij] will decrease by 10
       d = -(2*(abc[1]*ll_max) + abc[2] + sqrt(abc[2]^2 - 4*abc[1]*(abc[3]-opt_res$value+10))) / (2*abc[1])
 
-      int_res = safely_integrate(vec_integrand_logistic,
+      int_res = safely_integrate(vec_integrand_logistic_old,
                                  lower = ll_max - d,
                                  upper = ll_max + d,
                                  mu_bar_j         = mu_bar_j,
