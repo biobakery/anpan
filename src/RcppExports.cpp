@@ -11,6 +11,17 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// arma_exp
+arma::mat arma_exp(arma::mat m);
+RcppExport SEXP _anpan_arma_exp(SEXP mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat >::type m(mSEXP);
+    rcpp_result_gen = Rcpp::wrap(arma_exp(m));
+    return rcpp_result_gen;
+END_RCPP
+}
 // inv_logit
 arma::vec inv_logit(arma::vec x);
 RcppExport SEXP _anpan_inv_logit(SEXP xSEXP) {
@@ -145,6 +156,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_anpan_arma_exp", (DL_FUNC) &_anpan_arma_exp, 1},
     {"_anpan_inv_logit", (DL_FUNC) &_anpan_inv_logit, 1},
     {"_anpan_vec_integrand_logistic", (DL_FUNC) &_anpan_vec_integrand_logistic, 8},
     {"_anpan_integrand_logistic", (DL_FUNC) &_anpan_integrand_logistic, 8},

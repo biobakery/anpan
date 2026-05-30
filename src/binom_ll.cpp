@@ -7,6 +7,11 @@ using namespace arma;
 using namespace boost::math::quadrature;
 
 // [[Rcpp::export]]
+arma::mat arma_exp(arma::mat m) {
+  return exp(m);
+}
+
+// [[Rcpp::export]]
 arma::vec inv_logit(arma::vec x) {
   arma::vec res = 1 / (1 + exp(-x));
   return res;

@@ -1,5 +1,5 @@
 
-test_that("Binomial loglik calculation accurate", {
+test_that("Binomial loglik close to original implementation", {
 
   load(test_path("test_data/binom_pieces.RData"))
   load(test_path("test_data/binom_ll.RData"))
@@ -20,8 +20,40 @@ test_that("Binomial loglik calculation accurate", {
   # observations 3 and 9 seem problematic
   which(diffs == max(abs(diffs)), arr.ind = TRUE)
 
-  expect_true(all(dplyr::near(diffs,
-                              0)))
+  comps = dplyr::near(diffs, 0, tol = .002)
+  # Have to increase the tolerance a bit because turns out the newer
+  # implementation is more accurate for low sigma_phylo values.
+
+  expect_true(all(comps))
+
+})
+
+test_that("Binomial loglik accurate", {
+
+  load(test_path("test_data/binom_pieces2.RData"))
+  load(test_path("test_data/binom_ll2.RData"))
+
+  test_ll = get_ll_mat(pieces$nested_df,
+                       pieces$em,
+                       pieces$cor_mat,
+                       pieces$Lcov,
+                       pieces$Xc,
+                       pieces$offset_val,
+                       pieces$metadata$outcome,
+                       pieces$family, verbose = FALSE)
+
+  diffs = test_ll - binom_ll
+
+  max(abs(diffs))
+
+  # observations 3 and 9 seem problematic
+  which(diffs == max(abs(diffs)), arr.ind = TRUE)
+
+  comps = dplyr::near(diffs, 0)
+  # Have to increase the tolerance a bit because turns out the newer
+  # implementation is more accurate for low sigma_phylo values.
+
+  expect_true(all(comps))
 
 })
 
