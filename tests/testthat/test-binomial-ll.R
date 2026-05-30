@@ -17,7 +17,6 @@ test_that("Binomial loglik close to original implementation", {
 
   max(abs(diffs))
 
-  # observations 3 and 9 seem problematic
   which(diffs == max(abs(diffs)), arr.ind = TRUE)
 
   comps = dplyr::near(diffs, 0, tol = .002)
@@ -46,12 +45,9 @@ test_that("Binomial loglik accurate", {
 
   max(abs(diffs))
 
-  # observations 3 and 9 seem problematic
   which(diffs == max(abs(diffs)), arr.ind = TRUE)
 
   comps = dplyr::near(diffs, 0)
-  # Have to increase the tolerance a bit because turns out the newer
-  # implementation is more accurate for low sigma_phylo values.
 
   expect_true(all(comps))
 

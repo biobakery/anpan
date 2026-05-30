@@ -2,7 +2,7 @@
 ## integrated log-likelihood. Uses the updated Cpp version since it turns out to
 ## be more numerically accurate on top of being faster.
 
-# pak::pak("biobakery/anpan@1d08004")
+# pak::pak("biobakery/anpan@abd7c94")
 library(anpan)
 library(tibble)
 library(dplyr)
@@ -53,7 +53,6 @@ r2 = anpan_pglmm(meta_file       = m2,
                  iter_sampling  = 100)
 
 binom_ddf = r2$pglmm_fit$draws(format = "data.frame")
-binom_loo = anpan:::get_pglmm_loo(binom_ll, binom_ddf)
 
 em = r2$pglmm_fit$summary(variables = "phylo_effect",
                               mean = mean)$mean
@@ -78,8 +77,28 @@ if (ncol(nested_df$beta[[1]]) != 0) {
   nested_df$beta = purrr::map(nested_df$beta,
                               ~matrix(unlist(.x), ncol = 1))
 }
+cor_mat = r2$cor_mat
 
-binom_ll = anpan:::get_ll_mat(nested_df, em, cor_mat, Lcov, Xc, offset_val, m2$outcome, family)
+chol_res = anpan:::safely_chol(cor_mat)
+Lcov = t(chol_res$result)
+
+Xc = matrix(nrow = nrow(metadata),
+            ncol = 1)
+
+mx = mean(metadata$covariate)
+
+if (ncol(Xc) > 0) {
+  # can't remember how to use seq_along here
+  for (i in 2) {
+    Xc[,i-1] = metadata$covariate - mx[i-1]
+  }
+}
+
+offset_val = rep(0, nrow(m2))
+
+binom_ll = anpan:::get_ll_mat(nested_df, em, cor_mat, Lcov, Xc, offset_val, m2$outcome, family,
+                              verbose = FALSE)
+binom_loo = anpan:::get_pglmm_loo(binom_ll, binom_ddf)
 
 pieces = list(nested_df = nested_df,
               em = em,
