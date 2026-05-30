@@ -130,7 +130,6 @@ r2 = anpan_pglmm(meta_file       = m2,
                  iter_sampling  = 100)
 
 binom_ddf = r2$pglmm_fit$draws(format = "data.frame")
-binom_loo = anpan:::get_pglmm_loo(binom_ll, binom_ddf)
 
 em = r2$pglmm_fit$summary(variables = "phylo_effect",
                               mean = mean)$mean
@@ -157,6 +156,7 @@ if (ncol(nested_df$beta[[1]]) != 0) {
 }
 
 binom_ll = anpan:::get_ll_mat(nested_df, em, cor_mat, Lcov, Xc, offset_val, m2$outcome, family)
+binom_loo = anpan:::get_pglmm_loo(binom_ll, binom_ddf)
 
 pieces = list(nested_df = nested_df,
               em = em,
