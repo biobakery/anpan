@@ -58,12 +58,12 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
 
   p = progressr::progressor(steps = n_obs / n_upd)
 
-  arr_list = furrr::future_map(1:n_obs,
+  arr_list = furrr::future_map((1:n_obs)-1,
                                function(.x) {
-                                 res = precompute_arrays(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
+                                 res = precompute_arr(j = .x, cor_mat = cor_mat, cor_mat_inv = cor_mat_inv)
                                  if (.x %% n_upd == 0) p()
                                  return(res)},
-                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv", "n_obs", "precompute_arrays"))) |>
+                               .options = furrr::furrr_options(globals = c("cor_mat", "cor_mat_inv", "n_obs", "precompute_arr"))) |>
     purrr::transpose()
   # ^1.5s
 
@@ -141,12 +141,16 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
 
 safely_get_ll_mat = purrr::safely(get_ll_mat)
 
-s22_inv = function(cor_mat_inv, cor_mat, j) {
+s22_inv_old = function(cor_mat_inv, cor_mat, j) {
+  # Redone with Rcpp, see binom_ll.cpp
+
   rcor_mat = cor_mat[-j,-j]
   return(solve(rcor_mat))
 }
 
-woodbury_s22_inv = function(cor_mat_inv, cor_mat, j) {
+woodbury_s22_inv_old = function(cor_mat_inv, cor_mat, j) {
+  # Redone with Rcpp, see binom_ll.cpp
+
   # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
   # >20x faster, but less numerically precise by a tiny amount.
 
@@ -168,7 +172,9 @@ woodbury_s22_inv = function(cor_mat_inv, cor_mat, j) {
 }
 
 # compute multivariate normal conditional components
-precompute_arrays = function(j, cor_mat, cor_mat_inv) {
+precompute_arrays_old = function(j, cor_mat, cor_mat_inv) {
+  # Redone with Rcpp, see binom_ll.cpp
+
 
   n = nrow(cor_mat)
 

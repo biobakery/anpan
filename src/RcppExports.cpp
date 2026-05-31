@@ -33,6 +33,46 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// s22_inv
+arma::mat s22_inv(arma::mat& cor_mat, arma::uword j);
+RcppExport SEXP _anpan_s22_inv(SEXP cor_matSEXP, SEXP jSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type cor_mat(cor_matSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type j(jSEXP);
+    rcpp_result_gen = Rcpp::wrap(s22_inv(cor_mat, j));
+    return rcpp_result_gen;
+END_RCPP
+}
+// woodbury_s22_inv
+arma::mat woodbury_s22_inv(arma::mat& cor_mat_inv, arma::mat& cor_mat, arma::uword j, arma::uvec& o2, arma::uvec& jmj);
+RcppExport SEXP _anpan_woodbury_s22_inv(SEXP cor_mat_invSEXP, SEXP cor_matSEXP, SEXP jSEXP, SEXP o2SEXP, SEXP jmjSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::mat& >::type cor_mat_inv(cor_mat_invSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type cor_mat(cor_matSEXP);
+    Rcpp::traits::input_parameter< arma::uword >::type j(jSEXP);
+    Rcpp::traits::input_parameter< arma::uvec& >::type o2(o2SEXP);
+    Rcpp::traits::input_parameter< arma::uvec& >::type jmj(jmjSEXP);
+    rcpp_result_gen = Rcpp::wrap(woodbury_s22_inv(cor_mat_inv, cor_mat, j, o2, jmj));
+    return rcpp_result_gen;
+END_RCPP
+}
+// precompute_arr
+List precompute_arr(arma::uword j, arma::mat& cor_mat, arma::mat& cor_mat_inv);
+RcppExport SEXP _anpan_precompute_arr(SEXP jSEXP, SEXP cor_matSEXP, SEXP cor_mat_invSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< arma::uword >::type j(jSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type cor_mat(cor_matSEXP);
+    Rcpp::traits::input_parameter< arma::mat& >::type cor_mat_inv(cor_mat_invSEXP);
+    rcpp_result_gen = Rcpp::wrap(precompute_arr(j, cor_mat, cor_mat_inv));
+    return rcpp_result_gen;
+END_RCPP
+}
 // inv_logit
 arma::vec inv_logit(arma::vec x);
 RcppExport SEXP _anpan_inv_logit(SEXP xSEXP) {
@@ -169,6 +209,9 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_anpan_arma_exp", (DL_FUNC) &_anpan_arma_exp, 1},
     {"_anpan_arma_solve", (DL_FUNC) &_anpan_arma_solve, 1},
+    {"_anpan_s22_inv", (DL_FUNC) &_anpan_s22_inv, 2},
+    {"_anpan_woodbury_s22_inv", (DL_FUNC) &_anpan_woodbury_s22_inv, 5},
+    {"_anpan_precompute_arr", (DL_FUNC) &_anpan_precompute_arr, 3},
     {"_anpan_inv_logit", (DL_FUNC) &_anpan_inv_logit, 1},
     {"_anpan_vec_integrand_logistic", (DL_FUNC) &_anpan_vec_integrand_logistic, 8},
     {"_anpan_integrand_logistic", (DL_FUNC) &_anpan_integrand_logistic, 8},

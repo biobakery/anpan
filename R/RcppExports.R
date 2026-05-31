@@ -9,6 +9,18 @@ arma_solve <- function(m) {
     .Call(`_anpan_arma_solve`, m)
 }
 
+s22_inv <- function(cor_mat, j) {
+    .Call(`_anpan_s22_inv`, cor_mat, j)
+}
+
+woodbury_s22_inv <- function(cor_mat_inv, cor_mat, j, o2, jmj) {
+    .Call(`_anpan_woodbury_s22_inv`, cor_mat_inv, cor_mat, j, o2, jmj)
+}
+
+precompute_arr <- function(j, cor_mat, cor_mat_inv) {
+    .Call(`_anpan_precompute_arr`, j, cor_mat, cor_mat_inv)
+}
+
 inv_logit <- function(x) {
     .Call(`_anpan_inv_logit`, x)
 }
