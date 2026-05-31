@@ -29,7 +29,7 @@ get_pglmm_loo = function(ll_mat, draw_df) {
            r_eff = reff)
 }
 
-safely_invert = purrr::safely(solve)
+safely_invert = purrr::safely(arma_solve)
 
 # For each posterior iteration, compute the log-likelihood of each observation.
 get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, family, verbose = TRUE) {
@@ -41,6 +41,7 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
     stop("Correlation matrix couldn't be inverted, loo not performed.")
   } else {
     cor_mat_inv = inv_res$result
+    dimnames(cor_mat_inv) = dimnames(cor_mat)
   }
 
   max_i = nrow(draw_df)

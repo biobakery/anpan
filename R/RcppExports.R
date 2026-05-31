@@ -5,6 +5,10 @@ arma_exp <- function(m) {
     .Call(`_anpan_arma_exp`, m)
 }
 
+arma_solve <- function(m) {
+    .Call(`_anpan_arma_solve`, m)
+}
+
 inv_logit <- function(x) {
     .Call(`_anpan_inv_logit`, x)
 }
