@@ -11,6 +11,21 @@ arma::mat arma_exp(arma::mat m) {
   return exp(m);
 }
 
+// // [[Rcpp::export]]
+// arma::mat arma_chol(arma::mat m) {
+//   return chol(m);
+// }
+
+// [[Rcpp::export]]
+arma::mat arma_solve(arma::mat m) {
+  return inv(m);
+}
+
+// // [[Rcpp::export]]
+// arma::mat arma_solve2(arma::mat m) {
+//   return inv_sympd(m);
+// }
+
 // [[Rcpp::export]]
 arma::vec inv_logit(arma::vec x) {
   arma::vec res = 1 / (1 + exp(-x));
