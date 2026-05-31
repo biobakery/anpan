@@ -27,6 +27,81 @@ arma::mat arma_solve(arma::mat m) {
 // }
 
 // [[Rcpp::export]]
+arma::mat s22_inv(arma::mat& cor_mat, arma::uword j) {
+
+  int n = cor_mat.n_rows;
+  arma::uvec mj = linspace<uvec>(0,n-1, n);
+  mj.shed_row(j);
+
+  return inv(cor_mat(mj,mj));
+}
+
+// [[Rcpp::export]]
+arma::mat woodbury_s22_inv(arma::mat& cor_mat_inv, arma::mat& cor_mat,
+                           arma::uword j, arma::uvec& o2, arma::uvec& jmj) {
+
+  int n = cor_mat.n_rows;
+  arma::uvec o1 = {j};
+
+  arma::vec Uc1 = zeros(n);
+  Uc1(0) = 1;
+
+  // arma::mat cor_slice = cor_mat(o2, o1);
+  arma::vec zv = {0};
+  arma::vec Uc2 = join_cols(zv, cor_mat(o2, o1));
+
+  arma::mat U = join_rows(Uc1, Uc2);
+  // Rcout << "U: " << U.head_rows(5) << "\n";
+
+  arma::mat V = flipud(U.t());
+  arma::mat rci = cor_mat_inv(jmj, jmj);
+  // Rcout << "V: " << V.head_cols(5) << "\n";
+
+  arma::mat upd_fct = inv(eye(2, 2) - (V * (rci * U)));
+
+  // Rcout << upd_fct << "\n";
+  // Rcout << rci.submat(0,0,4,4) << "\n";
+
+  arma::mat wood_ans = rci +
+    (rci * U) *
+      upd_fct *
+      (V * rci);
+
+  return wood_ans.submat(1, 1, n-1, n-1);
+}
+
+// [[Rcpp::export]]
+List precompute_arr(arma::uword j, arma::mat& cor_mat, arma::mat& cor_mat_inv) {
+  // Will return List
+  int n = cor_mat.n_rows;
+
+  arma::uvec o1 = {j};
+  arma::uvec o2 = linspace<uvec>(0,n-1, n);
+  o2.shed_row(j);
+
+  arma::uvec jmj = join_cols(o1, o2); // element j, then (0:(n-1))(-j)
+
+  arma::mat r12 = cor_mat(o1, o2);
+
+  bool any_high_cor = any(any(cor_mat(o1, o2) > 0.9999));
+  // arma's any() returns a rowvec for matrix input
+  arma::mat r22_inv(n-1,n-1);
+
+  if (any_high_cor) {
+    r22_inv = s22_inv(cor_mat, j);
+  } else {
+    r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j, o2, jmj);
+  }
+
+  arma::mat sinv_j = r12 * r22_inv;
+  // aka sigma12x22_inv_mat_j
+
+  List res = List::create(sinv_j, r12.t());
+
+  return res;
+}
+
+// [[Rcpp::export]]
 arma::vec inv_logit(arma::vec x) {
   arma::vec res = 1 / (1 + exp(-x));
   return res;
