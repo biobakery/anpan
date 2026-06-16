@@ -176,12 +176,14 @@ fit_horseshoe = function(model_input,
     return(NULL)
   }
 
-  cov_formula = as.formula(paste0("~ 1 + ", paste(covariates, collapse = " + ")))
+  cov_formula = as.formula(paste0("~ ", paste(c("1", covariates), collapse = " + ")))
 
   X_genes = model_input |>
     dplyr::select(-dplyr::all_of(c('sample_id', outcome, covariates))) |>
     as.matrix()
+
   X_genes = 0+X_genes # convert to 0/1
+
   X_covariates = model.matrix(cov_formula, data = model_input)
 
   data_list = list(N = nrow(model_input),
@@ -601,11 +603,12 @@ anpan_batch = function(bug_dir,
     as_tibble()
 
   worked = anpan_results |>
-    dplyr::filter(purrr::map_lgl(error, is.null))
+    dplyr::filter(purrr::map_lgl(error, is.null)) |>
+    dplyr::filter(purrr::map_lgl(result, not_empty))
 
   errors = anpan_results |>
     dplyr::mutate(bug_file = basename(bug_files)) |>
-    dplyr::filter(purrr::map_lgl(result, is.null)) |>
+    dplyr::filter(purrr::map_lgl(result, is_null_or_empty)) |>
     dplyr::relocate(bug_file) |>
     dplyr::select(-result)
 

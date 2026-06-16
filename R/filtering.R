@@ -673,5 +673,10 @@ filter_batch = function(bug_dir, meta_file,
 
 }
 
+is_null_or_empty = function(x) {
+  is.null(x) || (is.data.frame(x) & (nrow(x) == 0))
+}
 
-
+not_empty = function(x) {
+  is.data.frame(x) & (nrow(x) != 0)
+}
