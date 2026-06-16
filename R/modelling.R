@@ -723,7 +723,9 @@ anpan_batch = function(bug_dir,
     }
 
     hit_df = all_bug_terms[q_global < q_threshold & abs(estimate) > beta_threshold]
+
     plotting_input = all_bug_terms[bug_name %in% hit_df$bug_name][,.(s = list(.SD)), by = bug_name]
+
     p = progressr::progressor(steps = nrow(plotting_input))
 
     message("Generating plots for bugs with hits...")

@@ -392,15 +392,23 @@ get_int_plot_df = function(plot_dat) {
                                                                    names(plot_dat),
                                                                    value = TRUE))
 
-  int_plot_df = plot_dat[,..select_cols] |>
-    unique() |>
-    dplyr::mutate(max_val = estimate + 1.96*std.error,
-                  min_val = estimate - 1.96*std.error,
-                  p_group = dplyr::case_when(p.value < .001 ~ "***",
-                                             p.value < .01  ~ "**",
-                                             p.value < .05  ~ "*",
-                                             p.value < .1   ~ ".",
-                                             p.value < 1    ~ " "))
+
+  if (all(select_cols %in% names(plot_dat))) {
+    int_plot_df = plot_dat[,..select_cols] |>
+      unique() |>
+      dplyr::mutate(max_val = estimate + 1.96*std.error,
+                    min_val = estimate - 1.96*std.error,
+                    p_group = dplyr::case_when(p.value < .001 ~ "***",
+                                               p.value < .01  ~ "**",
+                                               p.value < .05  ~ "*",
+                                               p.value < .1   ~ ".",
+                                               p.value < 1    ~ " "))
+
+  } else {
+    select_cols = c("estimate", "gene", "q5", "q95")
+    int_plot_df = plot_dat[,..select_cols] |> unique() |>
+      dplyr::rename(min_val = q5, max_val = q95)
+  }
 
   if (any(grepl("q_", names(plot_dat)))) {
     signif_var = ifelse("q_global" %in% names(int_plot_df),
@@ -420,7 +428,7 @@ pca = function(mat, k = 10) {
 
   k = min(k, ncol(mat))
 
-  d = diag(svd_res$d)[,1:k]
+  d = diag(svd_res$d)[,1:min(k, length(svd_res$d))]
 
   res = svd_res$u %*% d
 
@@ -520,6 +528,13 @@ plot_results = function(res, covariates, outcome, model_input,
 
   n_top = min(n_top, dplyr::n_distinct(res$gene))
 
+  is_ushoe = !("estimate" %in% names(res))
+  # This means it's a summary result from the horseshoe model
+  if (is_ushoe) {
+      res = res[grepl("^b_genes", param)][order(abs(mean))] |>
+        dplyr::select(gene, estimate = mean, q5, q95)
+  }
+
   if (!is.null(q_threshold) || !is.null(beta_threshold)) {
     signif_var = ifelse("q_global" %in% names(res),
                         'q_global',
@@ -531,8 +546,13 @@ plot_results = function(res, covariates, outcome, model_input,
       res$q_bug_wise = p.adjust(res$p.value, method = "fdr")
     }
 
-    if (!is.null(   q_threshold)) gene_level_df = gene_level_df[gene_level_df[[signif_var]] <     q_threshold]
-    if (!is.null(beta_threshold)) gene_level_df = gene_level_df[abs(estimate)              >=  beta_threshold]
+    if (!is.null(q_threshold) && signif_var %in% names(gene_level_df)) {
+      gene_level_df = gene_level_df[gene_level_df[[signif_var]] < q_threshold]
+    }
+
+    if (!is.null(beta_threshold)) {
+      gene_level_df = gene_level_df[abs(estimate) >=  beta_threshold]
+    }
 
     gene_levels = gene_level_df$gene
 
@@ -546,8 +566,8 @@ plot_results = function(res, covariates, outcome, model_input,
     }
   } else {
     gene_levels = res[1:n_top,]$gene
-    threshold_warning_string = NULL
     subtitle_str = paste0("Top ", n_top, " hits")
+    threshold_warning_string = NULL
   }
 
   # Get the order of the genes
@@ -769,11 +789,13 @@ plot_results = function(res, covariates, outcome, model_input,
     point_geom = geom_point(aes(fill = lsignif),
                             pch = 21,
                             color = 'grey10')
+    fill_lab = expression(paste("-log"[10], "(Q)"))
   } else {
     point_geom = geom_point(color = 'grey10')
+    fill_lab = NULL
   }
 
-  if (stars) {
+  if (stars && !is_ushoe) {
     star_geom = geom_text(aes(x = star_loc,
                               y = gene,
                               label = p_group), hjust = 0, vjust = .7)
@@ -785,19 +807,20 @@ plot_results = function(res, covariates, outcome, model_input,
 
   int_plot = int_plot_df |>
     ggplot(aes(estimate, gene)) +
+    geom_vline(xintercept = 0,
+               lty = 2,
+               color = 'grey70') +
     geom_segment(aes(y = gene,
                      yend = gene,
                      x = min_val,
                      xend = max_val),
                  color = 'grey20') +
     point_geom +
-    geom_vline(xintercept = 0,
-               lty = 2,
-               color = 'grey70') +
     star_geom +
     xlim(c(min(0, x_lo),
            max(0, max(int_plot_df$max_val)))) +
-    labs(fill = expression(paste("-log"[10], "(Q)"))) +
+    labs(fill = fill_lab,
+         x = "estimate") +
     guides(fill = guide_colorbar(title.position = 'bottom', title.hjust = .5)) +
     scale_fill_viridis_c(option = "plasma") +
     theme(panel.background = element_rect(fill = "white",
