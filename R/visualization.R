@@ -372,8 +372,9 @@ plot_color_bars = function(color_bar_df, model_input,
   }
 
   base_plot = color_bar_df |>
-    ggplot(aes_string(x = x_var)) +
-    geom_tile(aes_string(y = 1, fill = outcome)) +
+    ggplot(aes(x = .data[[x_var]])) +
+    geom_tile(aes(y = 1,
+                  fill = .data[[outcome]])) +
     outcome_fill_scale +
     coords + labs_obj + theme_obj +
     x_scale
@@ -382,9 +383,9 @@ plot_color_bars = function(color_bar_df, model_input,
 
   for (i in seq_along(covariates)) {
     p = p + ggnewscale::new_scale("fill") +
-      geom_tile(aes_string(x = x_var,
-                           y = covariate_color_map$y[i],
-                           fill = covariate_color_map$covariate[i])) +
+      geom_tile(aes(x =.data[[x_var]],
+                    y = covariate_color_map$y[i],
+                    fill = .data[[covariate_color_map$covariate[i]]])) +
       covariate_color_map$color_scales[[i]]
   }
 
@@ -1174,7 +1175,7 @@ plot_outcome_tree = function(tree_file,
     geom_segment(aes(x = x, xend = xend,
                      y = y, yend = yend)) +
     geom_point(data = terminal_seg_df,
-               aes_string(color = outcome)) +
+               aes(color = .data[[outcome]])) +
     outcome_color_scale +
     scale_x_continuous(breaks = 1:nrow(terminal_seg_df),
                        labels = terminal_seg_df$label) +
@@ -1458,8 +1459,8 @@ plot_tree_with_post_pred = function(tree_file,
                        ymax = q95,
                        group = variable_i),
                    stat = 'identity') +
-      geom_point(aes_string(y = outcome,
-                            color = outcome)) +
+      geom_point(aes(y = .data[[outcome]],
+                     color = .data[[outcome]])) +
       scale_color_viridis_c() +
       scale_x_continuous(breaks = 1:(nlevels(yrep_df$variable)),
                          labels = tree_plot$terminal_seg_df$label,
@@ -1726,14 +1727,14 @@ plot_elpd_diff_batch = function(anpan_pglmm_res,
 
   if (!is.null(color_category) && color_category %in% names(anpan_pglmm_res)) {
 
-    inner_interval = geom_segment(aes_string(yend  = "input_file",
-                                             x     = "inner_lo",
-                                             xend  = "inner_hi",
-                                             color = color_category),
+    inner_interval = geom_segment(aes(yend  = .data[["input_file"]],
+                                      x     = .data[["inner_lo"]],
+                                      xend  = .data[["inner_hi"]],
+                                      color = .data[[color_category]]),
                                   lwd = 2)
 
     big_dot = geom_point(size = 2.5,
-                         aes_string(color = color_category))
+                         aes(color = .data[[color_category]]))
 
   } else {
     inner_interval = geom_segment(aes(yend = input_file,
