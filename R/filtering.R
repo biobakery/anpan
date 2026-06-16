@@ -121,7 +121,13 @@ filter_with_kmeans = function(gf,
                               plot_ext = plot_ext) {
 
   em_input = na.omit(samp_stats[,.(sample_id, n_nz, q50)])
+
+  if (nrow(em_input) < 3) {
+    stop(paste0(bug_name, " Fewer than three samples had sufficient prevalence when attempting filtering."))
+  }
+
   log_it = dplyr::n_distinct(gf$gene) > 50000
+
   if (log_it) em_input$n_nz = log1p(em_input$n_nz)
 
   if (dplyr::n_distinct(em_input$n_nz) == 1) {
