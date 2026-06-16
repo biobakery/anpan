@@ -145,11 +145,17 @@ plot_kmeans_dots = function(samp_stats,
 }
 
 blank_tree = function(clust) {
-  ggdendro::ggdendrogram(clust, labels = FALSE, leaf_labels = FALSE) +
+  dd = ggdendro::dendro_data(clust)
+
+  # xl = range(dd$segments$x) + c(-.5, .5)
+
+  ggdendro::ggdendrogram(dd, labels = FALSE, leaf_labels = FALSE) +
     theme(axis.text.x = element_blank(),
           axis.text.y = element_blank(),
           plot.margin = unit(c(0,0,0,0), 'cm')) +
-    scale_x_continuous(expand = c(0,0))
+    # scale_x_continuous(expand = c(0,0))
+    scale_x_continuous(expand = expansion(add = 0.5))
+  # Tree limits go from e.g. 1 - 50, but the corresponding tiles go from 0.5 - 50.5
 }
 
 delete_leaf = function(tree, leaf_label){
@@ -360,8 +366,7 @@ plot_color_bars = function(color_bar_df, model_input,
                       panel.background = element_blank())
 
     color_bar_df = color_bar_df |>
-      dplyr::left_join(terminal_seg_df |> dplyr::select(sample_id = label,
-                                                        x),
+      dplyr::left_join(terminal_seg_df |> dplyr::select(sample_id = label, x),
                 by = 'sample_id') |>
       dplyr::arrange(x)
   }
@@ -528,11 +533,11 @@ plot_results = function(res, covariates, outcome, model_input,
 
   n_top = min(n_top, dplyr::n_distinct(res$gene))
 
-  is_ushoe = !("estimate" %in% names(res))
+  is_ushoe = ("rhat" %in% names(res))
   # This means it's a summary result from the horseshoe model
   if (is_ushoe) {
-      res = res[grepl("^b_genes", param)][order(abs(mean))] |>
-        dplyr::select(gene, estimate = mean, q5, q95)
+      res = res[grepl("^b_genes", param)][order(abs(estimate))] |>
+        dplyr::select(gene, estimate, q5, q95)
   }
 
   if (!is.null(q_threshold) || !is.null(beta_threshold)) {

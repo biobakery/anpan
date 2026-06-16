@@ -622,6 +622,7 @@ anpan_batch = function(bug_dir,
       dplyr::bind_rows() |>
       dplyr::relocate(bug_name, gene) |>
       data.table::as.data.table()
+
   } else {
     stop("No models fit successfully, see errors.RData")
   }
@@ -651,6 +652,11 @@ anpan_batch = function(bug_dir,
 
   write_tsv_no_progress(all_bug_terms,
                         file = file.path(out_dir, 'all_bug_gene_terms.tsv.gz'))
+
+  if (model_type == "horseshoe") {
+    all_bug_terms = all_bug_terms[grepl("^b_", param)] |>
+      dplyr::rename(estimate = mean)
+  }
 
   filter_stats_dir = file.path(out_dir, "filter_stats")
   plot_dir = file.path(out_dir, 'plots')
@@ -722,7 +728,14 @@ anpan_batch = function(bug_dir,
            file = file.path(plot_dir, 'top_n_plot_errors.RData'))
     }
 
-    hit_df = all_bug_terms[q_global < q_threshold & abs(estimate) > beta_threshold]
+    hit_df = all_bug_terms
+    if (!is.null(q_threshold) && model_type != "horseshoe") {
+      hit_df = hit_df[q_global < q_threshold]
+    }
+
+    if (!is.null(beta_threshold) ) {
+      hit_df = hit_df[abs(estimate) > beta_threshold]
+    }
 
     plotting_input = all_bug_terms[bug_name %in% hit_df$bug_name][,.(s = list(.SD)), by = bug_name]
 
@@ -782,6 +795,7 @@ anpan_batch = function(bug_dir,
                                 by = bug_name][order(-prop_bug, -prop_global)]
 
     if (any(hit_prop_df$prop_global > .01) || any(hit_prop_df$prop_bug > .01)) {
+
       warning_msg = paste0("The bug(s) listed below (and in warnings.txt) had more than 1% of their genes exhibit an association with an FDR q-value below ",
                            qt,
                            " (either bug-wise or globally). This may indicate that there is some phylogenetic structure within the species confounded with the outcome. This might show up visually as large blocks on the results plot. You can try evaluating a PGLMM with anpan_pglmm() (or anpan_pglmm_batch()) to quantify the phylogenetic signal. If you don't have a phylogeny for the species, see the \"Estimating phylogenies from gene matrices\" section of the vignette.\n") |>
