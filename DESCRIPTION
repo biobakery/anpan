@@ -1,7 +1,7 @@
 Package: anpan
 Type: Package
 Title: Quantifying Microbial Strain-Host Associations
-Version: 0.3.0
+Version: 0.4.0
 Author: Andrew Ghazi
 Maintainer: Andrew Ghazi <yourself@somewhere.net>
 Description: More about what it does (maybe more than one line)
