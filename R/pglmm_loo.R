@@ -511,3 +511,41 @@ vec_integrand_logistic_old = function(phylo_effect_vec,
   return(res)
 }
 
+print_loo_interpretation = function(comparison, verbose) {
+
+  if (verbose) {
+    message("loo comparison: ")
+    print(comparison)
+  }
+
+  is_df = is.data.frame(comparison)
+
+  if (is_df) {
+    pglmm_better = comparison$model[1] == "pglmm_fit"
+  } else {
+    # old versions of loo produce matrices with rownames by model instead of
+    # data.frames
+
+    pglmm_better = rownames(comparison)[1] == 'pglmm_fit'
+  }
+
+  if (pglmm_better) {
+    p1 = "The phylogenetic model seems to fit better, "
+  } else {
+    p1 = "The phylogenetic model seems to fit worse, "
+  }
+
+  if (abs(comparison[2,"elpd_diff"] / comparison[2,"se_diff"]) > 2) {
+    p2 = "and the difference seems clear (more than 2 standard errors difference in ELPD)."
+  } else {
+    p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
+  }
+
+  if (abs(comparison[2,"elpd_diff"] / comparison[2,"se_diff"]) > 2 && abs(comparison[2,"elpd_diff"]) < 4) {
+    p3 = " However the ELPD difference is less than 4, so the difference is small."
+  } else {
+    p3 = NULL
+  }
+
+  if (verbose) message(paste0(p1, p2, p3))
+}
