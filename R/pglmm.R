@@ -739,30 +739,8 @@ anpan_pglmm = function(meta_file,
       comparison = loo::loo_compare(list(pglmm_fit = pglmm_loo,
                                          base_fit  = base_loo))
 
-      if (verbose) {
-        message("loo comparison: ")
-        print(comparison)
-      }
+      if (verbose) print_loo_interpretation(comparison, verbose)
 
-      if (rownames(comparison)[1] == 'pglmm_fit') {
-        p1 = "The phylogenetic model seems to fit better, "
-      } else {
-        p1 = "The phylogenetic model seems to fit worse, "
-      }
-
-      if (abs(comparison[2,1] / comparison[2,2]) > 2) {
-        p2 = "and the difference seems clear (more than 2 standard errors difference in ELPD)."
-      } else {
-        p2 = "but the difference doesn't seem clear (less than 2 standard errors difference in ELPD)."
-      }
-
-      if (abs(comparison[2,1] / comparison[2,2]) > 2 && abs(comparison[2,1]) < 4) {
-        p3 = " However the ELPD difference is less than 4, so the difference is small."
-      } else {
-        p3 = NULL
-      }
-
-      if (verbose) message(paste0(p1, p2, p3))
     } else {
       warning(paste0("loo comparison failed for ", bug_name, " . loo results set to NULL."))
       print(ll_attempt$error)
