@@ -377,7 +377,9 @@ The code chunk below sets a randomization seed and the parameters we'll use, the
 set.seed(123)
 
 n = 120
+
 sigma_phylo = 1
+
 sigma_resid = 1
 
 tr = ape::rtree(n)
@@ -495,9 +497,6 @@ result = anpan_pglmm(meta_file       = metadata,
                      covariates      = "covariate",
                      family          = "gaussian",
                      bug_name        = "sim_bug",
-                     reg_noise       = TRUE,
-                     loo_comparison  = TRUE,
-                     run_diagnostics = FALSE,
                      refresh         = 500,
                      show_plot_tree  = FALSE,
                      show_post       = FALSE)
