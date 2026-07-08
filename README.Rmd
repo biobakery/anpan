@@ -81,6 +81,34 @@ Once you have the dependencies, you can install anpan from github with:
 remotes::install_github("biobakery/anpan", build_vignettes = TRUE)
 ```
 
+### Common issues during installation and how to fix them
+
+#### 1. [MacOS] `emutils`/`gfortran`-related errors
+
+if installation fails with an error similar to:
+
+```text
+ld: library 'emutls_w' not found
+ld: warning: search path '/opt/gfortran/lib' not found
+```
+
+your R installation is configured to use the official macOS gfortran toolchain, but the required runtime libraries are not installed.
+
+First, verify whether the toolchain is present:
+
+```bash
+ls /opt/gfortran
+```
+
+If the directory does not exist, install the official gfortran distribution for macOS from the R Project: https://mac.r-project.org/tools/. Choose the installer matching your R version (e.g. `gfortran-14.2-universal.pkg` for R 4.5), then restart R and reinstall the package. The following commands will perform this installation automatically for R version 4.5:
+
+```bash
+curl -LO https://mac.r-project.org/tools/gfortran-14.2-universal.pkg
+sudo installer -pkg gfortran-14.2-universal.pkg -target /
+```
+
+> **Note:** Installing `gfortran` via Homebrew is generally **not sufficient**, as CRAN's macOS R binaries are configured to look for the official R Project toolchain under `/opt/gfortran`.
+
 ## Tutorial
 
 
