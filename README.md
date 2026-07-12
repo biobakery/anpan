@@ -11,6 +11,7 @@ build it if you don’t have it built.
 # anpan <img src="man/figures/logo.png" align="right"/>
 
 <!-- badges: start -->
+
 <!-- badges: end -->
 
 The goal of anpan is to consolidate statistical methods for strain
@@ -21,58 +22,49 @@ models.
 
 <br>
 
-<img src="man/figures/1_overview.png" width="90%" height="90%" />
+<img src="man/figures/1_overview.png" alt="" width="90%" height="90%" />
 
 ## Dependencies
 
-anpan depends on R ≥4.1.0 and the following R packages, most of which
-are available through CRAN (the exception being cmdstanr):
+anpan depends on R ≥4.1.0, a number of R packages, and CmdStan. `anpan`
+is currently only on GitHub.
+
+**First**, install `remotes` and `cmdstanr`:
 
 ``` r
-install.packages(c("ape", 
-                   "data.table",
-                   "dplyr", 
-                   "fastglm",
-                   "furrr", 
-                   "ggdendro",
-                   "ggnewscale",
-                   "ggplot2",
-                   "loo",
-                   "patchwork",
-                   "phylogram",
-                   "posterior",
-                   "progressr",
-                   "purrr",
-                   "R.utils",
-                   "remotes",
-                   "stringr",
-                   "tibble",
-                   "tidyselect")) # add Ncpus = 4 to go faster
-
-install.packages("cmdstanr", repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
+install.packages(c("remotes", "cmdstanr"),
+                 repos = c("https://mc-stan.org/r-packages/", getOption("repos")))
 ```
 
 If the `cmdstanr` installation doesn’t work you can find more detailed
 instructions [at this link](https://mc-stan.org/cmdstanr/).
 
-Once you’ve installed `cmdstanr`, you will need to use it to install
-CmdStan itself:
+**Second**, use `cmdstanr` to install CmdStan itself:
 
 ``` r
 library(cmdstanr)
+
 check_cmdstan_toolchain()
+
 install_cmdstan(cores = 2)
 ```
 
-On some servers it may also be necessary to install / load the GNU MPFR
-library prior to installing CmdStan.
+**Finally**, there are some other system dependencies:
+
+- `gfortran` if you don’t have it already. Windows users should [install
+  RTools from here](https://cran.r-project.org/bin/windows/Rtools/), Mac
+  users [go here](https://cran.r-project.org/bin/macosx/tools/).
+- On some clusters it may also be necessary to install / load the GNU
+  MPFR library prior to installing CmdStan.
 
 ## Installation
 
 Once you have the dependencies, you can install anpan from github with:
 
 ``` r
-remotes::install_github("biobakery/anpan", build_vignettes = TRUE)
+remotes::install_github("biobakery/anpan", 
+                        build_vignettes = TRUE,
+                        Ncpus = 4)
 ```
 
 ## Tutorial
