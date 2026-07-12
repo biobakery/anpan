@@ -36,7 +36,7 @@ install.packages(c("remotes", "cmdstanr"),
                  repos = c('https://stan-dev.r-universe.dev', getOption("repos")))
 ```
 
-If the `cmdstanr` installation doesn’t work you can find more detailed
+If installing `cmdstanr` doesn’t work, you can find more detailed
 instructions [at this link](https://mc-stan.org/cmdstanr/).
 
 **Second**, use `cmdstanr` to install CmdStan itself:
@@ -48,6 +48,10 @@ check_cmdstan_toolchain()
 
 install_cmdstan(cores = 2)
 ```
+
+If installing CmdStan doesn’t work, you can find more detailed
+instructions [at this
+link](https://mc-stan.org/cmdstanr/articles/cmdstanr.html#installing-cmdstan).
 
 **Finally**, there are some other system dependencies:
 
