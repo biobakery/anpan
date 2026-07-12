@@ -66,7 +66,7 @@ If installing CmdStan doesn't work, you can find more detailed instructions [at 
 
 ## Installation
 
-Once you have the dependencies, you can install anpan from github with:
+Now install `anpan` and other dependencies with `remotes`:
 
 ```{r, eval = FALSE}
 remotes::install_github("biobakery/anpan", 

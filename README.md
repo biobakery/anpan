@@ -63,7 +63,7 @@ link](https://mc-stan.org/cmdstanr/articles/cmdstanr.html#installing-cmdstan).
 
 ## Installation
 
-Once you have the dependencies, you can install anpan from github with:
+Now install `anpan` and other dependencies with `remotes`:
 
 ``` r
 remotes::install_github("biobakery/anpan", 
