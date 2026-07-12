@@ -141,64 +141,6 @@ get_ll_mat = function(draw_df, effect_means, cor_mat, Lcov, Xc, offset_val, Y, f
 
 safely_get_ll_mat = purrr::safely(get_ll_mat)
 
-s22_inv_old = function(cor_mat_inv, cor_mat, j) {
-  # Redone with Rcpp, see binom_ll.cpp
-
-  rcor_mat = cor_mat[-j,-j]
-  return(solve(rcor_mat))
-}
-
-woodbury_s22_inv_old = function(cor_mat_inv, cor_mat, j) {
-  # Redone with Rcpp, see binom_ll.cpp
-
-  # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
-  # >20x faster, but less numerically precise by a tiny amount.
-
-  n = nrow(cor_mat)
-  ord = c(j, (1:n)[-j])
-  rcor_mat = cor_mat[ord,ord]
-  rcor_mat_inv = cor_mat_inv[ord,ord]
-
-  U = cbind(c(1, rep(0, n-1)),
-            c(0, rcor_mat[-1, 1]))
-
-  V = t(U)[2:1,]
-
-  update_factor = solve(diag(2) - V %*% (rcor_mat_inv %*% U))
-
-  woodbury_ans = rcor_mat_inv + (rcor_mat_inv %*% U) %*% update_factor %*% (V %*% rcor_mat_inv)
-
-  woodbury_ans[-1,-1]
-}
-
-# compute multivariate normal conditional components
-precompute_arrays_old = function(j, cor_mat, cor_mat_inv) {
-  # Redone with Rcpp, see binom_ll.cpp
-
-
-  n = nrow(cor_mat)
-
-  ord = c(j, (1:n)[-j])
-
-  r12 = cor_mat[ord, ord][1,-1, drop = FALSE]
-
-  any_high_corr = any(cor_mat[j, -j] > .9999)
-
-  if (any_high_corr) {
-    # Woodbury induces a tiny numerical inaccuracy for high correlations. Revert to slow naive
-    # method if that happens.
-    r22_inv = s22_inv(cor_mat_inv, cor_mat, j)
-  } else {
-    r22_inv = woodbury_s22_inv(cor_mat_inv, cor_mat, j)
-  }
-
-  # sigma12x22_inv_arr_j = r12 %*% r22_inv
-  sigma12x22_inv_mat_j = r12 %*% r22_inv
-
-  return(list(sigma12x22_inv_mat_j,
-              t(r12)))
-}
-
 # compute the log likelihood for all observations in a single posterior iteration i
 log_lik_terms_i = function(i_df,
                            effect_means,
