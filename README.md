@@ -26,8 +26,8 @@ models.
 
 ## Dependencies
 
-anpan depends on R ≥4.1.0, a number of R packages, and CmdStan. `anpan`
-is currently only on GitHub.
+`anpan` depends on R ≥4.1.0, a number of R packages, and CmdStan. There
+are a few upfront steps required before you can install `anpan`.
 
 **First**, install `remotes` and `cmdstanr`:
 
@@ -53,7 +53,8 @@ If installing CmdStan doesn’t work, you can find more detailed
 instructions [at this
 link](https://mc-stan.org/cmdstanr/articles/cmdstanr.html#installing-cmdstan).
 
-**Finally**, there are some other system dependencies:
+**Finally**, there are some other system dependencies you might need to
+check:
 
 - `gfortran` if you don’t have it already. Windows users should [install
   RTools from here](https://cran.r-project.org/bin/windows/Rtools/), Mac
@@ -63,7 +64,8 @@ link](https://mc-stan.org/cmdstanr/articles/cmdstanr.html#installing-cmdstan).
 
 ## Installation
 
-Now install `anpan` and other dependencies with `remotes`:
+`anpan` is currently only on GitHub. Install `anpan` and other
+dependencies with `remotes`:
 
 ``` r
 remotes::install_github("biobakery/anpan", 
@@ -73,8 +75,7 @@ remotes::install_github("biobakery/anpan",
 
 ## Tutorial
 
-<strong><b><span style="font-size:xxx-large;color:red"> Read the
-vignette: `anpan::anpan_vignette()` </span></b></strong>.
+<strong><b> Read the vignette: `anpan::anpan_vignette()` </b></strong>.
 
 You are currently reading the Github README, not the vignette.
 
