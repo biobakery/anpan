@@ -347,7 +347,7 @@ fwrite(sim_wide,
 
 # PGLMMs
 
-Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a linear regression as the base model, the model structure is as follows:
+Phylogenetic generalized linear mixed models (PGLMMs) are probabilistic models that account for phylogenetic structure. For a PGLMM with a Gaussian outcome `y`, the model structure is as follows:
 
 $$ y = X \beta + (1|\text{leaf}) + \epsilon $$
             
@@ -355,7 +355,7 @@ $$(1|\text{leaf}) \sim \text{MVNormal}(0, σ_p^2\Omega)$$
 
 $$\epsilon \sim \text{Normal}(0, σ_R^2)$$
 
-The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\text{leaf})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects (which are usually independent between different levels of the random effect variable), the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_{phylo}$.
+The outcome $y$ is modeled as a function of some familiar terms: covariates $X$, coefficients $\beta$, and residual noise $\epsilon$. The key addition is the phylogenetic term $(1|\text{leaf})$, which contains a "random effect" for each observation in $y$. Unlike typical random effects, the values in the phylogenetic term follow a pre-specified correlation structure $\Omega$, which is derived from a tree. The variability of the phylogenetic term is scaled by the "phylogenetic noise" parameter $\sigma_{phylo}$.
 
 To understand how a tree implies a correlation structure, consider the plot below showing a phylogenetic tree and the lower triangle of the correlation matrix it implies. You can see that the clade on the left (with low inter-leaf distances between its members) forms a bright sub-block of high correlation in the matrix. The tiny clade on the far right has high inter-leaf distance between its members and the rest of the tree, so its members generally have low correlation with the rest of the leaves, exhibited by the dark band on the right of the triangle. Note that the matrix is derived solely from the structure of the tree (the black lines) -- it is not influenced by the colored outcome dots. The correlation matrix numerically quantifies the "higher inter-leaf distance → lower correlation" principle.
 
